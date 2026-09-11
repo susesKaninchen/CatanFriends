@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Spectral', Georgia, serif;
+    background-color: #160e09;
+    background-image: 
+      radial-gradient(circle at 50% 20%, rgba(67, 40, 24, 0.4) 0%, rgba(22, 14, 9, 0.95) 75%),
+      url('/assets/parchment.jpg');
+    background-blend-mode: multiply;
+    background-size: cover;
+    background-attachment: fixed;
+    margin: 0;
+    padding: 0;
+    color: #f5eedb;
+  }
+
+  h1, h2, h3, h4, .font-title {
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.04em;
+  }
+}
+
+.font-medieval {
+  font-family: 'MedievalSharp', cursive, serif;
+}
+
+.font-cinzel {
+  font-family: 'Cinzel', serif;
+}
+
+/* Medieval Wood & Parchment styling */
+.catan-card {
+  background: linear-gradient(145deg, #2b1b12 0%, #1c110b 100%);
+  border: 2px solid #6e462a;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(212, 175, 55, 0.2);
+}
+
+.catan-card-gold {
+  border-color: #c59b27;
+  box-shadow: 0 0 15px rgba(197, 155, 39, 0.25), 0 8px 24px -4px rgba(0, 0, 0, 0.8);
+}
+
+.parchment-box {
+  background-color: #ecdcb9;
+  background-image: url('/assets/parchment.jpg');
+  background-size: cover;
+  color: #2b180d;
+  border: 2px solid #8c582f;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), inset 0 0 40px rgba(80, 45, 15, 0.2);
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(22, 14, 9, 0.8);
+}
+::-webkit-scrollbar-thumb {
+  background: #6e462a;
+  border-radius: 3px;
+  border: 1px solid #c29339;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #96613c;
+}
