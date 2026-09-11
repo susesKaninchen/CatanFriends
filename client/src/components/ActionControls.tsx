@@ -464,9 +464,18 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                   {/* Teammate Resource Gifting */}
                   {tradeTab === 'gift' && teammates.length > 0 && (
                     <div className="space-y-2 text-xs">
-                      <p className="text-[11px] text-[#c9b59e]">
-                        Schenke einem Mitspieler 1 Rohstoff für gemeinsame Bauprojekte.
-                      </p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[11px] text-[#c9b59e]">
+                          Schenke Rohstoffe (1 Schenkung pro Siedlung/Zug).
+                        </p>
+                        <span className={`text-[10px] whitespace-nowrap px-2 py-0.5 rounded-full font-bold border ${
+                          (myPlayer.tradesRemainingThisTurn ?? 0) > 0 
+                            ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40' 
+                            : 'bg-red-950/80 text-red-300 border-red-500/40'
+                        }`}>
+                          {myPlayer.tradesRemainingThisTurn ?? 0} {(myPlayer.tradesRemainingThisTurn ?? 0) === 1 ? 'Schenkung' : 'Schenkungen'} übrig
+                        </span>
+                      </div>
 
                       <div>
                         <span className="block text-[10px] uppercase font-bold text-[#a8825c] mb-1">
@@ -528,11 +537,13 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                       <button
                         type="button"
                         onClick={handleExecuteGift}
-                        disabled={myPlayer.resources[giftRes] < 1 || !selectedTeammateId}
-                        className="w-full bg-gradient-to-r from-emerald-700 to-emerald-600 hover:from-emerald-600 hover:to-emerald-500 disabled:from-stone-800 disabled:to-stone-900 disabled:text-stone-500 text-white font-bold py-2 rounded-xl border border-emerald-400 transition-all text-xs font-['MedievalSharp',serif] shadow flex items-center justify-center gap-2 mt-2"
+                        disabled={myPlayer.resources[giftRes] < 1 || !selectedTeammateId || (myPlayer.tradesRemainingThisTurn ?? 0) < 1}
+                        className="w-full bg-gradient-to-r from-emerald-700 to-emerald-600 hover:from-emerald-600 hover:to-emerald-500 disabled:from-stone-800 disabled:to-stone-900 disabled:text-stone-500 text-white font-bold py-2 rounded-xl border border-emerald-400 disabled:border-stone-700 transition-all text-xs font-['MedievalSharp',serif] shadow flex items-center justify-center gap-2 mt-2"
                       >
                         <Gift className="w-3.5 h-3.5" />
-                        1x {RESOURCE_INFO[giftRes].name} verschenken
+                        {(myPlayer.tradesRemainingThisTurn ?? 0) < 1 
+                          ? 'Schenk-Limit für diesen Zug erreicht' 
+                          : `1x ${RESOURCE_INFO[giftRes].name} verschenken`}
                       </button>
                     </div>
                   )}

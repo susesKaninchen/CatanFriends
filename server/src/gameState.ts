@@ -37,11 +37,11 @@ export class GameManager {
 
     const fullHost: Player = {
       ...hostPlayer,
-      resources: { wood: 4, clay: 4, sheep: 3, wheat: 3, ore: 2 }, // Friendly starting reserve
+      resources: { wood: 1, clay: 1, sheep: 1, wheat: 1, ore: 0 }, // Balanced starting reserve (4 cards)
       remainingPieces: { roads: 29, settlements: 4, cities: 4 },
       knightsPlayed: 0,
       longestRoadLength: 0,
-      tradesRemainingThisTurn: 2
+      tradesRemainingThisTurn: 1
     };
 
     const state: GameRoomState = {
@@ -107,11 +107,11 @@ export class GameManager {
       ...player,
       color,
       role,
-      resources: { wood: 4, clay: 4, sheep: 3, wheat: 3, ore: 2 },
+      resources: { wood: 1, clay: 1, sheep: 1, wheat: 1, ore: 0 },
       remainingPieces: { roads: 29, settlements: 4, cities: 4 },
       knightsPlayed: 0,
       longestRoadLength: 0,
-      tradesRemainingThisTurn: 2
+      tradesRemainingThisTurn: 1
     };
 
     state.players.push(fullPlayer);
@@ -145,11 +145,11 @@ export class GameManager {
       isReady: true,
       isHost: false,
       isBot: true,
-      resources: { wood: 4, clay: 4, sheep: 3, wheat: 3, ore: 2 },
+      resources: { wood: 1, clay: 1, sheep: 1, wheat: 1, ore: 0 },
       remainingPieces: { roads: 29, settlements: 4, cities: 4 },
       knightsPlayed: 0,
       longestRoadLength: 0,
-      tradesRemainingThisTurn: 2
+      tradesRemainingThisTurn: 1
     };
 
     state.players.push(botPlayer);
@@ -194,6 +194,10 @@ export class GameManager {
 
     // Place initial settlements and roads for quick start or friendly start
     this.setupFriendlyInitialBoard(state);
+
+    state.players.forEach(p => {
+      p.tradesRemainingThisTurn = this.calculateTradeCapacity(p, state);
+    });
 
     this.addLog(state, 'Das Spiel hat begonnen! Erste Würfelphase aktiv.', 'alert');
     return { success: true };
@@ -619,6 +623,10 @@ export class GameManager {
     const fremdbauNote = activePlayer.color !== recipientColor ? ` (Fremdbau für ${recipientPlayer.name})` : '';
     this.addLog(state, `${activePlayer.name} baut eine Siedlung in ${recipientColor}${fremdbauNote}.`, 'build');
 
+    if (activePlayer.color === recipientColor) {
+      activePlayer.tradesRemainingThisTurn += 1;
+    }
+
     this.checkProgressiveQuests(state, 'BUILD_SETTLEMENTS', 1);
 
     return { success: true };
@@ -668,6 +676,10 @@ export class GameManager {
     vertex.building.type = 'city';
     ownerPlayer.remainingPieces.cities -= 1;
     ownerPlayer.remainingPieces.settlements += 1; // Returned to player stock!
+
+    if (activePlayer.color === ownerPlayer.color) {
+      activePlayer.tradesRemainingThisTurn += 1;
+    }
 
     this.addLog(state, `${activePlayer.name} baut Siedlung zu einer Stadt aus!`, 'build');
 
@@ -837,14 +849,23 @@ export class GameManager {
     if (!targetPlayer) return { success: false, message: 'Zielspieler nicht gefunden.' };
     if (targetPlayer.id === activePlayer.id) return { success: false, message: 'Du kannst dir nicht selbst Rohstoffe schenken.' };
 
+    if (activePlayer.tradesRemainingThisTurn <= 0) {
+      const cap = this.calculateTradeCapacity(activePlayer, state);
+      return {
+        success: false,
+        message: `Du hast dein Schenk-Limit für diesen Zug erreicht (Kapazität: ${cap} Schenkung(en) pro Zug basierend auf deinen Siedlungen/Städten).`
+      };
+    }
+
     if (activePlayer.resources[resource] < 1) {
       return { success: false, message: `Nicht genügend ${resource} vorhanden.` };
     }
 
     activePlayer.resources[resource] -= 1;
     targetPlayer.resources[resource] += 1;
+    activePlayer.tradesRemainingThisTurn -= 1;
 
-    this.addLog(state, `${activePlayer.name} schenkt 1x ${resource} an ${targetPlayer.name} für gemeinsame Bauprojekte!`, 'info');
+    this.addLog(state, `${activePlayer.name} schenkt 1x ${resource} an ${targetPlayer.name} (${activePlayer.tradesRemainingThisTurn} Schenkung(en) verbleiben diesen Zug).`, 'info');
     return { success: true };
   }
 
