@@ -12,7 +12,7 @@ import {
   QuestType,
   HexType
 } from './types.js';
-import { generateBoard, getNextRobberLetter, getPreviousRobberLetter, ROBBER_LETTER_ORDER, exploreSurroundings } from './board.js';
+import { generateBoard, getNextRobberLetter, getPreviousRobberLetter, ROBBER_LETTER_ORDER, exploreSurroundings, getTileTwoTilesNorth } from './board.js';
 import { createQuestSlot, initializeQuestSlots } from './quests.js';
 
 export class GameManager {
@@ -37,8 +37,8 @@ export class GameManager {
 
     const fullHost: Player = {
       ...hostPlayer,
-      resources: { wood: 1, clay: 1, sheep: 1, wheat: 1, ore: 0 }, // Balanced starting reserve (4 cards)
-      remainingPieces: { roads: 29, settlements: 4, cities: 4 },
+      resources: { wood: 0, clay: 0, sheep: 0, wheat: 0, ore: 0 },
+      remainingPieces: { roads: 30, settlements: 5, cities: 4 },
       knightsPlayed: 0,
       longestRoadLength: 0,
       tradesRemainingThisTurn: 1
@@ -107,8 +107,8 @@ export class GameManager {
       ...player,
       color,
       role,
-      resources: { wood: 1, clay: 1, sheep: 1, wheat: 1, ore: 0 },
-      remainingPieces: { roads: 29, settlements: 4, cities: 4 },
+      resources: { wood: 0, clay: 0, sheep: 0, wheat: 0, ore: 0 },
+      remainingPieces: { roads: 30, settlements: 5, cities: 4 },
       knightsPlayed: 0,
       longestRoadLength: 0,
       tradesRemainingThisTurn: 1
@@ -145,8 +145,8 @@ export class GameManager {
       isReady: true,
       isHost: false,
       isBot: true,
-      resources: { wood: 1, clay: 1, sheep: 1, wheat: 1, ore: 0 },
-      remainingPieces: { roads: 29, settlements: 4, cities: 4 },
+      resources: { wood: 0, clay: 0, sheep: 0, wheat: 0, ore: 0 },
+      remainingPieces: { roads: 30, settlements: 5, cities: 4 },
       knightsPlayed: 0,
       longestRoadLength: 0,
       tradesRemainingThisTurn: 1
@@ -188,64 +188,28 @@ export class GameManager {
     if (!state) return { success: false, message: 'Raum nicht gefunden.' };
     if (state.phase !== 'LOBBY') return { success: false, message: 'Spiel läuft bereits.' };
 
-    state.phase = 'TURN_DICE';
+    state.phase = 'SETUP_SETTLEMENT';
     state.activePlayerIndex = 0;
+    state.setupTurnIndex = 0;
     state.roundNumber = 1;
+    state.lastBuiltSetupVertexId = null;
 
-    // Place initial settlements and roads for quick start or friendly start
-    this.setupFriendlyInitialBoard(state);
-
+    // Reset starting piece stocks and clear starting resources (collected when placing settlement)
     state.players.forEach(p => {
-      p.tradesRemainingThisTurn = this.calculateTradeCapacity(p, state);
+      p.resources = { wood: 0, clay: 0, sheep: 0, wheat: 0, ore: 0 };
+      p.remainingPieces = { roads: 30, settlements: 5, cities: 4 };
+      p.tradesRemainingThisTurn = 1;
     });
 
-    this.addLog(state, 'Das Spiel hat begonnen! Erste Würfelphase aktiv.', 'alert');
+    const activePlayer = state.players[0];
+    this.addLog(state, 'Das Spiel hat begonnen! Gründungsphase: Jeder Spieler gründet 1 Siedlung und 1 Straße.', 'alert');
+    this.addLog(state, `Gründungsphase: ${activePlayer.name} wählt eine freie Kreuzung für die Startsiedlung.`, 'info');
+
+    if (activePlayer.isBot) {
+      setTimeout(() => this.executeBotSetupTurn(roomCode, activePlayer.id), 1000);
+    }
+
     return { success: true };
-  }
-
-  // Set up 1 starting settlement and road per player automatically on balanced spots
-  private setupFriendlyInitialBoard(state: GameRoomState) {
-    const vertexKeys = Object.keys(state.board.vertices);
-    const usedVertices = new Set<string>();
-
-    state.players.forEach((player, index) => {
-      // Find a vertex touching 3 resource hexes if possible, respecting distance rule
-      let chosenVertexId = '';
-      for (const vKey of vertexKeys) {
-        if (usedVertices.has(vKey)) continue;
-        const v = state.board.vertices[vKey];
-        // Check distance rule: no settlement in adjacent vertices
-        const hasAdjacentBuilding = v.adjacentVertexIds.some(adjId => state.board.vertices[adjId].building !== null);
-        if (hasAdjacentBuilding) continue;
-
-        // Check if touches resource hexes
-        if (v.adjacentHexIds.length >= 2) {
-          chosenVertexId = vKey;
-          break;
-        }
-      }
-
-      if (!chosenVertexId) {
-        chosenVertexId = vertexKeys.find(vKey => state.board.vertices[vKey].building === null) || vertexKeys[0];
-      }
-
-      usedVertices.add(chosenVertexId);
-      state.board.vertices[chosenVertexId].building = {
-        type: 'settlement',
-        ownerColor: player.color
-      };
-
-      // Connect 1 road from this settlement
-      const v = state.board.vertices[chosenVertexId];
-      if (v.adjacentEdgeIds.length > 0) {
-        const edgeId = v.adjacentEdgeIds[0];
-        state.board.edges[edgeId].road = {
-          ownerColor: player.color
-        };
-      }
-
-      this.addLog(state, `Startsiedlung für ${player.name} (${player.color}) platziert.`, 'build');
-    });
   }
 
   public rollDice(roomCode: string, playerId: string): { success: boolean; message?: string } {
@@ -473,7 +437,7 @@ export class GameManager {
     if (activePlayer.id !== playerId && !activePlayer.isBot) {
       return { success: false, message: 'Du bist nicht am Zug.' };
     }
-    if (state.phase !== 'TURN_ACTIONS') {
+    if (state.phase !== 'TURN_ACTIONS' && state.phase !== 'SETUP_ROAD') {
       return { success: false, message: 'Bauen ist in dieser Phase nicht möglich.' };
     }
 
@@ -482,47 +446,58 @@ export class GameManager {
     if (edge.road !== null) return { success: false, message: 'Kante ist bereits besetzt.' };
     if (edge.isWaterEdge) return { success: false, message: 'Im offenen Ozean können keine Straßen gebaut werden!' };
 
-    const totalRemainingRoads = state.players.reduce((sum, p) => sum + p.remainingPieces.roads, 0);
-    if (totalRemainingRoads <= 0) {
-      return { success: false, message: 'Das Team hat das globale Straßen-Limit erreicht (alle Straßen gebaut).' };
+    const isSetup = state.phase === 'SETUP_ROAD';
+
+    if (isSetup) {
+      const connectsToSetup =
+        edge.vertex1Id === state.lastBuiltSetupVertexId ||
+        edge.vertex2Id === state.lastBuiltSetupVertexId;
+      if (!connectsToSetup) {
+        return { success: false, message: 'Die Startstraße muss direkt an deine soeben gegründete Startsiedlung anschließen!' };
+      }
+    } else {
+      const totalRemainingRoads = state.players.reduce((sum, p) => sum + p.remainingPieces.roads, 0);
+      if (totalRemainingRoads <= 0) {
+        return { success: false, message: 'Das Team hat das globale Straßen-Limit erreicht (alle Straßen gebaut).' };
+      }
+
+      // Adjacency rule: road must connect to an existing road or any building
+      const v1 = state.board.vertices[edge.vertex1Id];
+      const v2 = state.board.vertices[edge.vertex2Id];
+      if (!v1 || !v2) return { success: false, message: 'Ungültige Kantenverbindung.' };
+
+      const hasAdjacentBuilding = Boolean(v1.building) || Boolean(v2.building);
+      const hasAdjacentRoad =
+        v1.adjacentEdgeIds.some(eId => eId !== edgeId && Boolean(state.board.edges[eId]?.road)) ||
+        v2.adjacentEdgeIds.some(eId => eId !== edgeId && Boolean(state.board.edges[eId]?.road));
+
+      if (!hasAdjacentBuilding && !hasAdjacentRoad) {
+        return { success: false, message: 'Straßen dürfen nur an bestehende Straßen oder Gebäude angebaut werden.' };
+      }
+
+      // Cost calculation (Pioneer bonus: 1 wood OR 1 clay instead of 1 wood AND 1 clay)
+      if (activePlayer.role === 'pioneer') {
+        if (activePlayer.resources.wood >= 1) {
+          activePlayer.resources.wood -= 1;
+        } else if (activePlayer.resources.clay >= 1) {
+          activePlayer.resources.clay -= 1;
+        } else {
+          return { success: false, message: 'Pionier benötigt mindestens 1 Holz oder 1 Lehm.' };
+        }
+      } else {
+        if (activePlayer.resources.wood < 1 || activePlayer.resources.clay < 1) {
+          return { success: false, message: 'Für eine Straße werden 1 Holz und 1 Lehm benötigt.' };
+        }
+        activePlayer.resources.wood -= 1;
+        activePlayer.resources.clay -= 1;
+      }
     }
 
-    const recipientColor = targetColor || activePlayer.color;
+    const recipientColor = isSetup ? activePlayer.color : (targetColor || activePlayer.color);
     const recipientPlayer = state.players.find(p => p.color === recipientColor);
     if (!recipientPlayer) return { success: false, message: 'Zielspieler existiert nicht.' };
     if (recipientPlayer.remainingPieces.roads <= 0) {
       return { success: false, message: `${recipientPlayer.name} hat keine Straßen mehr im Vorrat.` };
-    }
-
-    // Adjacency rule: road must connect to an existing road or any building
-    const v1 = state.board.vertices[edge.vertex1Id];
-    const v2 = state.board.vertices[edge.vertex2Id];
-    if (!v1 || !v2) return { success: false, message: 'Ungültige Kantenverbindung.' };
-
-    const hasAdjacentBuilding = Boolean(v1.building) || Boolean(v2.building);
-    const hasAdjacentRoad =
-      v1.adjacentEdgeIds.some(eId => eId !== edgeId && Boolean(state.board.edges[eId]?.road)) ||
-      v2.adjacentEdgeIds.some(eId => eId !== edgeId && Boolean(state.board.edges[eId]?.road));
-
-    if (!hasAdjacentBuilding && !hasAdjacentRoad) {
-      return { success: false, message: 'Straßen dürfen nur an bestehende Straßen oder Gebäude angebaut werden.' };
-    }
-
-    // Cost calculation (Pioneer bonus: 1 wood OR 1 clay instead of 1 wood AND 1 clay)
-    if (activePlayer.role === 'pioneer') {
-      if (activePlayer.resources.wood >= 1) {
-        activePlayer.resources.wood -= 1;
-      } else if (activePlayer.resources.clay >= 1) {
-        activePlayer.resources.clay -= 1;
-      } else {
-        return { success: false, message: 'Pionier benötigt mindestens 1 Holz oder 1 Lehm.' };
-      }
-    } else {
-      if (activePlayer.resources.wood < 1 || activePlayer.resources.clay < 1) {
-        return { success: false, message: 'Für eine Straße werden 1 Holz und 1 Lehm benötigt.' };
-      }
-      activePlayer.resources.wood -= 1;
-      activePlayer.resources.clay -= 1;
     }
 
     recipientPlayer.remainingPieces.roads -= 1;
@@ -533,7 +508,7 @@ export class GameManager {
       builtByColor: activePlayer.color
     };
 
-    this.addLog(state, `${activePlayer.name} baut eine gemeinsame Straße für das Team.`, 'build');
+    this.addLog(state, `${activePlayer.name} baut eine ${isSetup ? 'Startstraße' : 'gemeinsame Straße für das Team'}.`, 'build');
 
     // Procedural island expansion: Reveal surroundings when building roads
     const newlyDiscovered = exploreSurroundings(state.board, edgeId);
@@ -541,6 +516,45 @@ export class GameManager {
       const landCount = newlyDiscovered.filter(h => h.type !== 'water').length;
       const waterCount = newlyDiscovered.filter(h => h.type === 'water').length;
       this.addLog(state, `Entdeckung! ${landCount} neues Land und ${waterCount} Ozeanfeld(er) aufgedeckt!`, 'info');
+    }
+
+    if (isSetup) {
+      state.setupTurnIndex += 1;
+      if (state.setupTurnIndex < state.players.length) {
+        state.activePlayerIndex = state.setupTurnIndex;
+        state.phase = 'SETUP_SETTLEMENT';
+        state.lastBuiltSetupVertexId = null;
+        const nextPlayer = state.players[state.activePlayerIndex];
+        this.addLog(state, `Gründungsphase: ${nextPlayer.name} ist an der Reihe für Startsiedlung und Startstraße.`, 'info');
+        if (nextPlayer.isBot) {
+          setTimeout(() => this.executeBotSetupTurn(roomCode, nextPlayer.id), 1000);
+        }
+      } else {
+        // Setup complete! Position Robber 2 tiles north of what was built
+        const northHex = getTileTwoTilesNorth(state.board, state.lastBuiltSetupVertexId || edge.vertex1Id);
+        if (northHex) {
+          state.board.hexes.forEach(h => { h.hasRobber = false; });
+          northHex.hasRobber = true;
+          state.board.robberHexId = northHex.id;
+          this.addLog(state, `Gründungsphase beendet! Der Räuber lauert 2 Felder nördlich auf Feld ${northHex.id} (${northHex.type}).`, 'alert');
+        }
+
+        state.activePlayerIndex = 0;
+        state.phase = 'TURN_DICE';
+        state.roundNumber = 1;
+        state.lastBuiltSetupVertexId = null;
+
+        state.players.forEach(p => {
+          p.tradesRemainingThisTurn = this.calculateTradeCapacity(p, state);
+        });
+
+        const firstPlayer = state.players[0];
+        this.addLog(state, `Alle Startsiedlungen und Startstraßen errichtet! Das Spiel beginnt - ${firstPlayer.name} würfelt!`, 'alert');
+        if (firstPlayer.isBot) {
+          setTimeout(() => this.executeBotTurn(roomCode, firstPlayer.id), 1200);
+        }
+      }
+      return { success: true };
     }
 
     // Check Quests for roads
@@ -558,7 +572,7 @@ export class GameManager {
     if (activePlayer.id !== playerId && !activePlayer.isBot) {
       return { success: false, message: 'Du bist nicht am Zug.' };
     }
-    if (state.phase !== 'TURN_ACTIONS') {
+    if (state.phase !== 'TURN_ACTIONS' && state.phase !== 'SETUP_SETTLEMENT') {
       return { success: false, message: 'Bauen ist in dieser Phase nicht möglich.' };
     }
 
@@ -577,39 +591,45 @@ export class GameManager {
       return { success: false, message: 'Abstandsregel verletzt: Mindestens 2 Kanten Abstand zu anderen Siedlungen erforderlich.' };
     }
 
-    // Road connection rule: Must be connected to at least one existing road
-    const hasConnectingRoad = vertex.adjacentEdgeIds.some(eId => Boolean(state.board.edges[eId]?.road));
-    if (!hasConnectingRoad) {
-      return { success: false, message: 'Siedlungen müssen an eine bestehende Straße angebunden sein.' };
+    const isSetup = state.phase === 'SETUP_SETTLEMENT';
+
+    if (!isSetup) {
+      // Road connection rule: Must be connected to at least one existing road
+      const hasConnectingRoad = vertex.adjacentEdgeIds.some(eId => Boolean(state.board.edges[eId]?.road));
+      if (!hasConnectingRoad) {
+        return { success: false, message: 'Siedlungen müssen an eine bestehende Straße angebunden sein.' };
+      }
     }
 
-    const recipientColor = targetColor || activePlayer.color;
+    const recipientColor = isSetup ? activePlayer.color : (targetColor || activePlayer.color);
     const recipientPlayer = state.players.find(p => p.color === recipientColor);
     if (!recipientPlayer) return { success: false, message: 'Zielspieler existiert nicht.' };
     if (recipientPlayer.remainingPieces.settlements <= 0) {
       return { success: false, message: `${recipientPlayer.name} hat das Siedlungs-Limit erreicht (5/5 gebaut).` };
     }
 
-    // Base cost: 1 wood, 1 clay, 1 sheep, 1 wheat
-    // Builder discount: -1 resource of choice
-    const required: ResourceCount = { wood: 1, clay: 1, sheep: 1, wheat: 1, ore: 0 };
-    if (activePlayer.role === 'builder') {
-      const discount = chosenDiscountRes || 'wood';
-      if (required[discount] > 0) required[discount]--;
-    }
-
-    // Validate active player resources
-    for (const [r, needed] of Object.entries(required)) {
-      const resKey = r as ResourceType;
-      if (activePlayer.resources[resKey] < needed) {
-        return { success: false, message: `Nicht genügend ${resKey} für Siedlung.` };
+    if (!isSetup) {
+      // Base cost: 1 wood, 1 clay, 1 sheep, 1 wheat
+      // Builder discount: -1 resource of choice
+      const required: ResourceCount = { wood: 1, clay: 1, sheep: 1, wheat: 1, ore: 0 };
+      if (activePlayer.role === 'builder') {
+        const discount = chosenDiscountRes || 'wood';
+        if (required[discount] > 0) required[discount]--;
       }
-    }
 
-    // Deduct resources
-    for (const [r, needed] of Object.entries(required)) {
-      const resKey = r as ResourceType;
-      activePlayer.resources[resKey] -= needed;
+      // Validate active player resources
+      for (const [r, needed] of Object.entries(required)) {
+        const resKey = r as ResourceType;
+        if (activePlayer.resources[resKey] < needed) {
+          return { success: false, message: `Nicht genügend ${resKey} für Siedlung.` };
+        }
+      }
+
+      // Deduct resources
+      for (const [r, needed] of Object.entries(required)) {
+        const resKey = r as ResourceType;
+        activePlayer.resources[resKey] -= needed;
+      }
     }
 
     recipientPlayer.remainingPieces.settlements -= 1;
@@ -619,6 +639,30 @@ export class GameManager {
       ownerColor: recipientColor,
       builtByColor: activePlayer.color
     };
+
+    if (isSetup) {
+      state.lastBuiltSetupVertexId = vertexId;
+
+      // Startrohstoffe wo man gebaut hat (direkte Auszahlung der angrenzenden Ertragsfelder)
+      const gained: string[] = [];
+      touchingHexes.forEach(h => {
+        if (h && h.type !== 'desert' && h.type !== 'water') {
+          const res = h.type as ResourceType;
+          activePlayer.resources[res] = (activePlayer.resources[res] || 0) + 1;
+          gained.push(res);
+        }
+      });
+      const resMsg = gained.length > 0 ? gained.join(', ') : 'keine Rohstoffe';
+      this.addLog(state, `${activePlayer.name} gründet Startsiedlung und erhält Startrohstoffe: ${resMsg}.`, 'build');
+
+      state.phase = 'SETUP_ROAD';
+      this.addLog(state, `${activePlayer.name} platziert nun eine angeschlossene Startstraße.`, 'info');
+
+      if (activePlayer.isBot) {
+        setTimeout(() => this.executeBotSetupRoad(roomCode, activePlayer.id, vertexId), 800);
+      }
+      return { success: true };
+    }
 
     const fremdbauNote = activePlayer.color !== recipientColor ? ` (Fremdbau für ${recipientPlayer.name})` : '';
     this.addLog(state, `${activePlayer.name} baut eine Siedlung in ${recipientColor}${fremdbauNote}.`, 'build');
@@ -967,6 +1011,57 @@ export class GameManager {
     if (totalRoads >= 7 && !state.teamHasLongestRoad) {
       state.teamHasLongestRoad = true;
       this.addLog(state, 'MEILENSTEIN: Längste Handelsstraße erreicht (>= 7 Straßen)! Alle künftigen Quests erhalten +1 W6-Timer!', 'alert');
+    }
+  }
+
+  // Bot setup turn AI: smart placement of starting settlement and road
+  private executeBotSetupTurn(roomCode: string, botId: string) {
+    const state = this.getRoom(roomCode);
+    if (!state || state.players[state.activePlayerIndex]?.id !== botId) return;
+    if (state.phase !== 'SETUP_SETTLEMENT') return;
+
+    const validVertices: Array<{ id: string; score: number }> = [];
+    for (const [vId, vertex] of Object.entries(state.board.vertices)) {
+      if (vertex.building !== null) continue;
+
+      const hasAdjBuilding = vertex.adjacentVertexIds.some(adjId => Boolean(state.board.vertices[adjId]?.building));
+      if (hasAdjBuilding) continue;
+
+      const touchingHexes = vertex.adjacentHexIds.map(hId => state.board.hexes.find(h => h.id === hId)).filter(Boolean);
+      if (touchingHexes.length === 0 || touchingHexes.every(h => h?.type === 'water')) continue;
+
+      let score = touchingHexes.filter(h => h?.type !== 'water' && h?.type !== 'desert').length * 10;
+      touchingHexes.forEach(h => {
+        if (h && h.diceNumber) {
+          score += 6 - Math.abs(7 - h.diceNumber);
+        }
+      });
+
+      validVertices.push({ id: vId, score });
+    }
+
+    validVertices.sort((a, b) => b.score - a.score);
+    const chosen = validVertices[0] || { id: Object.keys(state.board.vertices)[0] };
+
+    this.buildSettlement(roomCode, botId, chosen.id);
+    this.notifyStateChanged(roomCode);
+  }
+
+  private executeBotSetupRoad(roomCode: string, botId: string, vertexId: string) {
+    const state = this.getRoom(roomCode);
+    if (!state || state.players[state.activePlayerIndex]?.id !== botId) return;
+    if (state.phase !== 'SETUP_ROAD') return;
+
+    const vertex = state.board.vertices[vertexId];
+    if (!vertex) return;
+
+    const validEdges = vertex.adjacentEdgeIds
+      .map(eId => state.board.edges[eId])
+      .filter(e => e && e.road === null && !e.isWaterEdge);
+
+    if (validEdges.length > 0) {
+      this.buildRoad(roomCode, botId, validEdges[0].id);
+      this.notifyStateChanged(roomCode);
     }
   }
 

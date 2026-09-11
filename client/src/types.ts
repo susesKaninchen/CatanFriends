@@ -82,6 +82,7 @@ export interface BoardState {
   robberHexId: string;
   currentLetter: string;
   unexploredLettersPool: Array<{ letter: string; num: number }>;
+  numberTokenPool?: number[];
 }
 
 export type QuestType =
@@ -111,6 +112,8 @@ export interface QuestSlot {
 
 export type GamePhase =
   | 'LOBBY'
+  | 'SETUP_SETTLEMENT'
+  | 'SETUP_ROAD'
   | 'TURN_DICE'
   | 'TURN_ACTIONS'
   | 'ROBBER_DISCARD'
@@ -132,6 +135,7 @@ export interface GameRoomState {
   activePlayerIndex: number;
   roundNumber: number;
   setupTurnIndex: number;
+  lastBuiltSetupVertexId?: string | null;
   board: BoardState;
   questSlots: QuestSlot[];
   solvedQuestsCount: number;

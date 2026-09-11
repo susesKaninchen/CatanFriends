@@ -172,11 +172,15 @@ export const Board: React.FC<BoardProps> = ({
     setPan({ x: 0, y: 0 });
   };
 
+  // Setup phase interactive flags
+  const isSetupSettlement = phase === 'SETUP_SETTLEMENT' && Boolean(isMyTurn);
+  const isSetupRoad = phase === 'SETUP_ROAD' && Boolean(isMyTurn);
+
   // Rule 1: Valid Roads
   // Can only be built on edges touching an existing road or building.
-  // Communal roads belong to everyone.
+  // In SETUP_ROAD: Must connect to player's newly built settlement.
   const buildableEdgeIds = useMemo(() => {
-    if (buildMode !== 'road' || disabled) return new Set<string>();
+    if ((buildMode !== 'road' && !isSetupRoad) || disabled) return new Set<string>();
 
     const valid = new Set<string>();
     Object.values(board.edges).forEach((edge) => {
@@ -186,23 +190,34 @@ export const Board: React.FC<BoardProps> = ({
       const v2 = board.vertices[edge.vertex2Id];
       if (!v1 || !v2) return;
 
-      const touchesBuilding = Boolean(v1.building) || Boolean(v2.building);
-      const touchesRoad =
-        v1.adjacentEdgeIds.some(eId => eId !== edge.id && Boolean(board.edges[eId]?.road)) ||
-        v2.adjacentEdgeIds.some(eId => eId !== edge.id && Boolean(board.edges[eId]?.road));
+      if (isSetupRoad) {
+        const connectsToMyBuilding =
+          (v1.building && v1.building.ownerColor === targetColor) ||
+          (v2.building && v2.building.ownerColor === targetColor);
+        if (connectsToMyBuilding) {
+          valid.add(edge.id);
+        }
+      } else {
+        const touchesBuilding = Boolean(v1.building) || Boolean(v2.building);
+        const touchesRoad =
+          v1.adjacentEdgeIds.some(eId => eId !== edge.id && Boolean(board.edges[eId]?.road)) ||
+          v2.adjacentEdgeIds.some(eId => eId !== edge.id && Boolean(board.edges[eId]?.road));
 
-      if (touchesBuilding || touchesRoad) {
-        valid.add(edge.id);
+        if (touchesBuilding || touchesRoad) {
+          valid.add(edge.id);
+        }
       }
     });
 
     return valid;
-  }, [board.edges, board.vertices, buildMode, disabled]);
+  }, [board.edges, board.vertices, buildMode, isSetupRoad, targetColor, disabled]);
 
   // Rule 2: Valid Settlements
-  // Must be empty, not pure water, respect distance rule, and connect to an existing road.
+  // Must be empty, not pure water, respect distance rule.
+  // In regular phase, also must connect to an existing road.
+  // In SETUP_SETTLEMENT, free choice of any valid vertex without road!
   const buildableSettlementVertexIds = useMemo(() => {
-    if (buildMode !== 'settlement' || disabled) return new Set<string>();
+    if ((buildMode !== 'settlement' && !isSetupSettlement) || disabled) return new Set<string>();
 
     const valid = new Set<string>();
     Object.values(board.vertices).forEach((vertex) => {
@@ -216,15 +231,17 @@ export const Board: React.FC<BoardProps> = ({
       const hasAdjBuilding = vertex.adjacentVertexIds.some(adjId => Boolean(board.vertices[adjId]?.building));
       if (hasAdjBuilding) return;
 
-      // Road connection rule: Must connect to an existing road
-      const hasRoadConnection = vertex.adjacentEdgeIds.some(eId => Boolean(board.edges[eId]?.road));
-      if (!hasRoadConnection) return;
+      if (!isSetupSettlement) {
+        // Road connection rule: Must connect to an existing road
+        const hasRoadConnection = vertex.adjacentEdgeIds.some(eId => Boolean(board.edges[eId]?.road));
+        if (!hasRoadConnection) return;
+      }
 
       valid.add(vertex.id);
     });
 
     return valid;
-  }, [board.vertices, board.edges, board.hexes, buildMode, disabled]);
+  }, [board.vertices, board.edges, board.hexes, buildMode, isSetupSettlement, disabled]);
 
   // Rule 3: Valid Cities
   // Strict upgrade: ONLY on existing settlements.

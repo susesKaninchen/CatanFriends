@@ -62,10 +62,10 @@ export const App: React.FC = () => {
 
   const handleSelectEdge = (edgeId: string) => {
     if (!roomState) return;
-    if (buildMode === 'road') {
+    if (buildMode === 'road' || roomState.phase === 'SETUP_ROAD') {
       socket.emit(
         'build_road',
-        { roomCode: roomState.roomCode, edgeId, targetColor },
+        { roomCode: roomState.roomCode, edgeId, targetColor: myPlayer?.color },
         (res: any) => {
           if (res.success) {
             setBuildMode('none');
@@ -79,10 +79,10 @@ export const App: React.FC = () => {
 
   const handleSelectVertex = (vertexId: string) => {
     if (!roomState) return;
-    if (buildMode === 'settlement') {
+    if (buildMode === 'settlement' || roomState.phase === 'SETUP_SETTLEMENT') {
       socket.emit(
         'build_settlement',
-        { roomCode: roomState.roomCode, vertexId, targetColor },
+        { roomCode: roomState.roomCode, vertexId, targetColor: myPlayer?.color },
         (res: any) => {
           if (res.success) {
             setBuildMode('none');

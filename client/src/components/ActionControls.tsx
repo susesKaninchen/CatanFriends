@@ -169,6 +169,32 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
       {/* Main Action Area */}
       {isMyTurn ? (
         <div className="space-y-4">
+          {/* 0a. Setup Settlement Phase */}
+          {phase === 'SETUP_SETTLEMENT' && (
+            <div className="p-3.5 bg-[#2b180d] border-2 border-emerald-500 rounded-xl text-center space-y-1.5 shadow-lg animate-pulse">
+              <span className="text-sm font-bold text-emerald-300 font-['MedievalSharp',serif] flex items-center justify-center gap-1.5">
+                <Home className="w-4 h-4 text-emerald-400" />
+                Startphase: Setze dein Dorf (Start-Siedlung)!
+              </span>
+              <p className="text-xs text-[#e8d5b5]">
+                Wähle eine freie Kreuzung auf der Insel. Du erhältst sofort alle Rohstoffe der direkt angrenzenden Felder!
+              </p>
+            </div>
+          )}
+
+          {/* 0b. Setup Road Phase */}
+          {phase === 'SETUP_ROAD' && (
+            <div className="p-3.5 bg-[#2b180d] border-2 border-amber-500 rounded-xl text-center space-y-1.5 shadow-lg animate-pulse">
+              <span className="text-sm font-bold text-amber-300 font-['MedievalSharp',serif] flex items-center justify-center gap-1.5">
+                <Hammer className="w-4 h-4 text-amber-400" />
+                Startphase: Baue deine Start-Straße!
+              </span>
+              <p className="text-xs text-[#e8d5b5]">
+                Klicke auf eine freie Kante direkt an deinem soeben platzierten Dorf.
+              </p>
+            </div>
+          )}
+
           {/* 1. Dice Phase */}
           {phase === 'TURN_DICE' && (
             <button
@@ -597,10 +623,16 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
       ) : (
         <div className="p-4 bg-[#120b06]/80 rounded-xl border border-[#3b2311] text-center space-y-1">
           <p className="text-xs font-semibold text-[#e8d5b5]">
-            {activePlayer.name} plant gerade den nächsten Zug...
+            {phase === 'SETUP_SETTLEMENT'
+              ? `${activePlayer.name} wählt die Start-Siedlung (Dorf)...`
+              : phase === 'SETUP_ROAD'
+              ? `${activePlayer.name} baut die Start-Straße...`
+              : `${activePlayer.name} plant gerade den nächsten Zug...`}
           </p>
           <p className="text-[11px] text-[#9c7e65] italic">
-            Nutzt den Chat oder plant Absprachen für den gemeinsamen Fremdbau!
+            {phase === 'SETUP_SETTLEMENT' || phase === 'SETUP_ROAD'
+              ? 'Die Startphase wird reihum durchgeführt.'
+              : 'Nutzt den Chat oder plant Absprachen für den gemeinsamen Fremdbau!'}
           </p>
         </div>
       )}

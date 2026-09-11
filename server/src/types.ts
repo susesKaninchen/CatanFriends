@@ -87,6 +87,7 @@ export interface BoardState {
   robberHexId: string;
   currentLetter: string; // Current position on A-R cycle
   unexploredLettersPool: Array<{ letter: string; num: number }>;
+  numberTokenPool: number[];
 }
 
 export type QuestType =
@@ -116,6 +117,8 @@ export interface QuestSlot {
 
 export type GamePhase =
   | 'LOBBY'
+  | 'SETUP_SETTLEMENT'
+  | 'SETUP_ROAD'
   | 'TURN_DICE' // Active player must roll
   | 'TURN_ACTIONS' // Trade, build, quest deposit
   | 'ROBBER_DISCARD' // If 7 rolled and someone has > 7 cards
@@ -137,6 +140,7 @@ export interface GameRoomState {
   activePlayerIndex: number;
   roundNumber: number;
   setupTurnIndex: number;
+  lastBuiltSetupVertexId?: string | null;
   board: BoardState;
   questSlots: QuestSlot[];
   solvedQuestsCount: number;

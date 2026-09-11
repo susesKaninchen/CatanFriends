@@ -60,58 +60,93 @@ export function getPreviousRobberLetter(currentLetter: string, steps: number = 2
   return ROBBER_LETTER_ORDER[prevIndex];
 }
 
+export const STANDARD_TOKEN_POOL = [
+  2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12
+];
+
+export function shuffleArray<T>(arr: T[]): T[] {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+export function drawNumberToken(board: BoardState): number {
+  if (!board.numberTokenPool || board.numberTokenPool.length === 0) {
+    board.numberTokenPool = shuffleArray([...STANDARD_TOKEN_POOL]);
+  }
+  return board.numberTokenPool.pop()!;
+}
+
+// Find a land hex 2 tiles north of a given vertex in SVG coordinates
+export function getTileTwoTilesNorth(board: BoardState, vertexId: string): HexTile | null {
+  const vertex = board.vertices[vertexId];
+  if (!vertex) return null;
+
+  // 2 tiles north in SVG coordinates:
+  // Height of each tile row is 1.5 * HEX_RADIUS (HEX_RADIUS = 56).
+  // Target Y is 2 rows north (lower Y).
+  const targetX = vertex.x;
+  const targetY = vertex.y - 2 * 1.5 * HEX_RADIUS;
+
+  const landHexes = board.hexes.filter(h => h.type !== 'water');
+  if (landHexes.length === 0) return null;
+
+  let bestHex: HexTile = landHexes[0];
+  let minDistance = Infinity;
+
+  for (const hex of landHexes) {
+    const center = hexToPixel(hex.q, hex.r, HEX_RADIUS);
+    const dist = Math.hypot(center.x - targetX, center.y - targetY);
+    if (dist < minDistance) {
+      minDistance = dist;
+      bestHex = hex;
+    }
+  }
+
+  return bestHex;
+}
+
 export function generateBoard(): BoardState {
-  // Start with 7 Core Hexes (radius 1: (0,0) and 6 neighbors)
+  // Complete 19-tile Catan island (radius 2)
   const coreCoords = [
+    // Center (0, 0)
     { q: 0, r: 0 },
+    // Ring 1 (6 hexes)
     { q: 1, r: 0 },
     { q: 1, r: -1 },
     { q: 0, r: -1 },
     { q: -1, r: 0 },
     { q: -1, r: 1 },
-    { q: 0, r: 1 }
+    { q: 0, r: 1 },
+    // Ring 2 (12 hexes)
+    { q: 2, r: 0 },
+    { q: 2, r: -1 },
+    { q: 2, r: -2 },
+    { q: 1, r: -2 },
+    { q: 0, r: -2 },
+    { q: -1, r: -1 },
+    { q: -2, r: 0 },
+    { q: -2, r: 1 },
+    { q: -2, r: 2 },
+    { q: -1, r: 2 },
+    { q: 0, r: 2 },
+    { q: 1, r: 1 }
   ];
 
-  // Starting balanced resource core
-  const coreResources: HexType[] = [
-    'desert', // Center
-    'wood',
-    'clay',
-    'sheep',
-    'wheat',
-    'ore',
-    'wood'
+  // Standard Catan resource tiles: 4 wood, 3 clay, 4 sheep, 4 wheat, 3 ore (18 total)
+  const resourceTiles: HexType[] = [
+    'wood', 'wood', 'wood', 'wood',
+    'clay', 'clay', 'clay',
+    'sheep', 'sheep', 'sheep', 'sheep',
+    'wheat', 'wheat', 'wheat', 'wheat',
+    'ore', 'ore', 'ore'
   ];
-
-  const coreTokens = [
-    { letter: null, num: null }, // desert
-    { letter: null, num: 6 },
-    { letter: null, num: 5 },
-    { letter: null, num: 8 },
-    { letter: null, num: 4 },
-    { letter: null, num: 9 },
-    { letter: null, num: 10 }
-  ];
-
-  // Unexplored exploration pool (for outward expansion)
-  const unexploredLettersPool: Array<{ letter: string; num: number }> = [
-    { letter: 'G', num: 3 },
-    { letter: 'H', num: 11 },
-    { letter: 'I', num: 8 },
-    { letter: 'J', num: 6 },
-    { letter: 'K', num: 5 },
-    { letter: 'L', num: 9 },
-    { letter: 'M', num: 10 },
-    { letter: 'N', num: 4 },
-    { letter: 'O', num: 3 },
-    { letter: 'P', num: 11 },
-    { letter: 'Q', num: 2 },
-    { letter: 'R', num: 12 },
-    { letter: 'S', num: 6 },
-    { letter: 'T', num: 8 },
-    { letter: 'U', num: 5 },
-    { letter: 'V', num: 9 }
-  ];
+  const shuffledResources = shuffleArray(resourceTiles);
+  // Center is desert, surrounded by all standard resource tiles
+  const coreResources: HexType[] = ['desert', ...shuffledResources];
 
   const board: BoardState = {
     hexes: [],
@@ -119,18 +154,23 @@ export function generateBoard(): BoardState {
     edges: {},
     robberHexId: '0_0',
     currentLetter: 'A',
-    unexploredLettersPool
+    unexploredLettersPool: [],
+    numberTokenPool: shuffleArray([...STANDARD_TOKEN_POOL])
   };
 
   coreCoords.forEach((coord, i) => {
+    const resType = coreResources[i];
+    const isDesert = resType === 'desert';
+    const diceNum = isDesert ? null : drawNumberToken(board);
+
     addHexToBoard(
       board,
       coord.q,
       coord.r,
-      coreResources[i],
-      coreTokens[i].letter,
-      coreTokens[i].num,
-      coreResources[i] === 'desert'
+      resType,
+      null, // Letters removed from tokens
+      diceNum,
+      isDesert // Robber initially on desert
     );
   });
 
@@ -307,13 +347,8 @@ export function exploreSurroundings(board: BoardState, edgeId: string): HexTile[
         if (!isWater) {
           const landTypes: HexType[] = ['wood', 'clay', 'sheep', 'wheat', 'ore'];
           type = landTypes[Math.floor(Math.random() * landTypes.length)];
-
-          const token = board.unexploredLettersPool.shift() || {
-            letter: null,
-            num: [3, 4, 5, 6, 8, 9, 10, 11][Math.floor(Math.random() * 8)]
-          };
-          letter = null; // Letters removed from tokens as requested
-          diceNum = token.num;
+          diceNum = drawNumberToken(board);
+          letter = null;
         }
 
         const newHex = addHexToBoard(board, nq, nr, type, letter, diceNum, false);
