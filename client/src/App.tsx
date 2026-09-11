@@ -194,7 +194,11 @@ export const App: React.FC = () => {
       {/* Top Navigation Bar with Medieval Styling */}
       <header className="max-w-7xl w-full mx-auto flex flex-wrap items-center justify-between gap-4 pb-4 border-b-2 border-[#5a3818]">
         <div className="flex items-center gap-3">
-          <span className="text-3xl filter drop-shadow">🏝️</span>
+          <img
+            src="/assets/logo.jpg"
+            alt="Catan Friends"
+            className="w-11 h-11 rounded-xl border border-[#d4af37] shadow-md object-cover hover:scale-105 transition-transform"
+          />
           <div>
             <h1 className="text-xl font-bold text-[#fff4e0] font-['MedievalSharp',serif] tracking-wider drop-shadow">
               Catan Friends

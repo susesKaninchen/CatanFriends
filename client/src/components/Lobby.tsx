@@ -97,8 +97,12 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
       <div className="min-h-screen bg-[#0d0906] flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-[#19110a]/95 border-2 border-[#5a3818] rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.9)] p-6 sm:p-8 space-y-6 text-[#e8d5b5]">
           <div className="text-center space-y-2">
-            <div className="inline-flex p-3 bg-[#2a1a0f] rounded-2xl border border-[#7a4e22] text-4xl mb-2 shadow-inner">
-              🏝️
+            <div className="flex justify-center mb-3">
+              <img
+                src="/assets/logo.jpg"
+                alt="Catan Friends Wappen"
+                className="w-32 h-32 sm:w-36 sm:h-36 rounded-2xl border-2 border-[#d4af37] shadow-[0_6px_25px_rgba(212,175,55,0.25)] object-cover hover:scale-105 transition-transform duration-300"
+              />
             </div>
             <h1 className="text-3xl font-bold font-['MedievalSharp',serif] tracking-wide text-[#fff4e0] drop-shadow">
               Catan Friends
@@ -227,13 +231,20 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
     <div className="min-h-screen bg-[#0d0906] flex items-center justify-center p-4">
       <div className="max-w-2xl w-full bg-[#19110a]/95 border-2 border-[#5a3818] rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.9)] p-6 sm:p-8 space-y-6 text-[#e8d5b5]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#472c14] pb-4">
-          <div>
-            <span className="text-xs font-semibold text-amber-500 uppercase tracking-wider font-['Cinzel',serif]">
-              Kooperative Spielrunde
-            </span>
-            <h1 className="text-2xl font-extrabold text-[#fff4e0] flex items-center gap-2 font-['MedievalSharp',serif]">
-              Raumcode: <span className="font-mono text-amber-400 bg-[#2b1b0d] px-3 py-1 rounded-lg border border-amber-600/50">{roomState.roomCode}</span>
-            </h1>
+          <div className="flex items-center gap-3">
+            <img
+              src="/assets/logo.jpg"
+              alt="Catan Friends"
+              className="w-12 h-12 rounded-xl border border-[#d4af37] shadow-md object-cover"
+            />
+            <div>
+              <span className="text-xs font-semibold text-amber-500 uppercase tracking-wider font-['Cinzel',serif]">
+                Kooperative Spielrunde
+              </span>
+              <h1 className="text-2xl font-extrabold text-[#fff4e0] flex items-center gap-2 font-['MedievalSharp',serif]">
+                Raumcode: <span className="font-mono text-amber-400 bg-[#2b1b0d] px-3 py-1 rounded-lg border border-amber-600/50">{roomState.roomCode}</span>
+              </h1>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {onOpenRulebook && (
