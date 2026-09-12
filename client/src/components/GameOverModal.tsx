@@ -33,7 +33,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-6 sm:p-8 text-center space-y-6">
+      <div className="max-w-md w-full bg-[#22150c] border-2 border-[#73451e] rounded-3xl shadow-2xl p-6 sm:p-8 text-center space-y-6 text-[#e8d5b5]">
         {/* Victory or Defeat Icon */}
         <div className="flex justify-center">
           {isVictory ? (
@@ -48,24 +48,24 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         </div>
 
         <div className="space-y-2">
-          <h2 className="text-2xl sm:text-3xl font-black text-white">
-            {isVictory ? 'Glorreicher Sieg fuer das Team!' : 'Die Insel ist verloren!'}
+          <h2 className="text-2xl sm:text-3xl font-black text-white font-['MedievalSharp',serif]">
+            {isVictory ? 'Glorreicher Sieg für das Team!' : 'Die Insel ist verloren!'}
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400">
+          <p className="text-xs sm:text-sm text-[#cbb299] font-sans">
             {isVictory
-              ? 'Gemeinsam habt ihr alle Quest-Ziele gemeistert und Catan vor dem Raeuber beschuetzt!'
-              : 'Vier Quests sind abgelaufen. Der Raeuber hat die Siedlungen ueberrannt.'}
+              ? 'Gemeinsam habt ihr alle Quest-Ziele gemeistert und Catan vor dem Räuber beschützt!'
+              : 'Vier Quests sind abgelaufen. Der Räuber hat die Siedlungen überrannt.'}
           </p>
         </div>
 
         {/* Stats card */}
-        <div className="grid grid-cols-2 gap-3 p-4 bg-slate-950 rounded-2xl border border-slate-800 text-xs">
+        <div className="grid grid-cols-2 gap-3 p-4 bg-[#1c1109] rounded-2xl border border-[#5c3718] text-xs">
           <div>
-            <span className="text-slate-500 block uppercase font-bold text-[10px]">Geloeste Quests</span>
+            <span className="text-[#bd966f] block uppercase font-bold text-[10px] font-['Cinzel',serif]">Gelöste Quests</span>
             <span className="text-xl font-extrabold text-amber-400 font-mono">{solvedCount}</span>
           </div>
           <div>
-            <span className="text-slate-500 block uppercase font-bold text-[10px]">Gescheiterte Quests</span>
+            <span className="text-[#bd966f] block uppercase font-bold text-[10px] font-['Cinzel',serif]">Gescheiterte Quests</span>
             <span className="text-xl font-extrabold text-rose-400 font-mono">{failedCount} / 4</span>
           </div>
         </div>

@@ -58,7 +58,7 @@ export class GameManager {
       questSlots,
       solvedQuestsCount: 0,
       failedQuestsCount: 0,
-      targetQuestsToWin: 10,
+      targetQuestsToWin: 4,
       diceValues: [1, 1],
       logs: [
         {
@@ -825,7 +825,10 @@ export class GameManager {
     activePlayer.resources[resource] -= toDeposit;
     slot.depositedResources[resource] += toDeposit;
 
-    this.addLog(state, `${activePlayer.name} zahlt ${toDeposit}x ${resource} in Quest "${slot.title}" ein.`, 'quest');
+    // Einlagern schuetzt vor Verfall und verlaengert den Timer (Herauszoegern-Mechanik)
+    slot.d6Timer = Math.min(6, slot.d6Timer + 3);
+
+    this.addLog(state, `${activePlayer.name} zahlt ${toDeposit}x ${resource} in Quest "${slot.title}" ein. Timer steigt auf ${slot.d6Timer}!`, 'quest');
 
     // Check if fully satisfied
     let allFulfilled = true;
