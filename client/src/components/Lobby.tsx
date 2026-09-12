@@ -89,6 +89,13 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
     });
   };
 
+  const handleSetPointsPerPlayer = (pts: number) => {
+    if (!roomState) return;
+    socket.emit('set_points_per_player', { roomCode: roomState.roomCode, points: pts }, (res: any) => {
+      if (res && !res.success) setError(res.message);
+    });
+  };
+
   const myPlayer = roomState?.players.find(p => p.id === myPlayerId);
   const isHost = myPlayer?.isHost;
 
@@ -337,12 +344,64 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
           </div>
         </div>
 
+        {/* Game Length & Victory Target Selector */}
+        <div className="p-4 bg-[#1c1109] rounded-xl border border-[#5c3718] space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5 font-['Cinzel',serif]">
+              <span>🏆</span> Spiellänge & Siegziel
+            </h3>
+            <span className="text-xs font-bold text-[#f3dfc8] font-mono bg-[#2a170d] px-2.5 py-1 rounded-lg border border-amber-600/50">
+              Ziel: {roomState.targetQuestsToWin} Team-Siegpunkte
+            </span>
+          </div>
+
+          <p className="text-xs text-[#dec2a6] font-sans leading-relaxed">
+            Alle Siegpunkte werden gemeinsam für das Team gesammelt: Siedlung (+1 Pkt), Stadt (+2 Pkt), gelöste Quest (+1 Pkt), Handelsstraße (+3 Pkt) und Rittermacht (+3 Pkt).
+          </p>
+
+          {isHost ? (
+            <div className="grid grid-cols-3 gap-2 pt-1">
+              {[
+                { pts: 6, label: 'Kurz', desc: '6 Pkt/Spieler' },
+                { pts: 10, label: 'Standard', desc: '10 Pkt/Spieler' },
+                { pts: 14, label: 'Episch', desc: '14 Pkt/Spieler' }
+              ].map((opt) => {
+                const isSelected = (roomState.pointsPerPlayer || 10) === opt.pts;
+                return (
+                  <button
+                    key={opt.pts}
+                    type="button"
+                    onClick={() => handleSetPointsPerPlayer(opt.pts)}
+                    className={`py-2 px-3 rounded-xl border text-center transition-all ${
+                      isSelected
+                        ? 'bg-amber-600 text-slate-950 border-amber-300 font-bold shadow-md ring-1 ring-amber-400'
+                        : 'bg-[#28160b] hover:bg-[#381f10] text-[#dec2a6] border-[#5c3718]'
+                    }`}
+                  >
+                    <div className="text-xs font-bold font-['MedievalSharp',serif]">{opt.label}</div>
+                    <div className={`text-[10px] ${isSelected ? 'text-slate-900 font-semibold' : 'text-[#a88260]'}`}>
+                      {opt.desc}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#2a170d] rounded-lg border border-[#5c3718] text-xs text-[#e8d5b5]">
+              <span className="text-[#bd966f]">Gewählte Spiellänge:</span>
+              <span className="font-bold text-amber-300 font-['MedievalSharp',serif]">
+                {(roomState.pointsPerPlayer || 10) === 6 ? 'Kurz (6 Pkt/Spieler)' : (roomState.pointsPerPlayer || 10) === 14 ? 'Episch (14 Pkt/Spieler)' : 'Standard (10 Pkt/Spieler)'}
+              </span>
+            </div>
+          )}
+        </div>
+
         <div className="p-4 bg-[#1c1109] rounded-xl border border-[#5c3718] space-y-2">
           <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5 font-['Cinzel',serif]">
             <span>🛡️</span> Team-Missionsregeln
           </h3>
           <p className="text-xs text-[#dec2a6] leading-relaxed font-sans">
-            Gemeinsam gegen den Räuber! Erfüllt die 4 ausliegenden Quests, bevor ihre D6-Timer ablaufen.
+            Gemeinsam gegen den Räuber! Erfüllt die ausliegenden Quests, bevor ihre D6-Timer ablaufen, baut Straßen und Siedlungen aus.
             Nutzt <strong>Fremdbau</strong>, um Mitspielern Gebäude mit euren Rohstoffen zu errichten.
             Bei 4 abgelaufenen Quests verliert das Team sofort!
           </p>

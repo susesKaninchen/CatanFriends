@@ -112,6 +112,18 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
+  // Set points per player (Lobby host setting)
+  socket.on('set_points_per_player', (data: { roomCode: string; points: number }, callback) => {
+    const result = gameManager.setPointsPerPlayer(data.roomCode, socket.id, data.points);
+    if (result.success) {
+      const state = gameManager.getRoom(data.roomCode);
+      if (state) io.to(data.roomCode.toUpperCase()).emit('room_state_updated', state);
+      if (callback) callback({ success: true });
+    } else {
+      if (callback) callback({ success: false, message: result.message });
+    }
+  });
+
   // Start game
   socket.on('start_game', (data: { roomCode: string }, callback) => {
     const result = gameManager.startGame(data.roomCode);

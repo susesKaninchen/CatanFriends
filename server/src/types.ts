@@ -173,13 +173,15 @@ export interface GameRoomState {
   questSlots: QuestSlot[];
   solvedQuestsCount: number;
   failedQuestsCount: number; // Defeat at 4
-  targetQuestsToWin: number; // Default 10 or endless highscore
+  pointsPerPlayer: number; // Default 10 (or 6 for short, 14 for epic)
+  teamVictoryPoints: number; // Current sum of settlements (1), cities (2), quests (1), road (3), army (3)
+  targetQuestsToWin: number; // Target team victory points to win (pointsPerPlayer * players.length)
   diceValues: [number, number];
   logs: GameLogEntry[];
   longestRoadOwner: PlayerColor | null;
   longestRoadLength: number;
-  teamHasLongestRoad: boolean; // >= 7 roads connected
-  teamHasLargestArmy: boolean; // >= 3 knights played
+  teamHasLongestRoad: boolean; // >= 7 roads connected (+3 VP)
+  teamHasLargestArmy: boolean; // >= 3 knights played (+3 VP)
   robberMovedThisRound: boolean;
   robberStunnedRounds?: number;
   activeTradeProposal?: ActiveTradeProposal | null;

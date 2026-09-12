@@ -168,6 +168,8 @@ export interface GameRoomState {
   questSlots: QuestSlot[];
   solvedQuestsCount: number;
   failedQuestsCount: number;
+  pointsPerPlayer: number;
+  teamVictoryPoints: number;
   targetQuestsToWin: number;
   diceValues: [number, number];
   logs: GameLogEntry[];

@@ -14,6 +14,9 @@ interface QuestTrackerProps {
   onDeposit: (slotIndex: number, resource: ResourceType, amount: number) => void;
   teamHasLongestRoad?: boolean;
   teamHasLargestArmy?: boolean;
+  teamVictoryPoints?: number;
+  settlementsCount?: number;
+  citiesCount?: number;
 }
 
 const RESOURCE_LABELS: { [key in ResourceType]: { name: string; icon: React.ReactNode; bg: string; text: string } } = {
@@ -63,10 +66,20 @@ export const QuestTracker: React.FC<QuestTrackerProps> = ({
   isMyTurn,
   onDeposit,
   teamHasLongestRoad,
-  teamHasLargestArmy
+  teamHasLargestArmy,
+  teamVictoryPoints,
+  settlementsCount,
+  citiesCount
 }) => {
-  const bonusPoints = (teamHasLongestRoad ? 1 : 0) + (teamHasLargestArmy ? 1 : 0);
-  const totalTeamPoints = solvedCount + bonusPoints;
+  const roadPoints = teamHasLongestRoad ? 3 : 0;
+  const armyPoints = teamHasLargestArmy ? 3 : 0;
+  const totalTeamPoints = teamVictoryPoints ?? (
+    solvedCount +
+    (settlementsCount || 0) * 1 +
+    (citiesCount || 0) * 2 +
+    roadPoints +
+    armyPoints
+  );
 
   return (
     <div className="bg-[#22150c]/95 border-2 border-[#73451e] rounded-2xl p-4 shadow-2xl space-y-4 text-[#e8d5b5]">
@@ -78,16 +91,26 @@ export const QuestTracker: React.FC<QuestTrackerProps> = ({
             <span className="font-['MedievalSharp',serif] font-bold text-base text-[#fff4e0]">
               Team-Siegpunkte: <span className="text-amber-400 font-mono">{totalTeamPoints}</span> / {targetToWin}
             </span>
-            <div className="flex items-center gap-1.5 text-[11px]">
+            <div className="flex items-center gap-1.5 text-[11px] flex-wrap">
               <span className="text-[#bd966f] font-sans">({solvedCount} Quests</span>
+              {(settlementsCount !== undefined && settlementsCount > 0) && (
+                <span className="bg-[#362012] text-amber-200 border border-[#7a4d25] px-1.5 py-0.5 rounded font-sans font-bold">
+                  {settlementsCount} Siedl. (+{settlementsCount})
+                </span>
+              )}
+              {(citiesCount !== undefined && citiesCount > 0) && (
+                <span className="bg-[#2a170d] text-amber-300 border border-amber-600/70 px-1.5 py-0.5 rounded font-sans font-bold">
+                  {citiesCount} Städte (+{citiesCount * 2})
+                </span>
+              )}
               {teamHasLongestRoad && (
                 <span className="bg-amber-950 text-amber-300 border border-amber-600/60 px-1.5 py-0.5 rounded font-sans font-bold">
-                  +1 Straße
+                  +3 Straße
                 </span>
               )}
               {teamHasLargestArmy && (
                 <span className="bg-rose-950 text-rose-300 border border-rose-600/60 px-1.5 py-0.5 rounded font-sans font-bold">
-                  +1 Ritter
+                  +3 Ritter
                 </span>
               )}
               <span className="text-[#bd966f] font-sans">)</span>

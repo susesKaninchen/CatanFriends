@@ -244,6 +244,15 @@ export const App: React.FC = () => {
   const myPlayer = roomState.players.find(p => p.id === myPlayerId) || activePlayer;
   const isMyTurn = activePlayer.id === myPlayerId;
 
+  let settlementsCount = 0;
+  let citiesCount = 0;
+  if (roomState?.board?.vertices) {
+    for (const v of Object.values(roomState.board.vertices)) {
+      if (v.building?.type === 'settlement') settlementsCount++;
+      else if (v.building?.type === 'city') citiesCount++;
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#1e150e] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#2b1c11] via-[#1a1109] to-[#120b06] text-[#f7ecd9] p-2 sm:p-4 md:p-6 flex flex-col justify-between selection:bg-amber-800 selection:text-amber-100">
       {/* Top Navigation Bar with Medieval Styling */}
@@ -331,6 +340,9 @@ export const App: React.FC = () => {
             onDeposit={handleDepositQuest}
             teamHasLongestRoad={roomState.teamHasLongestRoad}
             teamHasLargestArmy={roomState.teamHasLargestArmy}
+            teamVictoryPoints={roomState.teamVictoryPoints}
+            settlementsCount={settlementsCount}
+            citiesCount={citiesCount}
           />
 
           {/* Action & Building Controls */}

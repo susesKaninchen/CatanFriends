@@ -58,7 +58,9 @@ export class GameManager {
       questSlots,
       solvedQuestsCount: 0,
       failedQuestsCount: 0,
-      targetQuestsToWin: 4,
+      pointsPerPlayer: 10,
+      teamVictoryPoints: 0,
+      targetQuestsToWin: 10,
       diceValues: [1, 1],
       logs: [
         {
@@ -118,7 +120,8 @@ export class GameManager {
     };
 
     state.players.push(fullPlayer);
-    this.addLog(state, `${fullPlayer.name} ist beigetreten (${color}, ${role}).`, 'info');
+    state.targetQuestsToWin = (state.pointsPerPlayer || 10) * state.players.length;
+    this.addLog(state, `${fullPlayer.name} ist beigetreten (${color}, ${role}). Team-Siegziel: ${state.targetQuestsToWin} Siegpunkte (${state.pointsPerPlayer || 10}/Spieler).`, 'info');
 
     return { success: true, room: state };
   }
@@ -156,9 +159,32 @@ export class GameManager {
     };
 
     state.players.push(botPlayer);
-    this.addLog(state, `${name} (Bot) wurde hinzugefügt.`, 'info');
+    state.targetQuestsToWin = (state.pointsPerPlayer || 10) * state.players.length;
+    this.addLog(state, `${name} (Bot) wurde hinzugefügt. Team-Siegziel: ${state.targetQuestsToWin} Siegpunkte (${state.pointsPerPlayer || 10}/Spieler).`, 'info');
 
     return { success: true, room: state };
+  }
+
+  public setPointsPerPlayer(roomCode: string, playerId: string, points: number): { success: boolean; message?: string } {
+    const state = this.getRoom(roomCode);
+    if (!state) return { success: false, message: 'Raum nicht gefunden.' };
+    const player = state.players.find(p => p.id === playerId);
+    if (!player || !player.isHost) {
+      return { success: false, message: 'Nur der Host kann die Spiellänge anpassen.' };
+    }
+    if (state.phase !== 'LOBBY') {
+      return { success: false, message: 'Spiellänge kann nur in der Lobby geändert werden.' };
+    }
+    const validPoints = [6, 10, 14];
+    if (!validPoints.includes(points)) {
+      return { success: false, message: 'Ungültige Punktzahl. Erlaubt sind: 6 (Kurz), 10 (Standard), 14 (Episch).' };
+    }
+
+    state.pointsPerPlayer = points;
+    state.targetQuestsToWin = points * state.players.length;
+    const modeName = points === 6 ? 'Kurz (6 Pkt/Spieler)' : points === 10 ? 'Standard (10 Pkt/Spieler)' : 'Episch (14 Pkt/Spieler)';
+    this.addLog(state, `Host ${player.name} setzt Spiellänge auf "${modeName}". Neues Team-Siegziel: ${state.targetQuestsToWin} Siegpunkte.`, 'info');
+    return { success: true };
   }
 
   public setPlayerReady(roomCode: string, playerId: string, isReady: boolean): boolean {
@@ -195,7 +221,9 @@ export class GameManager {
     state.activePlayerIndex = 0;
     state.setupTurnIndex = 0;
     state.roundNumber = 1;
-    state.lastBuiltSetupVertexId = null;
+    state.pointsPerPlayer = state.pointsPerPlayer || 10;
+    state.targetQuestsToWin = state.pointsPerPlayer * state.players.length;
+    state.teamVictoryPoints = 0;
 
     // Reset starting piece stocks and clear starting resources (collected when placing settlement)
     state.players.forEach(p => {
@@ -599,8 +627,10 @@ export class GameManager {
           p.tradesRemainingThisTurn = this.calculateTradeCapacity(p, state);
         });
 
+        const score = this.calculateTeamVictoryPoints(state);
+        state.teamVictoryPoints = score.totalPoints;
         const firstPlayer = state.players[0];
-        this.addLog(state, `Alle Startsiedlungen und Startstraßen errichtet! Das Spiel beginnt - ${firstPlayer.name} würfelt!`, 'alert');
+        this.addLog(state, `Alle Startsiedlungen und Startstraßen errichtet! Das Team startet mit ${score.totalPoints} Siegpunkten (${state.players.length} Siedlungen). Das Spiel beginnt: ${firstPlayer.name} würfelt!`, 'alert');
         if (firstPlayer.isBot) {
           setTimeout(() => this.executeBotTurn(roomCode, firstPlayer.id), 1200);
         }
@@ -723,6 +753,7 @@ export class GameManager {
     }
 
     this.checkProgressiveQuests(state, 'BUILD_SETTLEMENTS', 1);
+    this.checkTeamVictory(state);
 
     return { success: true };
   }
@@ -788,6 +819,8 @@ export class GameManager {
         }
       }
     });
+
+    this.checkTeamVictory(state);
 
     return { success: true };
   }
@@ -858,11 +891,62 @@ export class GameManager {
     });
   }
 
+  public calculateTeamVictoryPoints(state: GameRoomState): {
+    settlementsCount: number;
+    settlementPoints: number;
+    citiesCount: number;
+    cityPoints: number;
+    solvedQuestsCount: number;
+    questPoints: number;
+    longestRoadPoints: number;
+    largestArmyPoints: number;
+    totalPoints: number;
+  } {
+    let settlementsCount = 0;
+    let citiesCount = 0;
+    for (const vertex of Object.values(state.board.vertices)) {
+      if (vertex.building?.type === 'settlement') {
+        settlementsCount++;
+      } else if (vertex.building?.type === 'city') {
+        citiesCount++;
+      }
+    }
+
+    const settlementPoints = settlementsCount * 1;
+    const cityPoints = citiesCount * 2;
+    const questPoints = state.solvedQuestsCount * 1;
+    const longestRoadPoints = state.teamHasLongestRoad ? 3 : 0;
+    const largestArmyPoints = state.teamHasLargestArmy ? 3 : 0;
+    const totalPoints = settlementPoints + cityPoints + questPoints + longestRoadPoints + largestArmyPoints;
+
+    return {
+      settlementsCount,
+      settlementPoints,
+      citiesCount,
+      cityPoints,
+      solvedQuestsCount: state.solvedQuestsCount,
+      questPoints,
+      longestRoadPoints,
+      largestArmyPoints,
+      totalPoints
+    };
+  }
+
   private checkTeamVictory(state: GameRoomState) {
-    const totalPoints = state.solvedQuestsCount + (state.teamHasLongestRoad ? 1 : 0) + (state.teamHasLargestArmy ? 1 : 0);
-    if (totalPoints >= state.targetQuestsToWin && state.phase !== 'GAME_OVER_VICTORY') {
+    const score = this.calculateTeamVictoryPoints(state);
+    state.teamVictoryPoints = score.totalPoints;
+
+    if (score.totalPoints >= state.targetQuestsToWin && state.phase !== 'GAME_OVER_VICTORY') {
       state.phase = 'GAME_OVER_VICTORY';
-      this.addLog(state, `SIEG! Das Team hat ${totalPoints} Siegpunkte erreicht (Quests: ${state.solvedQuestsCount}, Meilensteine: ${(state.teamHasLongestRoad ? 1 : 0) + (state.teamHasLargestArmy ? 1 : 0)}) und Catan gerettet!`, 'alert');
+      const parts = [
+        `${score.settlementsCount} Siedlung(en) (${score.settlementPoints} Pkt)`,
+        `${score.citiesCount} Stadt/Städte (${score.cityPoints} Pkt)`,
+        `${score.solvedQuestsCount} Quest(s) (${score.questPoints} Pkt)`
+      ];
+      if (state.teamHasLongestRoad) parts.push('Handelsstraße (+3 Pkt)');
+      if (state.teamHasLargestArmy) parts.push('Rittermacht (+3 Pkt)');
+
+      this.addLog(state, `SIEG! Das Team hat ${score.totalPoints} von benötigten ${state.targetQuestsToWin} Siegpunkten erreicht! (${parts.join(', ')}) Catan ist gerettet!`, 'alert');
     }
   }
 
@@ -964,7 +1048,7 @@ export class GameManager {
     if (teamTotalKnights >= 3) {
       if (!state.teamHasLargestArmy) {
         state.teamHasLargestArmy = true;
-        this.addLog(state, 'MEILENSTEIN: Größte Rittermacht erreicht (>= 3 Ritter)! +1 Siegpunkt für das Team! Der Räuber patrouilliert nur noch jede 2. Runde!', 'alert');
+        this.addLog(state, 'MEILENSTEIN: Größte Rittermacht erreicht (>= 3 Ritter)! +3 Siegpunkte für das Team! Der Räuber patrouilliert nur noch jede 2. Runde!', 'alert');
         this.checkTeamVictory(state);
       }
       state.robberStunnedRounds = 1;
@@ -1374,7 +1458,7 @@ export class GameManager {
       if (activePlayer) {
         activePlayer.tradesRemainingThisTurn += 1;
       }
-      this.addLog(state, 'MEILENSTEIN: Längste Handelsstraße erreicht (>= 7 Straßen)! +1 Siegpunkt für das Team, +1 Schenkung pro Zug, 3:1 Bankhandel und +1 W6-Timer!', 'alert');
+      this.addLog(state, 'MEILENSTEIN: Längste Handelsstraße erreicht (>= 7 Straßen)! +3 Siegpunkte für das Team, +1 Schenkung pro Zug, 3:1 Bankhandel und +1 W6-Timer!', 'alert');
       this.checkTeamVictory(state);
     }
   }

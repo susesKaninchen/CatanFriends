@@ -9,18 +9,20 @@ Gemeinsam statt gegeneinander: Erkundet einen unendlichen Kontinent, erfüllt mo
 ## Spielfeatures & Spielmechanik
 
 ### 1. Kooperatives Teamspiel & Siegesbedingungen
-- **Gemeinsames Ziel**: Erreicht als Team mindestens **4 Team-Siegpunkte**, bevor 4 Quests fehlschlagen.
-- **Siegpunkte-Quellen**:
-  - Jede gelöste Quest bringt **+1 Team-Siegpunkt**.
-  - **Längste Handelsstraße** (ab 7 zusammenhängenden Straßen) bringt **+1 Team-Siegpunkt**.
-  - **Größte Rittermacht** (ab 3 gespielten Rittern) bringt **+1 Team-Siegpunkt**.
+- **Gemeinsames Team-Siegziel**: Standardmäßig **10 Team-Siegpunkte pro Spieler** (z. B. 20 Punkte bei 2 Spielern, 30 bei 3 Spielern). Die Spiellänge kann in der Lobby vom Host gewählt werden (Kurz: 6 Pkt/Spieler, Standard: 10 Pkt/Spieler, Episch: 14 Pkt/Spieler).
+- **Punktquellen für das Team**:
+  - Jede **Siedlung** auf dem Feld bringt **+1 Team-Siegpunkt**.
+  - Jede **Stadt** auf dem Feld bringt **+2 Team-Siegpunkte**.
+  - Jede gelöste **Quest** bringt **+1 Team-Siegpunkt**.
+  - **Längste Handelsstraße** (ab 7 zusammenhängenden Straßen) bringt **+3 Team-Siegpunkte**.
+  - **Größte Rittermacht** (ab 3 gespielten Rittern) bringt **+3 Team-Siegpunkte**.
 - **Niederlage**: Scheitern 4 Quests durch abgelaufene Zeitlimits, verliert das Team gemeinsam.
 
-### 2. Modulare Quests mit W6-Würfel-Timer & Vorratsspeicher
+### 2. Modulare Quests mit W6-Würfel-Timer & Krisen-Management
 - **4 aktive Quest-Slots**: Ständig 4 offene Herausforderungen mit W6-Timer (6 bis 1 Runde).
-- **Einsteigerfreundliche Stufe-1-Quests**: Zu Beginn benötigt jede Quest nur 1 Rohstoff oder 1 Straße, damit das Team direkt Fahrt aufnehmen kann.
+- **Balancierte Auftragsstufen (Tiers 1 bis 6)**: Von ersten Holz- und Lehm-Lieferungen (2 Rohstoffe) über Straßenbau- und Siedlungs-Aufträge bis hin zum monumentalen Endgame.
 - **Runden-Countdown**: Zu Beginn jeder vollen Spielrunde sinkt der Timer aller offenen Quests um 1.
-- **Bedarf einlagern (Schutz vor der 7 & Timer-Verlängerung)**: Rohstoffe für Quests (z. B. Holz oder Erz) können schrittweise eingezahlt werden. Eingelagerte Ressourcen sind **vollständig vor dem Räuber geschützt**, wenn eine 7 gewürfelt wird! Zudem steigt der W6-Timer bei jeder Einzahlung um **+3 Runden** (bis max. 6), was gezieltes Herauszögern und Vorbereiten ermöglicht.
+- **Bedarf einlagern (Schutz vor der 7 & Zeitgewinn)**: Rohstoffe für Quests können schrittweise eingezahlt werden. Eingelagerte Ressourcen sind **vollständig vor dem Räuber geschützt**, wenn eine 7 gewürfelt wird! Zudem steigt der W6-Timer bei jeder Einzahlung um **+2 Runden** (bis max. 6), was gezieltes Abwenden drohender Fehlschläge ermöglicht.
 
 ### 3. Handels-, Tausch- und Hilfesystem (4 Modi)
 - **🏛️ Bankhandel & Häfen**: Standardkurs 4:1. An 3:1 Allzweckhäfen oder mit der *Längsten Handelsstraße* sinkt die Quote auf 3:1. An 2:1 Spezial-Häfen handelt das Team Rohstoffe 2:1.
@@ -37,12 +39,12 @@ Gemeinsam statt gegeneinander: Erkundet einen unendlichen Kontinent, erfüllt mo
 
 ### 5. Kooperative Team-Meilensteine
 - **Längste Handelsstraße (ab 7 Straßen)**:
-  - +1 permanenter Team-Siegpunkt
+  - +3 permanente Team-Siegpunkte
   - +1 zusätzliche Schenkung pro Zug (2 Schenkungen)
   - 3:1 Bankhandel auch ohne See-Hafen
   - +1 W6-Timer-Puffer für alle künftigen Quests
 - **Größte Rittermacht (ab 3 Rittern)**:
-  - +1 permanenter Team-Siegpunkt
+  - +3 permanente Team-Siegpunkte
   - Maximales Exil für den Räuber
   - Betäubung des Räubers für 1 Runde (kein Raubzug)
   - Halbierung der Räuber-Aktivität auf jede 2. Runde

@@ -138,30 +138,52 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
               </p>
               <div className="bg-[#2a1a10] border border-[#5c3a1e] rounded-xl p-4 space-y-2">
                 <h4 className="font-bold text-[#f0af68] flex items-center gap-2">
-                  <span>🏆</span> Siegesbedingung
+                  <span>🏆</span> Siegesbedingung (10 Punkte pro Spieler)
                 </h4>
-                <p className="text-xs text-[#c9b59e]">
-                  Erreicht als Team mindestens <strong>10 Team-Siegpunkte</strong>! Siegpunkte erhaltet ihr durch gelöste Quests (+1 SP pro Quest) sowie die beiden kooperativen Team-Meilensteine: <strong>Längste Handelsstraße</strong> (+1 SP) und <strong>Größte Rittermacht</strong> (+1 SP).
+                <p className="text-xs text-[#c9b59e] leading-relaxed">
+                  Erreicht als Team das gemeinsame Siegziel von standardmäßig <strong>10 Team-Siegpunkten pro Spieler</strong> (z. B. 20 Punkte bei 2 Spielern, 30 bei 3 Spielern)! In der Lobby kann der Host zwischen Kurz (6/Spieler), Standard (10/Spieler) und Episch (14/Spieler) wählen.
                 </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 text-[11px]">
+                  <div className="bg-[#1e130a] p-2 rounded-lg border border-[#4a2e16]">
+                    <span className="text-amber-400 font-bold block">🏠 Siedlungen</span>
+                    <span className="text-[#a88260]">+1 Punkt pro Siedlung</span>
+                  </div>
+                  <div className="bg-[#1e130a] p-2 rounded-lg border border-[#4a2e16]">
+                    <span className="text-amber-400 font-bold block">🏰 Städte</span>
+                    <span className="text-[#a88260]">+2 Punkte pro Stadt</span>
+                  </div>
+                  <div className="bg-[#1e130a] p-2 rounded-lg border border-[#4a2e16]">
+                    <span className="text-amber-400 font-bold block">📜 Quests</span>
+                    <span className="text-[#a88260]">+1 Punkt pro Quest</span>
+                  </div>
+                  <div className="bg-[#1e130a] p-2 rounded-lg border border-[#4a2e16]">
+                    <span className="text-amber-400 font-bold block">🛤️ Handelsstraße</span>
+                    <span className="text-[#a88260]">+3 Punkte fürs Team</span>
+                  </div>
+                  <div className="bg-[#1e130a] p-2 rounded-lg border border-[#4a2e16]">
+                    <span className="text-amber-400 font-bold block">⚔️ Rittermacht</span>
+                    <span className="text-[#a88260]">+3 Punkte fürs Team</span>
+                  </div>
+                </div>
               </div>
               <div className="bg-[#2a1210] border border-[#6b231d] rounded-xl p-4 space-y-2">
                 <h4 className="font-bold text-[#f87171] flex items-center gap-2">
-                  <span>💀</span> Niederlagebedingung
+                  <span>💀</span> Niederlagebedingung (4 Fehlschläge)
                 </h4>
-                <p className="text-xs text-[#e5b3af]">
-                  Sollte die Insel von Katastrophen überrollt werden oder zu viele Quests an ihren Zeitlimits scheitern (4 Fehlschläge), verliert das Team gemeinsam.
+                <p className="text-xs text-[#e5b3af] leading-relaxed">
+                  Quests fordern euch heraus und lenken vom Siedlungsbau ab: Bei 4 abgelaufenen Quests verliert das Team sofort! Jeder Rohstoff-Zuschuss verlängert jedoch den W6-Timer der Quest um +2 Runden (maximal 6 Runden).
                 </p>
               </div>
               <div className="bg-[#1f1910] border border-[#6b4e28] rounded-xl p-4 space-y-2">
                 <h4 className="font-bold text-[#f4d068] flex items-center gap-2">
-                  <span>⭐</span> Kooperative Team-Meilensteine
+                  <span>⭐</span> Kooperative Team-Meilensteine (+3 Punkte)
                 </h4>
                 <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#cfbeaa]">
                   <li>
-                    <strong>Längste Handelsstraße (ab 7 Straßen):</strong> +1 Siegpunkt, +1 zusätzliche Schenkung pro Zug, 3:1 Bankhandel auch ohne Hafen und +1 W6-Timer für künftige Quests.
+                    <strong>Längste Handelsstraße (ab 7 Straßen):</strong> +3 Team-Siegpunkte, +1 zusätzliche Schenkung pro Zug, 3:1 Bankhandel auch ohne Hafen und +1 W6-Timer für künftige Quests.
                   </li>
                   <li>
-                    <strong>Größte Rittermacht (ab 3 Rittern):</strong> +1 Siegpunkt, schleudert den Räuber maximal weit weg, betäubt ihn für 1 Runde und halbiert seine Patrouille (nur noch jede 2. Runde).
+                    <strong>Größte Rittermacht (ab 3 Rittern):</strong> +3 Team-Siegpunkte, schleudert den Räuber maximal weit weg, betäubt ihn für 1 Runde und halbiert seine Patrouille (nur noch jede 2. Runde).
                   </li>
                 </ul>
               </div>
@@ -233,7 +255,7 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                   <strong>Ablauf:</strong> Erreicht ein Timer 0, scheitert der Auftrag und wird durch eine neue Herausforderung ersetzt. Bei 4 Fehlschlägen hat das Team verloren!
                 </li>
                 <li>
-                  <strong>Rohstoff-Einzahlung:</strong> Quests verlangen Rohstofflieferungen (z. B. Holz oder Erz). Eingezahlte Rohstoffe sind sicher vor der Räuber-7 gelagert! Jede erfüllte Quest bringt dem Team 1 Siegpunkt.
+                  <strong>Rohstoff-Einzahlung & Zeitgewinn:</strong> Quests verlangen Rohstofflieferungen (z. B. Holz oder Erz). Eingezahlte Rohstoffe sind sicher vor der Räuber-7 gelagert! Jede Einzahlung belohnt das Team mit wertvoller Zeit: Der W6-Timer steigt sofort um +2 Runden (maximal 6 Runden). Jede erfüllte Quest bringt dem Team +1 Team-Siegpunkt.
                 </li>
                 <li>
                   <strong>Bau- und Verbindungsquests:</strong> Manche Aufträge fordern den Bau einer bestimmten Anzahl Straßen oder Siedlungen auf bestimmten Landschaften.

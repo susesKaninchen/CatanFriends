@@ -15,45 +15,45 @@ export const QUEST_POOL: { [tier: number]: QuestTemplate[] } = {
   1: [
     {
       title: 'Erste Holzlieferung',
-      description: 'Zahlt 1 Holz in den Vorratsspeicher ein.',
+      description: 'Zahlt 2 Holz in den Vorratsspeicher ein.',
       type: 'DELIVER_RESOURCES',
       baseTimer: 6,
-      requiredResources: { wood: 1 }
+      requiredResources: { wood: 2 }
     },
     {
       title: 'Lehm für einfache Hütten',
-      description: 'Zahlt 1 Lehm in den Vorratsspeicher ein.',
+      description: 'Zahlt 2 Lehm in den Vorratsspeicher ein.',
       type: 'DELIVER_RESOURCES',
       baseTimer: 6,
-      requiredResources: { clay: 1 }
+      requiredResources: { clay: 2 }
     },
     {
       title: 'Erste Weizenernte',
-      description: 'Zahlt 1 Getreide in das Notlager ein.',
+      description: 'Zahlt 2 Getreide in das Notlager ein.',
       type: 'DELIVER_RESOURCES',
       baseTimer: 6,
-      requiredResources: { wheat: 1 }
+      requiredResources: { wheat: 2 }
     },
     {
       title: 'Wollspende der Hirten',
-      description: 'Zahlt 1 Wolle für wärmende Decken ein.',
+      description: 'Zahlt 2 Wolle für wärmende Decken ein.',
       type: 'DELIVER_RESOURCES',
       baseTimer: 6,
-      requiredResources: { sheep: 1 }
-    },
-    {
-      title: 'Gemeinsamer Pfad',
-      description: 'Das Team muss gemeinsam 1 neue Straße errichten.',
-      type: 'BUILD_ROADS',
-      baseTimer: 6,
-      targetCount: 1
+      requiredResources: { sheep: 2 }
     },
     {
       title: 'Erster Schürfversuch',
-      description: 'Zahlt 1 Erz in die Werkstatt ein.',
+      description: 'Zahlt 2 Erz in die Werkstatt ein.',
       type: 'DELIVER_RESOURCES',
       baseTimer: 6,
-      requiredResources: { ore: 1 }
+      requiredResources: { ore: 2 }
+    },
+    {
+      title: 'Gemeinsamer Pfad',
+      description: 'Das Team muss gemeinsam 2 neue Straßen errichten.',
+      type: 'BUILD_ROADS',
+      baseTimer: 6,
+      targetCount: 2
     }
   ],
   2: [
@@ -80,10 +80,10 @@ export const QUEST_POOL: { [tier: number]: QuestTemplate[] } = {
     },
     {
       title: 'Wege des Friedens',
-      description: 'Errichtet gemeinsam 2 neue Straßen.',
+      description: 'Errichtet gemeinsam 3 neue Straßen.',
       type: 'BUILD_ROADS',
       baseTimer: 6,
-      targetCount: 2
+      targetCount: 3
     },
     {
       title: 'Neues Siedlungsland',
@@ -124,10 +124,10 @@ export const QUEST_POOL: { [tier: number]: QuestTemplate[] } = {
     },
     {
       title: 'Siedlungsgemeinschaft',
-      description: 'Errichtet im Team 2 neue Siedlungen.',
+      description: 'Errichtet im Team 1 neue Siedlung.',
       type: 'BUILD_SETTLEMENTS',
       baseTimer: 6,
-      targetCount: 2
+      targetCount: 1
     },
     {
       title: 'Brot für die Insel',
@@ -147,10 +147,10 @@ export const QUEST_POOL: { [tier: number]: QuestTemplate[] } = {
   4: [
     {
       title: 'Wachturm gegen Räuber',
-      description: 'Zahlt 4 Erz, 3 Holz und 2 Wolle für Vorposten ein.',
+      description: 'Zahlt 3 Erz, 2 Holz und 1 Wolle für Vorposten ein.',
       type: 'DELIVER_RESOURCES',
       baseTimer: 5,
-      requiredResources: { ore: 4, wood: 3, sheep: 2 }
+      requiredResources: { ore: 3, wood: 2, sheep: 1 }
     },
     {
       title: 'Größere Siedlungsflächen',
@@ -161,10 +161,10 @@ export const QUEST_POOL: { [tier: number]: QuestTemplate[] } = {
     },
     {
       title: 'Großer Handelshafen',
-      description: 'Zahlt 4 Holz, 3 Wolle und 2 Weizen ein.',
+      description: 'Zahlt 3 Holz, 2 Wolle und 1 Weizen ein.',
       type: 'DELIVER_RESOURCES',
       baseTimer: 5,
-      requiredResources: { wood: 4, sheep: 3, wheat: 2 }
+      requiredResources: { wood: 3, sheep: 2, wheat: 1 }
     },
     {
       title: 'Fernstraßen-Pflasterung',
@@ -177,10 +177,10 @@ export const QUEST_POOL: { [tier: number]: QuestTemplate[] } = {
   5: [
     {
       title: 'Die uneinnehmbare Festung',
-      description: 'Zahlt 5 Erz, 4 Weizen und 3 Lehm für die Inselfestung ein.',
+      description: 'Zahlt 4 Erz, 3 Weizen und 2 Lehm für die Inselfestung ein.',
       type: 'DELIVER_RESOURCES',
       baseTimer: 5,
-      requiredResources: { ore: 5, wheat: 4, clay: 3 }
+      requiredResources: { ore: 4, wheat: 3, clay: 2 }
     },
     {
       title: 'Blüten der Zivilisation',
@@ -207,17 +207,17 @@ export const QUEST_POOL: { [tier: number]: QuestTemplate[] } = {
   6: [
     {
       title: 'Das Monument von Catan',
-      description: 'Das ultimative Bauwerk: Zahlt 6 Erz, 6 Weizen und 4 Holz ein!',
+      description: 'Das ultimative Bauwerk: Zahlt 4 Erz, 4 Weizen und 3 Holz ein!',
       type: 'DELIVER_RESOURCES',
       baseTimer: 5,
-      requiredResources: { ore: 6, wheat: 6, wood: 4 }
+      requiredResources: { ore: 4, wheat: 4, wood: 3 }
     },
     {
       title: 'Goldenes Zeitalter',
-      description: 'Zahlt 5 Wolle, 5 Lehm und 5 Getreide für den finalen Wohlstand ein.',
+      description: 'Zahlt 4 Wolle, 4 Lehm und 4 Getreide für den finalen Wohlstand ein.',
       type: 'DELIVER_RESOURCES',
       baseTimer: 5,
-      requiredResources: { sheep: 5, clay: 5, wheat: 5 }
+      requiredResources: { sheep: 4, clay: 4, wheat: 4 }
     },
     {
       title: 'Inselweites Straßennetz',
