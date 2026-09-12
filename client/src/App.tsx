@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { socket } from './socket';
-import { GameRoomState, PlayerColor, ResourceType } from './types';
+import { GameRoomState, PlayerColor, ResourceType, TradeProposalType } from './types';
 import { Lobby } from './components/Lobby';
 import { Board } from './components/Board';
 import { QuestTracker } from './components/QuestTracker';
@@ -133,6 +133,61 @@ export const App: React.FC = () => {
         showNotification(res.message);
       }
     });
+  };
+
+  const handleProposeTrade = (
+    type: TradeProposalType,
+    targetPlayerId: string | null,
+    wantedResource: ResourceType,
+    wantedAmount: number = 1,
+    giveResource?: ResourceType,
+    giveAmount: number = 1
+  ) => {
+    if (!roomState) return;
+    socket.emit(
+      'propose_trade',
+      {
+        roomCode: roomState.roomCode,
+        type,
+        targetPlayerId,
+        wantedResource,
+        wantedAmount,
+        giveResource,
+        giveAmount
+      },
+      (res: any) => {
+        if (!res.success) showNotification(res.message);
+      }
+    );
+  };
+
+  const handleRespondTrade = (proposalId: string, action: 'accept' | 'decline') => {
+    if (!roomState) return;
+    socket.emit(
+      'respond_trade',
+      {
+        roomCode: roomState.roomCode,
+        proposalId,
+        action
+      },
+      (res: any) => {
+        if (!res.success) showNotification(res.message);
+      }
+    );
+  };
+
+  const handleCancelTrade = (proposalId: string) => {
+    if (!roomState) return;
+    socket.emit(
+      'cancel_trade',
+      {
+        roomCode: roomState.roomCode,
+        proposalId
+      },
+      (res: any) => {
+        if (!res.success) showNotification(res.message);
+      }
+    );
   };
 
   const handleDepositQuest = (slotIndex: number, resource: ResourceType, amount: number) => {
@@ -299,6 +354,10 @@ export const App: React.FC = () => {
             onOpenRulebook={() => setIsRulebookOpen(true)}
             onTradeBank={handleTradeBank}
             onGiftResource={handleGiftResource}
+            activeTradeProposal={roomState.activeTradeProposal}
+            onProposeTrade={handleProposeTrade}
+            onRespondTrade={handleRespondTrade}
+            onCancelTrade={handleCancelTrade}
           />
 
           {/* Island Chronicle (Event Log) */}

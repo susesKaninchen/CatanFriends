@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { BookOpen, X, Scroll, Users, Compass, Shield, Flame, Hammer } from 'lucide-react';
+import { BookOpen, X, Scroll, Users, Compass, Shield, Flame, Hammer, ArrowLeftRight } from 'lucide-react';
 
 interface RulebookModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type TabType = 'overview' | 'quests' | 'robber' | 'fremdbau' | 'exploration' | 'pieces';
+type TabType = 'overview' | 'trading' | 'quests' | 'robber' | 'fremdbau' | 'exploration' | 'pieces';
 
 export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -51,6 +51,18 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
           >
             <Scroll className="w-3.5 h-3.5" />
             Übersicht & Ziel
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('trading')}
+            className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all ${
+              activeTab === 'trading'
+                ? 'bg-[#855829] text-[#fff8ec] shadow'
+                : 'text-[#a8825c] hover:bg-[#2e1c10] hover:text-[#e8d5b5]'
+            }`}
+          >
+            <ArrowLeftRight className="w-3.5 h-3.5" />
+            Handel & Tausch
           </button>
           <button
             type="button"
@@ -152,6 +164,55 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                     <strong>Größte Rittermacht (ab 3 Rittern):</strong> +1 Siegpunkt, schleudert den Räuber maximal weit weg, betäubt ihn für 1 Runde und halbiert seine Patrouille (nur noch jede 2. Runde).
                   </li>
                 </ul>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'trading' && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold font-['MedievalSharp',serif] text-[#f4caa1] border-b border-[#5a3818] pb-1">
+                Handel, Tausch & Rohstoff-Anfragen
+              </h3>
+              <p>
+                In <strong>Catan Friends</strong> ist enge wirtschaftliche Zusammenarbeit der Schlüssel zum Sieg. Über das <strong>Handel & Tausch Menü</strong> stehen euch vier mächtige Werkzeuge zur Verfügung:
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div className="bg-[#20150d] border border-[#52341b] rounded-xl p-3 space-y-1">
+                  <h4 className="font-bold text-[#f59e0b] text-xs flex items-center gap-1.5">
+                    🏛️ 1. Bankhandel & Häfen
+                  </h4>
+                  <p className="text-[11px] text-[#c9b59e]">
+                    Tausche überschüssige Rohstoffe direkt mit der Bank. Der Standardkurs beträgt 4:1. Besitzt euer Team eine Siedlung an einem 3:1 Allzweckhafen oder den Meilenstein <em>Längste Handelsstraße</em>, sinkt der Kurs auf 3:1. An 2:1 Spezial-Häfen handelt ihr den entsprechenden Rohstoff sogar 2:1!
+                  </p>
+                </div>
+
+                <div className="bg-[#20150d] border border-[#52341b] rounded-xl p-3 space-y-1">
+                  <h4 className="font-bold text-[#60a5fa] text-xs flex items-center gap-1.5">
+                    🤝 2. Mitspieler-Tausch (2-Wege)
+                  </h4>
+                  <p className="text-[11px] text-[#c9b59e]">
+                    Biete einen fairen Tausch an: Biete z. B. 1x Holz für 1x Lehm. Das Angebot kann gezielt an einen bestimmten Mitspieler oder als offene Anfrage an das gesamte Team gerichtet werden. Der Empfänger (oder ein Team-Bot) kann annehmen oder ablehnen.
+                  </p>
+                </div>
+
+                <div className="bg-[#20150d] border border-[#52341b] rounded-xl p-3 space-y-1">
+                  <h4 className="font-bold text-[#34d399] text-xs flex items-center gap-1.5">
+                    📢 3. Rohstoff-Anfrage (Hilferuf)
+                  </h4>
+                  <p className="text-[11px] text-[#c9b59e]">
+                    Fehlt dir genau 1x Erz oder 1x Wolle für eine wichtige Siedlung? Stelle eine offene Anfrage ans Team! Alle Mitspieler sehen eine leuchtende Karte und können mit einem Klick den gewünschten Rohstoff übergeben. Team-Bots helfen sofort aus, wenn sie den Rohstoff besitzen.
+                  </p>
+                </div>
+
+                <div className="bg-[#20150d] border border-[#52341b] rounded-xl p-3 space-y-1">
+                  <h4 className="font-bold text-[#e879f9] text-xs flex items-center gap-1.5">
+                    🎁 4. Rohstoff schenken (1-Weg)
+                  </h4>
+                  <p className="text-[11px] text-[#c9b59e]">
+                    Möchtest du einem Mitspieler bedingungslos unter die Arme greifen? Verschenke in deinem Zug bis zu 1 Rohstoffkarte (oder 2 Karten mit dem Meilenstein <em>Längste Handelsstraße</em>) direkt an einen Partner deiner Wahl.
+                  </p>
+                </div>
               </div>
             </div>
           )}

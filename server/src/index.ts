@@ -4,7 +4,7 @@ import { createServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import cors from 'cors';
 import { gameManager } from './gameState.js';
-import { PlayerColor, PlayerRole, ResourceType } from './types.js';
+import { PlayerColor, PlayerRole, ResourceType, TradeProposalType } from './types.js';
 
 const app = express();
 app.use(cors());
@@ -191,6 +191,47 @@ io.on('connection', (socket: Socket) => {
   // Gift Resource to Teammate
   socket.on('gift_resource', (data: { roomCode: string; targetPlayerId: string; resource: ResourceType }, callback) => {
     const result = gameManager.giftResource(data.roomCode, socket.id, data.targetPlayerId, data.resource);
+    const state = gameManager.getRoom(data.roomCode);
+    if (state) io.to(data.roomCode.toUpperCase()).emit('room_state_updated', state);
+    if (callback) callback(result);
+  });
+
+  // Propose Trade or Resource Request
+  socket.on('propose_trade', (data: {
+    roomCode: string;
+    type: TradeProposalType;
+    targetPlayerId: string | null;
+    wantedResource: ResourceType;
+    wantedAmount?: number;
+    giveResource?: ResourceType;
+    giveAmount?: number;
+  }, callback) => {
+    const result = gameManager.proposeTrade(
+      data.roomCode,
+      socket.id,
+      data.type,
+      data.targetPlayerId,
+      data.wantedResource,
+      data.wantedAmount ?? 1,
+      data.giveResource,
+      data.giveAmount ?? 1
+    );
+    const state = gameManager.getRoom(data.roomCode);
+    if (state) io.to(data.roomCode.toUpperCase()).emit('room_state_updated', state);
+    if (callback) callback(result);
+  });
+
+  // Respond to Trade Proposal
+  socket.on('respond_trade', (data: { roomCode: string; proposalId: string; action: 'accept' | 'decline' }, callback) => {
+    const result = gameManager.respondTrade(data.roomCode, socket.id, data.proposalId, data.action);
+    const state = gameManager.getRoom(data.roomCode);
+    if (state) io.to(data.roomCode.toUpperCase()).emit('room_state_updated', state);
+    if (callback) callback(result);
+  });
+
+  // Cancel Trade Proposal
+  socket.on('cancel_trade', (data: { roomCode: string; proposalId: string }, callback) => {
+    const result = gameManager.cancelTrade(data.roomCode, socket.id, data.proposalId);
     const state = gameManager.getRoom(data.roomCode);
     if (state) io.to(data.roomCode.toUpperCase()).emit('room_state_updated', state);
     if (callback) callback(result);

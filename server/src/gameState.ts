@@ -11,7 +11,9 @@ import {
   GameLogEntry,
   QuestSlot,
   QuestType,
-  HexType
+  HexType,
+  ActiveTradeProposal,
+  TradeProposalType
 } from './types.js';
 import { generateBoard, getNextRobberLetter, getPreviousRobberLetter, ROBBER_LETTER_ORDER, exploreSurroundings, getTileTwoTilesNorth, hexToPixel } from './board.js';
 import { createQuestSlot, initializeQuestSlots } from './quests.js';
@@ -1052,6 +1054,212 @@ export class GameManager {
     return { success: true };
   }
 
+  // Propose a Trade or Resource Request
+  public proposeTrade(
+    roomCode: string,
+    playerId: string,
+    type: TradeProposalType,
+    targetPlayerId: string | null,
+    wantedResource: ResourceType,
+    wantedAmount: number = 1,
+    giveResource?: ResourceType,
+    giveAmount: number = 1
+  ): { success: boolean; message?: string } {
+    const state = this.getRoom(roomCode);
+    if (!state) return { success: false, message: 'Raum nicht gefunden.' };
+
+    const activePlayer = state.players[state.activePlayerIndex];
+    if (activePlayer.id !== playerId && !activePlayer.isBot) {
+      return { success: false, message: 'Du bist nicht am Zug.' };
+    }
+    if (state.phase !== 'TURN_ACTIONS') {
+      return { success: false, message: 'Handeln und Anfragen sind nur in der Aktionsphase möglich.' };
+    }
+
+    if (type === 'trade') {
+      if (!giveResource) {
+        return { success: false, message: 'Bitte gib an, welchen Rohstoff du anbietest.' };
+      }
+      if (giveResource === wantedResource) {
+        return { success: false, message: 'Angebotener und gewünschter Rohstoff müssen unterschiedlich sein.' };
+      }
+      if (activePlayer.resources[giveResource] < giveAmount) {
+        return { success: false, message: `Du besitzt nicht genügend ${giveResource} (${activePlayer.resources[giveResource]}/${giveAmount}).` };
+      }
+    }
+
+    if (targetPlayerId && targetPlayerId === activePlayer.id) {
+      return { success: false, message: 'Du kannst nicht mit dir selbst handeln.' };
+    }
+
+    const proposalId = 'trade_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+    const proposal: ActiveTradeProposal = {
+      id: proposalId,
+      type,
+      senderId: activePlayer.id,
+      senderName: activePlayer.name,
+      senderColor: activePlayer.color,
+      targetPlayerId: targetPlayerId || null,
+      giveResource,
+      giveAmount: type === 'trade' ? giveAmount : undefined,
+      wantedResource,
+      wantedAmount,
+      createdAt: Date.now()
+    };
+
+    state.activeTradeProposal = proposal;
+
+    const targetName = targetPlayerId
+      ? (state.players.find(p => p.id === targetPlayerId)?.name || 'Mitspieler')
+      : 'alle Mitspieler';
+
+    if (type === 'trade') {
+      this.addLog(
+        state,
+        `Tauschangebot von ${activePlayer.name}: Bietet ${giveAmount}x ${giveResource} für ${wantedAmount}x ${wantedResource} an ${targetName}.`,
+        'info'
+      );
+    } else {
+      this.addLog(
+        state,
+        `Rohstoff-Anfrage: ${activePlayer.name} fragt dringend nach ${wantedAmount}x ${wantedResource} bei ${targetName} an!`,
+        'alert'
+      );
+    }
+
+    // Check if Bot can immediately respond or help
+    this.evaluateBotTradeProposal(state, proposal);
+
+    return { success: true };
+  }
+
+  // Evaluate Bot trade / request response
+  private evaluateBotTradeProposal(state: GameRoomState, proposal: ActiveTradeProposal) {
+    const targetBots = state.players.filter(p => p.isBot && p.id !== proposal.senderId && (!proposal.targetPlayerId || proposal.targetPlayerId === p.id));
+    if (targetBots.length === 0) return;
+
+    const helperBot = targetBots.find(b => b.resources[proposal.wantedResource] >= proposal.wantedAmount);
+    if (!helperBot) {
+      if (proposal.targetPlayerId && targetBots[0]) {
+        setTimeout(() => {
+          if (state.activeTradeProposal?.id === proposal.id) {
+            this.addLog(state, `${targetBots[0].name} (Bot) hat leider kein(e) ${proposal.wantedResource}.`, 'info');
+            state.activeTradeProposal = null;
+            this.notifyStateChanged(state.roomCode);
+          }
+        }, 900);
+      }
+      return;
+    }
+
+    // Bot accepts/fulfills after short natural thinking pause
+    setTimeout(() => {
+      if (state.activeTradeProposal?.id !== proposal.id) return;
+      this.respondTrade(state.roomCode, helperBot.id, proposal.id, 'accept');
+      this.notifyStateChanged(state.roomCode);
+    }, 1000);
+  }
+
+  // Respond to a Trade Proposal (Accept or Decline)
+  public respondTrade(
+    roomCode: string,
+    responderId: string,
+    proposalId: string,
+    action: 'accept' | 'decline'
+  ): { success: boolean; message?: string } {
+    const state = this.getRoom(roomCode);
+    if (!state) return { success: false, message: 'Raum nicht gefunden.' };
+
+    const proposal = state.activeTradeProposal;
+    if (!proposal || proposal.id !== proposalId) {
+      return { success: false, message: 'Dieses Tauschangebot ist nicht mehr aktiv.' };
+    }
+
+    if (proposal.senderId === responderId) {
+      return { success: false, message: 'Du kannst dein eigenes Angebot nicht annehmen oder ablehnen.' };
+    }
+
+    if (proposal.targetPlayerId && proposal.targetPlayerId !== responderId) {
+      return { success: false, message: 'Dieses Angebot war an einen anderen Mitspieler gerichtet.' };
+    }
+
+    const sender = state.players.find(p => p.id === proposal.senderId);
+    const responder = state.players.find(p => p.id === responderId);
+    if (!sender || !responder) {
+      return { success: false, message: 'Spieler nicht gefunden.' };
+    }
+
+    if (action === 'decline') {
+      this.addLog(state, `${responder.name} lehnt das Angebot von ${sender.name} ab.`, 'info');
+      state.activeTradeProposal = null;
+      return { success: true };
+    }
+
+    // Action is 'accept'
+    if (responder.resources[proposal.wantedResource] < proposal.wantedAmount) {
+      return {
+        success: false,
+        message: `${responder.name} besitzt nicht genügend ${proposal.wantedResource} (${responder.resources[proposal.wantedResource]}/${proposal.wantedAmount}).`
+      };
+    }
+
+    if (proposal.type === 'trade') {
+      const giveRes = proposal.giveResource!;
+      const giveAmt = proposal.giveAmount || 1;
+      if (sender.resources[giveRes] < giveAmt) {
+        state.activeTradeProposal = null;
+        return { success: false, message: `${sender.name} besitzt das angebotene ${giveRes} nicht mehr.` };
+      }
+
+      sender.resources[giveRes] -= giveAmt;
+      responder.resources[giveRes] += giveAmt;
+      responder.resources[proposal.wantedResource] -= proposal.wantedAmount;
+      sender.resources[proposal.wantedResource] += proposal.wantedAmount;
+
+      this.addLog(
+        state,
+        `Tausch vollzogen! ${sender.name} tauscht ${giveAmt}x ${giveRes} mit ${responder.name} gegen ${proposal.wantedAmount}x ${proposal.wantedResource}.`,
+        'info'
+      );
+    } else {
+      // type === 'request' (Aid given)
+      responder.resources[proposal.wantedResource] -= proposal.wantedAmount;
+      sender.resources[proposal.wantedResource] += proposal.wantedAmount;
+
+      this.addLog(
+        state,
+        `Gemeinschaftshilfe! ${responder.name} hilft aus und übergibt ${proposal.wantedAmount}x ${proposal.wantedResource} an ${sender.name}.`,
+        'info'
+      );
+    }
+
+    state.activeTradeProposal = null;
+    return { success: true };
+  }
+
+  // Cancel trade proposal by sender
+  public cancelTrade(
+    roomCode: string,
+    senderId: string,
+    proposalId: string
+  ): { success: boolean; message?: string } {
+    const state = this.getRoom(roomCode);
+    if (!state) return { success: false, message: 'Raum nicht gefunden.' };
+
+    const proposal = state.activeTradeProposal;
+    if (!proposal || proposal.id !== proposalId) {
+      return { success: false, message: 'Kein aktives Angebot gefunden.' };
+    }
+
+    if (proposal.senderId !== senderId) {
+      return { success: false, message: 'Nur der Ersteller kann das Angebot zurückziehen.' };
+    }
+
+    state.activeTradeProposal = null;
+    this.addLog(state, `${proposal.senderName} zieht das Angebot zurück.`, 'info');
+    return { success: true };
+  }
+
   // End active player's turn
   public endTurn(roomCode: string, playerId: string): { success: boolean; message?: string } {
     const state = this.getRoom(roomCode);
@@ -1064,6 +1272,9 @@ export class GameManager {
     if (state.phase !== 'TURN_ACTIONS') {
       return { success: false, message: 'Zug kann in dieser Phase nicht beendet werden.' };
     }
+
+    // Clear any pending trade proposals
+    state.activeTradeProposal = null;
 
     // Advance to next player
     state.activePlayerIndex = (state.activePlayerIndex + 1) % state.players.length;

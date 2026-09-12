@@ -140,6 +140,22 @@ export interface GameLogEntry {
   type: 'info' | 'roll' | 'build' | 'quest' | 'robber' | 'alert';
 }
 
+export type TradeProposalType = 'trade' | 'request';
+
+export interface ActiveTradeProposal {
+  id: string;
+  type: TradeProposalType; // 'trade' = biete Rohstoff A für Rohstoff B, 'request' = bitte um Rohstoff B
+  senderId: string;
+  senderName: string;
+  senderColor: PlayerColor;
+  targetPlayerId: string | null; // null = offenes Angebot an das gesamte Team
+  giveResource?: ResourceType;   // Angebotener Rohstoff (bei 'trade')
+  giveAmount?: number;           // Anzahl angebotener Rohstoffe (Standard 1)
+  wantedResource: ResourceType;  // Gesuchter Rohstoff
+  wantedAmount: number;          // Anzahl gesuchter Rohstoffe (Standard 1)
+  createdAt: number;
+}
+
 export interface GameRoomState {
   roomCode: string;
   phase: GamePhase;
@@ -161,4 +177,5 @@ export interface GameRoomState {
   teamHasLargestArmy: boolean;
   robberMovedThisRound: boolean;
   robberStunnedRounds?: number;
+  activeTradeProposal?: ActiveTradeProposal | null;
 }
