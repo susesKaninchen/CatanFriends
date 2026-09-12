@@ -52,8 +52,13 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
 
   const handleCreate = () => {
     setError(null);
-    socket.emit('create_room', { playerName, color: selectedColor, role: selectedRole }, (res: any) => {
-      if (!res.success) setError(res.message);
+    socket.emit('create_room', { playerName, color: selectedColor, role: selectedRole, sessionId: myPlayerId }, (res: any) => {
+      if (!res.success) {
+        setError(res.message);
+      } else {
+        sessionStorage.setItem('catan_friends_room_code', res.roomCode);
+        if (res.playerId) sessionStorage.setItem('catan_friends_player_id', res.playerId);
+      }
     });
   };
 
@@ -63,8 +68,13 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
       return;
     }
     setError(null);
-    socket.emit('join_room', { roomCode: joinCode.trim(), playerName, color: selectedColor, role: selectedRole }, (res: any) => {
-      if (!res.success) setError(res.message);
+    socket.emit('join_room', { roomCode: joinCode.trim(), playerName, color: selectedColor, role: selectedRole, sessionId: myPlayerId }, (res: any) => {
+      if (!res.success) {
+        setError(res.message);
+      } else {
+        sessionStorage.setItem('catan_friends_room_code', res.roomCode);
+        if (res.playerId) sessionStorage.setItem('catan_friends_player_id', res.playerId);
+      }
     });
   };
 

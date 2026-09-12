@@ -772,39 +772,38 @@ export const Board: React.FC<BoardProps> = ({
 
             return (
               <g key={edge.id}>
-                {/* Built Road: Authentic natural 3D wooden beam */}
-                {isBuilt && (
+                {/* Built Road: Distinct, vibrant player colored 3D wooden beam */}
+                {isBuilt && edge.road && (
                   <g filter="url(#catan-shadow)" className="animate-road-draw">
-                    {/* Dark timber foundation */}
+                    {/* Heavy dark outline for maximum visibility on all terrains */}
                     <line
                       x1={v1.x}
                       y1={v1.y}
                       x2={v2.x}
                       y2={v2.y}
-                      stroke="#3b1b08"
-                      strokeWidth="8"
+                      stroke={COLOR_STROKE_MAP[edge.road.ownerColor] || '#0f172a'}
+                      strokeWidth="10"
                       strokeLinecap="round"
                     />
-                    {/* Rich oak wood core */}
+                    {/* Vibrant player color core */}
                     <line
                       x1={v1.x}
                       y1={v1.y}
                       x2={v2.x}
                       y2={v2.y}
-                      stroke="#8b4513"
-                      strokeWidth="5.5"
+                      stroke={COLOR_MAP[edge.road.ownerColor] || '#ef4444'}
+                      strokeWidth="6.5"
                       strokeLinecap="round"
                     />
-                    {/* Golden wood grain surface highlight */}
+                    {/* Top edge highlight */}
                     <line
                       x1={v1.x}
                       y1={v1.y}
                       x2={v2.x}
                       y2={v2.y}
-                      stroke="#d97706"
+                      stroke="rgba(255, 255, 255, 0.45)"
                       strokeWidth="2"
                       strokeLinecap="round"
-                      opacity="0.85"
                     />
                   </g>
                 )}

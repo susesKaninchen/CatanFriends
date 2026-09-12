@@ -27,18 +27,20 @@ app.get('/api/health', (req, res) => {
 
 // Register state change listener for bots and timers
 gameManager.onStateChanged = (roomCode, state) => {
-  io.to(roomCode).emit('room_state_updated', state);
+  io.to(roomCode.toUpperCase()).emit('room_state_updated', state);
 };
 
 io.on('connection', (socket: Socket) => {
   console.log(`[Socket Connected] ID: ${socket.id}`);
 
   // Create new room
-  socket.on('create_room', (data: { playerName: string; color: PlayerColor; role: PlayerRole }, callback) => {
+  socket.on('create_room', (data: { playerName: string; color: PlayerColor; role: PlayerRole; sessionId?: string }, callback) => {
     try {
       const roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const playerId = data.sessionId || socket.id;
       const state = gameManager.createRoom(roomCode, {
-        id: socket.id,
+        id: playerId,
+        socketId: socket.id,
         name: data.playerName || 'Spieler 1',
         color: data.color || 'red',
         role: data.role || 'pioneer',
@@ -47,9 +49,9 @@ io.on('connection', (socket: Socket) => {
       });
 
       socket.join(roomCode);
-      callback({ success: true, roomCode, state });
+      callback({ success: true, roomCode, state, playerId });
       io.to(roomCode).emit('room_state_updated', state);
-      console.log(`[Room Created] Code: ${roomCode} by ${socket.id}`);
+      console.log(`[Room Created] Code: ${roomCode} by ${socket.id} (player: ${playerId})`);
     } catch (err: any) {
       console.error('[Error create_room]', err);
       callback({ success: false, message: err.message });
@@ -57,10 +59,13 @@ io.on('connection', (socket: Socket) => {
   });
 
   // Join existing room
-  socket.on('join_room', (data: { roomCode: string; playerName: string; color: PlayerColor; role: PlayerRole }, callback) => {
+  socket.on('join_room', (data: { roomCode: string; playerName: string; color: PlayerColor; role: PlayerRole; sessionId?: string }, callback) => {
     try {
-      const result = gameManager.joinRoom(data.roomCode, {
-        id: socket.id,
+      const roomCode = data.roomCode.toUpperCase();
+      const playerId = data.sessionId || socket.id;
+      const result = gameManager.joinRoom(roomCode, {
+        id: playerId,
+        socketId: socket.id,
         name: data.playerName || 'Gast',
         color: data.color || 'blue',
         role: data.role || 'builder',
@@ -73,12 +78,31 @@ io.on('connection', (socket: Socket) => {
         return;
       }
 
-      socket.join(data.roomCode.toUpperCase());
-      callback({ success: true, roomCode: data.roomCode.toUpperCase(), state: result.room });
-      io.to(data.roomCode.toUpperCase()).emit('room_state_updated', result.room);
-      console.log(`[Room Joined] Code: ${data.roomCode} by ${socket.id}`);
+      socket.join(roomCode);
+      callback({ success: true, roomCode, state: result.room, playerId });
+      io.to(roomCode).emit('room_state_updated', result.room);
+      console.log(`[Room Joined] Code: ${roomCode} by ${socket.id} (player: ${playerId})`);
     } catch (err: any) {
       console.error('[Error join_room]', err);
+      callback({ success: false, message: err.message });
+    }
+  });
+
+  // Reconnect player session
+  socket.on('reconnect_player', (data: { roomCode: string; playerId: string }, callback) => {
+    try {
+      const roomCode = data.roomCode.toUpperCase();
+      const state = gameManager.reconnectPlayer(roomCode, data.playerId, socket.id);
+      if (state) {
+        socket.join(roomCode);
+        callback({ success: true, roomCode, state });
+        io.to(roomCode).emit('room_state_updated', state);
+        console.log(`[Player Reconnected] Room: ${roomCode}, Player: ${data.playerId}, Socket: ${socket.id}`);
+      } else {
+        callback({ success: false, message: 'Spieler oder Raum nicht gefunden.' });
+      }
+    } catch (err: any) {
+      console.error('[Error reconnect_player]', err);
       callback({ success: false, message: err.message });
     }
   });

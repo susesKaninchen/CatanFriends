@@ -240,6 +240,7 @@ export function generateBoard(): BoardState {
     harborPool: shuffleArray([...STANDARD_HARBOR_POOL])
   };
 
+  // Add 19 land tiles
   coreCoords.forEach((coord, i) => {
     const resType = coreResources[i];
     const isDesert = resType === 'desert';
@@ -254,6 +255,44 @@ export function generateBoard(): BoardState {
       diceNum,
       isDesert // Robber initially on desert
     );
+  });
+
+  // Surrounding water ring (18 ocean hexes around the island)
+  const waterRingCoords = [
+    { q: 3, r: 0 },
+    { q: 3, r: -1 },
+    { q: 3, r: -2 },
+    { q: 3, r: -3 },
+    { q: 2, r: -3 },
+    { q: 1, r: -3 },
+    { q: 0, r: -3 },
+    { q: -1, r: -2 },
+    { q: -2, r: -1 },
+    { q: -3, r: 0 },
+    { q: -3, r: 1 },
+    { q: -3, r: 2 },
+    { q: -3, r: 3 },
+    { q: -2, r: 3 },
+    { q: -1, r: 3 },
+    { q: 0, r: 3 },
+    { q: 1, r: 2 },
+    { q: 2, r: 1 }
+  ];
+
+  // Add surrounding coastal ocean hexes and place the 9 standard Catan harbors
+  waterRingCoords.forEach((coord, i) => {
+    const waterHex = addHexToBoard(
+      board,
+      coord.q,
+      coord.r,
+      'water',
+      null,
+      null,
+      false
+    );
+    if (i % 2 === 0) {
+      assignHarborToWaterHex(board, waterHex);
+    }
   });
 
   return board;

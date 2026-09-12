@@ -390,15 +390,20 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
 
           {/* 1. Dice Phase */}
           {phase === 'TURN_DICE' && (
-            <button
-              type="button"
-              onClick={handleRollClick}
-              disabled={isRolling}
-              className="w-full bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-black py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm border border-amber-300 font-['MedievalSharp',serif] tracking-wider active:scale-95 cursor-pointer disabled:opacity-85"
-            >
-              <Dices className={`w-5 h-5 ${isRolling ? 'animate-dice-tumble text-amber-900' : ''}`} />
-              {isRolling ? 'Die Würfel rollen...' : 'Würfel werfen!'}
-            </button>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={handleRollClick}
+                disabled={isRolling}
+                className="w-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black py-3.5 px-4 rounded-xl shadow-xl transition-all flex items-center justify-center gap-2.5 text-base border-2 border-amber-200 font-['MedievalSharp',serif] tracking-wider active:scale-95 cursor-pointer disabled:opacity-85 animate-pulse"
+              >
+                <Dices className={`w-6 h-6 ${isRolling ? 'animate-dice-tumble text-amber-950' : 'text-amber-950'}`} />
+                {isRolling ? 'Die Würfel rollen...' : 'Würfel werfen für Erträge!'}
+              </button>
+              <p className="text-[11px] text-center text-[#e8d5b5]">
+                Du bist am Zug! Wirf die Würfel, um Rohstoffe für das Team auszuschütten.
+              </p>
+            </div>
           )}
 
           {/* 2. Robber Placement Phase Banner */}
@@ -1077,17 +1082,23 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
           )}
         </div>
       ) : (
-        <div className="p-4 bg-[#1a1009]/90 rounded-xl border border-[#4a2a14] text-center space-y-1">
+        <div className="p-4 bg-[#1a1009]/90 rounded-xl border border-[#4a2a14] text-center space-y-1.5 shadow-md">
           <p className="text-xs font-semibold text-[#f0dfcc]">
             {phase === 'SETUP_SETTLEMENT'
-              ? `${activePlayer.name} wählt die Start-Siedlung (Dorf)...`
+              ? `Startphase: ${activePlayer.name} wählt eine Startsiedlung...`
               : phase === 'SETUP_ROAD'
-              ? `${activePlayer.name} baut die Start-Straße...`
+              ? `Startphase: ${activePlayer.name} baut eine Startstraße...`
+              : phase === 'TURN_DICE'
+              ? `${activePlayer.name} ist am Zug und muss jetzt würfeln...`
+              : phase === 'ROBBER_PLACEMENT'
+              ? `${activePlayer.name} muss den Räuber versetzen...`
               : `${activePlayer.name} plant gerade den nächsten Zug...`}
           </p>
           <p className="text-[11px] text-[#bda087] italic">
             {phase === 'SETUP_SETTLEMENT' || phase === 'SETUP_ROAD'
-              ? 'Die Startphase wird reihum durchgeführt.'
+              ? 'Die Startphase wird reihum durchgeführt. Danach beginnt Runde 1 und der aktive Spieler kann würfeln.'
+              : phase === 'TURN_DICE'
+              ? 'Sobald gewürfelt wurde, erhalten alle Spieler Erträge.'
               : 'Nutzt den Chat oder plant Absprachen für den gemeinsamen Fremdbau!'}
           </p>
         </div>

@@ -15,7 +15,7 @@ import {
   ActiveTradeProposal,
   TradeProposalType
 } from './types.js';
-import { generateBoard, getNextRobberLetter, getPreviousRobberLetter, ROBBER_LETTER_ORDER, exploreSurroundings, getTileTwoTilesNorth, hexToPixel } from './board.js';
+import { generateBoard, getNextRobberLetter, getPreviousRobberLetter, ROBBER_LETTER_ORDER, getTileTwoTilesNorth, hexToPixel } from './board.js';
 import { createQuestSlot, initializeQuestSlots } from './quests.js';
 
 export class GameManager {
@@ -23,10 +23,34 @@ export class GameManager {
   public onStateChanged?: (roomCode: string, state: GameRoomState) => void;
 
   public notifyStateChanged(roomCode: string) {
-    const state = this.getRoom(roomCode);
+    const code = roomCode.toUpperCase();
+    const state = this.getRoom(code);
     if (state && this.onStateChanged) {
-      this.onStateChanged(roomCode, state);
+      this.onStateChanged(code, state);
     }
+  }
+
+  public getPlayer(state: GameRoomState, playerIdentifier: string): Player | undefined {
+    return state.players.find(p => p.id === playerIdentifier || p.socketId === playerIdentifier);
+  }
+
+  public isPlayerActive(state: GameRoomState, playerIdentifier: string): boolean {
+    const activePlayer = state.players[state.activePlayerIndex];
+    if (!activePlayer) return false;
+    if (activePlayer.isBot) return true;
+    const caller = this.getPlayer(state, playerIdentifier);
+    return Boolean(caller && caller.id === activePlayer.id);
+  }
+
+  public reconnectPlayer(roomCode: string, playerId: string, newSocketId: string): GameRoomState | null {
+    const state = this.getRoom(roomCode);
+    if (!state) return null;
+    const player = state.players.find(p => p.id === playerId || p.socketId === playerId);
+    if (player) {
+      player.socketId = newSocketId;
+      return state;
+    }
+    return null;
   }
 
   public getRoom(roomCode: string): GameRoomState | undefined {
@@ -168,7 +192,7 @@ export class GameManager {
   public setPointsPerPlayer(roomCode: string, playerId: string, points: number): { success: boolean; message?: string } {
     const state = this.getRoom(roomCode);
     if (!state) return { success: false, message: 'Raum nicht gefunden.' };
-    const player = state.players.find(p => p.id === playerId);
+    const player = this.getPlayer(state, playerId);
     if (!player || !player.isHost) {
       return { success: false, message: 'Nur der Host kann die Spiellänge anpassen.' };
     }
@@ -190,7 +214,7 @@ export class GameManager {
   public setPlayerReady(roomCode: string, playerId: string, isReady: boolean): boolean {
     const state = this.getRoom(roomCode);
     if (!state) return false;
-    const player = state.players.find(p => p.id === playerId);
+    const player = this.getPlayer(state, playerId);
     if (!player) return false;
     player.isReady = isReady;
     return true;
@@ -200,12 +224,12 @@ export class GameManager {
     const state = this.getRoom(roomCode);
     if (!state || state.phase !== 'LOBBY') return false;
 
-    // Verify color and role availability
-    const colorTaken = state.players.some(p => p.id !== playerId && p.color === color);
-    const roleTaken = state.players.some(p => p.id !== playerId && p.role === role);
-
-    const player = state.players.find(p => p.id === playerId);
+    const player = this.getPlayer(state, playerId);
     if (!player) return false;
+
+    // Verify color and role availability
+    const colorTaken = state.players.some(p => p.id !== player.id && p.color === color);
+    const roleTaken = state.players.some(p => p.id !== player.id && p.role === role);
 
     if (!colorTaken) player.color = color;
     if (!roleTaken) player.role = role;
@@ -248,7 +272,7 @@ export class GameManager {
     if (!state) return { success: false, message: 'Raum nicht gefunden.' };
 
     const activePlayer = state.players[state.activePlayerIndex];
-    if (activePlayer.id !== playerId && !activePlayer.isBot) {
+    if (!this.isPlayerActive(state, playerId)) {
       return { success: false, message: 'Du bist nicht am Zug.' };
     }
     if (state.phase !== 'TURN_DICE') {
@@ -384,7 +408,7 @@ export class GameManager {
     if (!state) return { success: false, message: 'Raum nicht gefunden.' };
 
     const activePlayer = state.players[state.activePlayerIndex];
-    if (activePlayer.id !== playerId && !activePlayer.isBot) {
+    if (!this.isPlayerActive(state, playerId)) {
       return { success: false, message: 'Du bist nicht am Zug.' };
     }
     if (state.phase !== 'ROBBER_PLACEMENT') {
@@ -513,7 +537,7 @@ export class GameManager {
     if (!state) return { success: false, message: 'Raum nicht gefunden.' };
 
     const activePlayer = state.players[state.activePlayerIndex];
-    if (activePlayer.id !== playerId && !activePlayer.isBot) {
+    if (!this.isPlayerActive(state, playerId)) {
       return { success: false, message: 'Du bist nicht am Zug.' };
     }
     if (state.phase !== 'TURN_ACTIONS' && state.phase !== 'SETUP_ROAD') {
@@ -589,14 +613,6 @@ export class GameManager {
 
     this.addLog(state, `${activePlayer.name} baut eine ${isSetup ? 'Startstraße' : 'gemeinsame Straße für das Team'}.`, 'build');
 
-    // Procedural island expansion: Reveal surroundings when building roads
-    const newlyDiscovered = exploreSurroundings(state.board, edgeId);
-    if (newlyDiscovered.length > 0) {
-      const landCount = newlyDiscovered.filter(h => h.type !== 'water').length;
-      const waterCount = newlyDiscovered.filter(h => h.type === 'water').length;
-      this.addLog(state, `Entdeckung! ${landCount} neues Land und ${waterCount} Ozeanfeld(er) aufgedeckt!`, 'info');
-    }
-
     if (isSetup) {
       state.setupTurnIndex += 1;
       if (state.setupTurnIndex < state.players.length) {
@@ -650,7 +666,7 @@ export class GameManager {
     if (!state) return { success: false, message: 'Raum nicht gefunden.' };
 
     const activePlayer = state.players[state.activePlayerIndex];
-    if (activePlayer.id !== playerId && !activePlayer.isBot) {
+    if (!this.isPlayerActive(state, playerId)) {
       return { success: false, message: 'Du bist nicht am Zug.' };
     }
     if (state.phase !== 'TURN_ACTIONS' && state.phase !== 'SETUP_SETTLEMENT') {
@@ -763,7 +779,7 @@ export class GameManager {
     if (!state) return { success: false, message: 'Raum nicht gefunden.' };
 
     const activePlayer = state.players[state.activePlayerIndex];
-    if (activePlayer.id !== playerId && !activePlayer.isBot) {
+    if (!this.isPlayerActive(state, playerId)) {
       return { success: false, message: 'Du bist nicht am Zug.' };
     }
     if (state.phase !== 'TURN_ACTIONS') {
@@ -831,7 +847,7 @@ export class GameManager {
     if (!state) return { success: false, message: 'Raum nicht gefunden.' };
 
     const activePlayer = state.players[state.activePlayerIndex];
-    if (activePlayer.id !== playerId && !activePlayer.isBot) {
+    if (!this.isPlayerActive(state, playerId)) {
       return { success: false, message: 'Du bist nicht am Zug.' };
     }
     if (state.phase !== 'TURN_ACTIONS') {
@@ -976,7 +992,7 @@ export class GameManager {
     if (!state) return { success: false, message: 'Raum nicht gefunden.' };
 
     const activePlayer = state.players[state.activePlayerIndex];
-    if (activePlayer.id !== playerId && !activePlayer.isBot) {
+    if (!this.isPlayerActive(state, playerId)) {
       return { success: false, message: 'Du bist nicht am Zug.' };
     }
     if (state.phase !== 'TURN_ACTIONS') {
@@ -1064,7 +1080,7 @@ export class GameManager {
     if (!state) return { success: false, message: 'Raum nicht gefunden.' };
 
     const activePlayer = state.players[state.activePlayerIndex];
-    if (activePlayer.id !== playerId && !activePlayer.isBot) {
+    if (!this.isPlayerActive(state, playerId)) {
       return { success: false, message: 'Du bist nicht am Zug.' };
     }
     if (state.phase !== 'TURN_ACTIONS') {
@@ -1110,14 +1126,14 @@ export class GameManager {
     if (!state) return { success: false, message: 'Raum nicht gefunden.' };
 
     const activePlayer = state.players[state.activePlayerIndex];
-    if (activePlayer.id !== playerId && !activePlayer.isBot) {
+    if (!this.isPlayerActive(state, playerId)) {
       return { success: false, message: 'Du bist nicht am Zug.' };
     }
     if (state.phase !== 'TURN_ACTIONS') {
       return { success: false, message: 'Rohstoffe können nur in der Aktionsphase verschenkt werden.' };
     }
 
-    const targetPlayer = state.players.find(p => p.id === targetPlayerId);
+    const targetPlayer = this.getPlayer(state, targetPlayerId);
     if (!targetPlayer) return { success: false, message: 'Zielspieler nicht gefunden.' };
     if (targetPlayer.id === activePlayer.id) return { success: false, message: 'Du kannst dir nicht selbst Rohstoffe schenken.' };
 
@@ -1156,7 +1172,7 @@ export class GameManager {
     if (!state) return { success: false, message: 'Raum nicht gefunden.' };
 
     const activePlayer = state.players[state.activePlayerIndex];
-    if (activePlayer.id !== playerId && !activePlayer.isBot) {
+    if (!this.isPlayerActive(state, playerId)) {
       return { success: false, message: 'Du bist nicht am Zug.' };
     }
     if (state.phase !== 'TURN_ACTIONS') {
@@ -1262,17 +1278,21 @@ export class GameManager {
       return { success: false, message: 'Dieses Tauschangebot ist nicht mehr aktiv.' };
     }
 
-    if (proposal.senderId === responderId) {
+    const responder = this.getPlayer(state, responderId);
+    if (!responder) {
+      return { success: false, message: 'Spieler nicht gefunden.' };
+    }
+
+    if (proposal.senderId === responder.id) {
       return { success: false, message: 'Du kannst dein eigenes Angebot nicht annehmen oder ablehnen.' };
     }
 
-    if (proposal.targetPlayerId && proposal.targetPlayerId !== responderId) {
+    if (proposal.targetPlayerId && proposal.targetPlayerId !== responder.id) {
       return { success: false, message: 'Dieses Angebot war an einen anderen Mitspieler gerichtet.' };
     }
 
     const sender = state.players.find(p => p.id === proposal.senderId);
-    const responder = state.players.find(p => p.id === responderId);
-    if (!sender || !responder) {
+    if (!sender) {
       return { success: false, message: 'Spieler nicht gefunden.' };
     }
 
@@ -1338,7 +1358,8 @@ export class GameManager {
       return { success: false, message: 'Kein aktives Angebot gefunden.' };
     }
 
-    if (proposal.senderId !== senderId) {
+    const caller = this.getPlayer(state, senderId);
+    if (!caller || proposal.senderId !== caller.id) {
       return { success: false, message: 'Nur der Ersteller kann das Angebot zurückziehen.' };
     }
 
@@ -1353,7 +1374,7 @@ export class GameManager {
     if (!state) return { success: false, message: 'Raum nicht gefunden.' };
 
     const activePlayer = state.players[state.activePlayerIndex];
-    if (activePlayer.id !== playerId && !activePlayer.isBot) {
+    if (!this.isPlayerActive(state, playerId)) {
       return { success: false, message: 'Du bist nicht am Zug.' };
     }
     if (state.phase !== 'TURN_ACTIONS') {
@@ -1506,10 +1527,15 @@ export class GameManager {
 
     const validEdges = vertex.adjacentEdgeIds
       .map(eId => state.board.edges[eId])
-      .filter(e => e && e.road === null && !e.isWaterEdge);
+      .filter((e): e is NonNullable<typeof e> => Boolean(e && e.road === null && !e.isWaterEdge));
 
-    if (validEdges.length > 0) {
-      this.buildRoad(roomCode, botId, validEdges[0].id);
+    const fallbackEdges = vertex.adjacentEdgeIds
+      .map(eId => state.board.edges[eId])
+      .filter((e): e is NonNullable<typeof e> => Boolean(e && e.road === null));
+
+    const chosenEdge = validEdges[0] || fallbackEdges[0];
+    if (chosenEdge) {
+      this.buildRoad(roomCode, botId, chosenEdge.id);
       this.notifyStateChanged(roomCode);
     }
   }

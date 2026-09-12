@@ -24,6 +24,7 @@ export interface PlayerPieces {
 
 export interface Player {
   id: string;
+  socketId?: string;
   name: string;
   color: PlayerColor;
   role: PlayerRole;

@@ -11,8 +11,17 @@ import { GameOverModal } from './components/GameOverModal';
 import { RulebookModal } from './components/RulebookModal';
 import { BookOpen } from 'lucide-react';
 
+function getSessionPlayerId(): string {
+  let id = sessionStorage.getItem('catan_friends_player_id');
+  if (!id) {
+    id = 'usr_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36).slice(-4);
+    sessionStorage.setItem('catan_friends_player_id', id);
+  }
+  return id;
+}
+
 export const App: React.FC = () => {
-  const [myPlayerId, setMyPlayerId] = useState<string>('');
+  const [myPlayerId, setMyPlayerId] = useState<string>(() => getSessionPlayerId());
   const [roomState, setRoomState] = useState<GameRoomState | null>(null);
   const [buildMode, setBuildMode] = useState<'none' | 'road' | 'settlement' | 'city'>('none');
   const [targetColor, setTargetColor] = useState<PlayerColor>('red');
@@ -21,25 +30,37 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     const onConnect = () => {
-      if (socket.id) {
-        setMyPlayerId(socket.id);
+      const savedRoomCode = sessionStorage.getItem('catan_friends_room_code');
+      const savedPlayerId = sessionStorage.getItem('catan_friends_player_id') || getSessionPlayerId();
+      if (savedRoomCode && savedPlayerId) {
+        socket.emit('reconnect_player', { roomCode: savedRoomCode, playerId: savedPlayerId }, (res: any) => {
+          if (res?.success && res.state) {
+            setRoomState(res.state);
+            setMyPlayerId(savedPlayerId);
+          }
+        });
       }
     };
 
     const onRoomStateUpdated = (state: GameRoomState) => {
       setRoomState(state);
-      // Update target color default to my color if in game
-      const me = state.players.find(p => p.id === socket.id);
-      if (me && (!targetColor || targetColor === 'red')) {
-        setTargetColor(me.color);
+      sessionStorage.setItem('catan_friends_room_code', state.roomCode);
+      const currentId = getSessionPlayerId();
+      const me = state.players.find(p => p.id === currentId || p.socketId === socket.id || p.id === socket.id);
+      if (me) {
+        setMyPlayerId(me.id);
+        sessionStorage.setItem('catan_friends_player_id', me.id);
+        if (!targetColor || targetColor === 'red') {
+          setTargetColor(me.color);
+        }
       }
     };
 
     socket.on('connect', onConnect);
     socket.on('room_state_updated', onRoomStateUpdated);
 
-    if (socket.connected && socket.id) {
-      setMyPlayerId(socket.id);
+    if (socket.connected) {
+      onConnect();
     }
 
     return () => {
@@ -241,8 +262,8 @@ export const App: React.FC = () => {
   }
 
   const activePlayer = roomState.players[roomState.activePlayerIndex];
-  const myPlayer = roomState.players.find(p => p.id === myPlayerId) || activePlayer;
-  const isMyTurn = activePlayer.id === myPlayerId;
+  const myPlayer = roomState.players.find(p => p.id === myPlayerId || p.socketId === socket.id || p.id === socket.id) || activePlayer;
+  const isMyTurn = activePlayer.id === myPlayer.id;
 
   let settlementsCount = 0;
   let citiesCount = 0;
