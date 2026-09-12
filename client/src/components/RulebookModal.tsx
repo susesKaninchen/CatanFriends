@@ -284,7 +284,10 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                     Alle Spieler mit mehr als <strong>7 Handkarten</strong> müssen bei einer 7 die Hälfte ihrer Handkarten an die Bank abgeben. In Quests eingelagerte Rohstoffe sind sicher!
                   </li>
                   <li>
-                    Erst wenn der Räuber direkt an einer Siedlung oder Stadt steht, blockiert er dort die Erträge und erbeutet bei einer 7 eine Rohstoffkarte von einem betroffenen Spieler.
+                    Der Räuber blockiert immer <strong>nur genau das Feld, auf dem er steht</strong> (keine Nachbarfelder).
+                  </li>
+                  <li>
+                    Wird eine <strong>7</strong> gewürfelt, zieht er 1 Feld vor und <strong>stiehlt von allen anliegenden Gebäuden</strong> (Siedlungen und Städten) je eine Rohstoffkarte von deren Besitzern. Bei Runden-Patrouillen wird nicht gestohlen.
                   </li>
                 </ul>
               </div>

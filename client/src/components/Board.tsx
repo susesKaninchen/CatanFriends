@@ -366,7 +366,7 @@ export const Board: React.FC<BoardProps> = ({
             const corners = getHexCornerPoints(center);
             const pointsStr = corners.map((p) => `${p.x},${p.y}`).join(' ');
             const isWater = hex.type === 'water';
-            const isRobberHere = Boolean(hex.hasRobber || hex.id === board.robberHexId);
+            const isRobberHere = hex.id === board.robberHexId;
             const canPlaceRobberHere = isRobberPlacementPhase && !isWater && !isRobberHere;
             const isRolledHex = isDiceHarvestActive && !isWater && hex.diceNumber === diceSum;
             const isHarvesting = isRolledHex && !isRobberHere;

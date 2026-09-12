@@ -300,7 +300,7 @@ export class GameManager {
     const hexesWithNumber = state.board.hexes.filter(h => h.diceNumber === diceSum);
 
     for (const hex of hexesWithNumber) {
-      if (hex.hasRobber || hex.id === state.board.robberHexId) {
+      if (hex.id === state.board.robberHexId) {
         const numStr = hex.diceNumber ? `Zahl ${hex.diceNumber}` : 'Wüste';
         this.addLog(state, `Räuber blockiert Ertrag auf ${hex.type} (${numStr})! Keine Rohstoffe.`, 'alert');
         continue;
@@ -346,15 +346,50 @@ export class GameManager {
     state.phase = 'TURN_ACTIONS';
   }
 
+  private stealFromAdjacentBuildings(state: GameRoomState, hexId: string): string {
+    const adjacentBuildings: Array<{ building: { type: 'settlement' | 'city'; ownerColor: PlayerColor }; vertexKey: string }> = [];
+    for (const vKey of Object.keys(state.board.vertices)) {
+      const v = state.board.vertices[vKey];
+      if (v.adjacentHexIds.includes(hexId) && v.building) {
+        adjacentBuildings.push({ building: v.building, vertexKey: vKey });
+      }
+    }
+
+    if (adjacentBuildings.length === 0) {
+      return ' (Keine anliegenden Gebäude zum Bestehlen)';
+    }
+
+    const stolenList: string[] = [];
+    for (const { building } of adjacentBuildings) {
+      const owner = state.players.find(p => p.color === building.ownerColor);
+      if (!owner) continue;
+
+      const resKeys: ResourceType[] = ['wood', 'clay', 'sheep', 'wheat', 'ore'];
+      const available = resKeys.filter(r => owner.resources[r] > 0);
+      if (available.length > 0) {
+        const stolen = available[Math.floor(Math.random() * available.length)];
+        owner.resources[stolen]--;
+        const bTypeStr = building.type === 'city' ? 'Stadt' : 'Siedlung';
+        stolenList.push(`1x ${stolen} von ${owner.name} (${bTypeStr})`);
+      }
+    }
+
+    if (stolenList.length > 0) {
+      return ` und stiehlt von allen anliegenden Gebäuden: ${stolenList.join(', ')}!`;
+    } else {
+      return ' (Anliegende Gebäude besitzen keine Handkarten mehr zum Stehlen)';
+    }
+  }
+
   private stepRobberTowardsTarget(state: GameRoomState, isSevenRoll: boolean = false) {
     // 1. Current robber hex
-    let currentHex = state.board.hexes.find(h => h.id === state.board.robberHexId || h.hasRobber);
+    let currentHex = state.board.hexes.find(h => h.id === state.board.robberHexId);
     if (!currentHex) {
       currentHex = state.board.hexes.find(h => h.type === 'desert') || state.board.hexes[0];
       if (!currentHex) return;
       state.board.robberHexId = currentHex.id;
-      currentHex.hasRobber = true;
     }
+    state.board.hexes.forEach(h => { h.hasRobber = (h.id === state.board.robberHexId); });
 
     // 2. Find target: highest-yielding land hex with team buildings
     const candidateHexes = state.board.hexes.filter(h => h.type !== 'water');
@@ -362,14 +397,10 @@ export class GameManager {
 
     const scoredHexes = candidateHexes.map(hex => {
       let buildingWeight = 0;
-      const touchingPlayers = new Set<Player>();
-
       for (const vKey of Object.keys(state.board.vertices)) {
         const v = state.board.vertices[vKey];
         if (v.adjacentHexIds.includes(hex.id) && v.building) {
           buildingWeight += (v.building.type === 'city' ? 2 : 1);
-          const owner = state.players.find(p => p.color === v.building!.ownerColor);
-          if (owner) touchingPlayers.add(owner);
         }
       }
 
@@ -377,107 +408,70 @@ export class GameManager {
       // Prioritize hexes with buildings (1000 base + 100 per building + pips)
       const score = (buildingWeight > 0 ? 1000 : 0) + (buildingWeight * 100) + pips;
 
-      return {
-        hex,
-        buildingWeight,
-        pips,
-        score,
-        touchingPlayers: Array.from(touchingPlayers)
-      };
+      return { hex, score };
     });
 
     scoredHexes.sort((a, b) => b.score - a.score);
-    const targetCandidate = scoredHexes[0];
-    const targetHex = targetCandidate.hex;
+    const targetHex = scoredHexes[0].hex;
 
-    // 3. If already at target hex: stays there and blocks it
-    if (currentHex.id === targetHex.id) {
-      const numStr = targetHex.diceNumber ? `Zahl ${targetHex.diceNumber}` : 'Wüste';
-      if (isSevenRoll) {
-        // Robber is already at richest hex: steals 1 card from 1 affected player
-        const victims = targetCandidate.touchingPlayers.filter(p => Object.values(p.resources).reduce((a, b) => a + b, 0) > 0);
-        let stolenMsg = '';
-        if (victims.length > 0) {
-          const victim = victims[Math.floor(Math.random() * victims.length)];
-          const resKeys: ResourceType[] = ['wood', 'clay', 'sheep', 'wheat', 'ore'];
-          const available = resKeys.filter(r => victim.resources[r] > 0);
-          if (available.length > 0) {
-            const stolen = available[Math.floor(Math.random() * available.length)];
-            victim.resources[stolen]--;
-            stolenMsg = ` und erbeutet 1x ${stolen} von ${victim.name}!`;
-          }
-        }
-        this.addLog(state, `Der Räuber lauert bereits auf dem ertragreichsten Feld: ${targetHex.type} (${numStr})${stolenMsg}`, 'robber');
-      } else {
-        this.addLog(state, `Der Räuber besetzt weiterhin das ertragreichste Feld: ${targetHex.type} (${numStr}) und blockiert Erträge.`, 'robber');
-      }
-      return;
-    }
+    let destinationHex = currentHex;
+    let movedStep = false;
+    let minDist = 0;
 
-    // 4. Robber is NOT at target hex: Take exactly 1 step in the direction of targetHex!
-    const neighbors = state.board.hexes.filter(h => {
-      if (h.type === 'water' || h.id === currentHex!.id) return false;
-      return hexDistance(currentHex!, h) === 1;
-    });
+    // 3. If robber is NOT at target hex: Take exactly 1 step in the direction of targetHex!
+    if (currentHex.id !== targetHex.id) {
+      const neighbors = state.board.hexes.filter(h => {
+        if (h.type === 'water' || h.id === currentHex!.id) return false;
+        return hexDistance(currentHex!, h) === 1;
+      });
 
-    if (neighbors.length === 0) return;
+      if (neighbors.length > 0) {
+        const neighborsWithDist = neighbors.map(n => ({
+          hex: n,
+          dist: hexDistance(n, targetHex)
+        }));
 
-    // Find neighbors with minimum distance to targetHex
-    const neighborsWithDist = neighbors.map(n => ({
-      hex: n,
-      dist: hexDistance(n, targetHex)
-    }));
+        neighborsWithDist.sort((a, b) => a.dist - b.dist);
+        minDist = neighborsWithDist[0].dist;
+        const bestStepCandidates = neighborsWithDist.filter(n => n.dist === minDist).map(n => n.hex);
+        destinationHex = bestStepCandidates[Math.floor(Math.random() * bestStepCandidates.length)];
 
-    neighborsWithDist.sort((a, b) => a.dist - b.dist);
-    const minDist = neighborsWithDist[0].dist;
-    const bestStepCandidates = neighborsWithDist.filter(n => n.dist === minDist).map(n => n.hex);
-    const chosenNextHex = bestStepCandidates[Math.floor(Math.random() * bestStepCandidates.length)];
-
-    // Relocate robber by 1 step
-    state.board.hexes.forEach(h => { h.hasRobber = false; });
-    chosenNextHex.hasRobber = true;
-    state.board.robberHexId = chosenNextHex.id;
-
-    // Check if new hex touches team buildings
-    const touchingPlayers = new Set<Player>();
-    for (const vKey of Object.keys(state.board.vertices)) {
-      const v = state.board.vertices[vKey];
-      if (v.adjacentHexIds.includes(chosenNextHex.id) && v.building) {
-        const owner = state.players.find(p => p.color === v.building!.ownerColor);
-        if (owner) touchingPlayers.add(owner);
+        // Relocate robber by 1 step
+        state.board.robberHexId = destinationHex.id;
+        state.board.hexes.forEach(h => { h.hasRobber = (h.id === destinationHex.id); });
+        movedStep = true;
       }
     }
 
+    // 4. If triggered by rolling a 7: steal from ALL adjacent buildings of destinationHex!
     let stolenMsg = '';
-    // Only plunder 1 card if triggered by a 7 AND standing directly on a settled hex
-    if (isSevenRoll && touchingPlayers.size > 0) {
-      const victims = Array.from(touchingPlayers).filter(p => Object.values(p.resources).reduce((a, b) => a + b, 0) > 0);
-      if (victims.length > 0) {
-        const victim = victims[Math.floor(Math.random() * victims.length)];
-        const resKeys: ResourceType[] = ['wood', 'clay', 'sheep', 'wheat', 'ore'];
-        const available = resKeys.filter(r => victim.resources[r] > 0);
-        if (available.length > 0) {
-          const stolen = available[Math.floor(Math.random() * available.length)];
-          victim.resources[stolen]--;
-          stolenMsg = ` und erbeutet 1x ${stolen} von ${victim.name}!`;
-        }
-      }
+    if (isSevenRoll) {
+      stolenMsg = this.stealFromAdjacentBuildings(state, destinationHex.id);
     }
 
-    const currentNumStr = chosenNextHex.diceNumber ? `Zahl ${chosenNextHex.diceNumber}` : 'Wüste';
+    // 5. Game Log messages
+    const currentNumStr = destinationHex.diceNumber ? `Zahl ${destinationHex.diceNumber}` : 'Wüste';
     const targetNumStr = targetHex.diceNumber ? `Zahl ${targetHex.diceNumber}` : 'Wüste';
     const reasonPrefix = isSevenRoll ? 'Eine 7 gewürfelt!' : 'Runden-Patrouille:';
 
-    if (chosenNextHex.id === targetHex.id) {
-      this.addLog(
-        state,
-        `${reasonPrefix} Der Räuber erreicht das ertragreichste Feld: ${chosenNextHex.type} (${currentNumStr})${stolenMsg}`,
-        'robber'
-      );
+    if (destinationHex.id === targetHex.id) {
+      if (movedStep) {
+        this.addLog(
+          state,
+          `${reasonPrefix} Der Räuber erreicht das ertragreichste Feld: ${destinationHex.type} (${currentNumStr})${stolenMsg}`,
+          'robber'
+        );
+      } else {
+        this.addLog(
+          state,
+          `${reasonPrefix} Der Räuber besetzt weiterhin das ertragreichste Feld: ${destinationHex.type} (${currentNumStr}) und blockiert dort die Erträge.${stolenMsg}`,
+          'robber'
+        );
+      }
     } else {
       this.addLog(
         state,
-        `${reasonPrefix} Der Räuber zieht 1 Feld vor auf ${chosenNextHex.type} (${currentNumStr}) in Richtung ${targetHex.type} (${targetNumStr}, noch ${minDist} Felder entfernt).${stolenMsg}`,
+        `${reasonPrefix} Der Räuber zieht 1 Feld vor auf ${destinationHex.type} (${currentNumStr}) in Richtung ${targetHex.type} (${targetNumStr}, noch ${minDist} Felder entfernt).${stolenMsg}`,
         'robber'
       );
     }
