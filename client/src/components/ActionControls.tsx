@@ -206,13 +206,13 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
   };
 
   return (
-    <div className="bg-[#19110a]/95 border-2 border-[#5a3818] rounded-2xl p-4 shadow-2xl space-y-4 text-[#e8d5b5]">
+    <div className="bg-[#22150c]/95 border-2 border-[#73451e] rounded-2xl p-4 shadow-2xl space-y-4 text-[#e8d5b5]">
       {/* Top bar: Active Player & Dice Result & Rulebook Button */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#472c14] pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#5c3718] pb-3">
         <div className="flex items-center gap-2.5">
           <div className={`w-3.5 h-3.5 rounded-full ${COLOR_MAP[activePlayer.color].bg} shadow`} />
           <div>
-            <span className="text-[11px] text-[#a8825c] block font-semibold">Aktueller Zug:</span>
+            <span className="text-[11px] text-[#bd966f] block font-semibold">Aktueller Zug:</span>
             <span className="text-sm font-black text-[#fff4e0] flex items-center gap-1.5 font-['MedievalSharp',serif]">
               {activePlayer.name} {isMyTurn && '(Du bist dran!)'}
             </span>
@@ -221,13 +221,13 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
 
         <div className="flex items-center gap-2">
           {/* Dice Result Display */}
-          <div className="flex items-center gap-2 bg-[#100b06] px-3 py-1.5 rounded-xl border border-[#52341b]">
-            <span className="text-xs text-[#a8825c] font-semibold">Würfel:</span>
+          <div className="flex items-center gap-2 bg-[#1c1109] px-3 py-1.5 rounded-xl border border-[#6b4220]">
+            <span className="text-xs text-[#bd966f] font-semibold">Würfel:</span>
             <div className="flex gap-1.5 font-mono font-black text-sm">
-              <span className={`w-6 h-6 bg-[#25170d] text-white rounded flex items-center justify-center border transition-all ${isRolling ? 'border-amber-400 text-amber-300 animate-dice-tumble' : 'border-[#6b4220]'}`}>
+              <span className={`w-6 h-6 bg-[#341d0e] text-white rounded flex items-center justify-center border transition-all ${isRolling ? 'border-amber-400 text-amber-300 animate-dice-tumble' : 'border-[#855127]'}`}>
                 {isRolling ? animDice[0] : diceValues[0]}
               </span>
-              <span className={`w-6 h-6 bg-[#25170d] text-white rounded flex items-center justify-center border transition-all ${isRolling ? 'border-amber-400 text-amber-300 animate-dice-tumble' : 'border-[#6b4220]'}`}>
+              <span className={`w-6 h-6 bg-[#341d0e] text-white rounded flex items-center justify-center border transition-all ${isRolling ? 'border-amber-400 text-amber-300 animate-dice-tumble' : 'border-[#855127]'}`}>
                 {isRolling ? animDice[1] : diceValues[1]}
               </span>
               <span className={`px-2 py-0.5 rounded font-extrabold ${diceSum === 7 ? 'bg-rose-950 text-rose-400 border border-rose-800' : 'text-amber-400'}`}>
@@ -241,7 +241,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
             <button
               type="button"
               onClick={onOpenRulebook}
-              className="bg-[#2a1a0f] hover:bg-[#3d2616] text-[#d4af37] border border-[#7a4e22] p-2 rounded-xl transition-all shadow hover:shadow-md flex items-center gap-1.5 text-xs font-bold"
+              className="bg-[#362012] hover:bg-[#4a2e1a] text-[#d4af37] border border-[#8a5726] p-2 rounded-xl transition-all shadow hover:shadow-md flex items-center gap-1.5 text-xs font-bold"
               title="Catan Friends Spielanleitung öffnen"
             >
               <BookOpen className="w-4 h-4" />
@@ -417,9 +417,9 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
           {phase === 'TURN_ACTIONS' && (
             <div className="space-y-3">
               {/* Fremdbau Target Player Selector */}
-              <div className="bg-[#120b06] p-3 rounded-xl border border-[#4a2e16] space-y-2">
+              <div className="bg-[#1a1009] p-3 rounded-xl border border-[#5c3718] space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-[#dfcfba] flex items-center gap-1.5 font-serif">
+                  <span className="font-semibold text-[#f0e2d1] flex items-center gap-1.5 font-serif">
                     <UserCheck className="w-4 h-4 text-amber-400" />
                     Siedlung/Stadt bauen für:
                   </span>
@@ -442,7 +442,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                         className={`py-1.5 px-2 rounded-lg text-xs font-bold border transition-all truncate ${
                           isSelected
                             ? `${cInfo.bg} text-white border-white shadow-md scale-105`
-                            : 'bg-[#22150c] border-[#4a2e16] text-[#bda286] hover:border-[#7a4e22]'
+                            : 'bg-[#2b180d] border-[#5c3718] text-[#cbb299] hover:border-[#8f5d2b]'
                         }`}
                         title={`Bauen für ${p.name}`}
                       >
@@ -464,8 +464,8 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                     buildMode === 'road'
                       ? 'bg-amber-500 text-slate-950 border-white shadow-lg scale-105'
                       : canAffordRoad() && remainingRoads > 0
-                      ? 'bg-[#22150c] hover:bg-[#342013] border-[#6b4220] text-[#f2e6d6]'
-                      : 'bg-[#120b06]/60 border-[#2b170c] text-[#6d5543] cursor-not-allowed'
+                      ? 'bg-[#2b180d] hover:bg-[#3e2414] border-[#7a4d25] text-[#f7eee1]'
+                      : 'bg-[#180f08]/60 border-[#3a2011] text-[#856b57] cursor-not-allowed'
                   }`}
                   title="Gemeinsame Straße bauen"
                 >
@@ -478,7 +478,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                     {myPlayer.role === 'pioneer' ? '/' : '+'}
                     <ResourceIcon type="clay" className="w-3.5 h-3.5" />
                   </span>
-                  <span className={`text-[8px] sm:text-[9px] font-mono font-bold px-1 rounded mt-0.5 ${remainingRoads > 0 ? 'bg-[#3b2311] text-amber-300' : 'bg-rose-950 text-rose-400'}`}>
+                  <span className={`text-[8px] sm:text-[9px] font-mono font-bold px-1 rounded mt-0.5 ${remainingRoads > 0 ? 'bg-[#402410] text-amber-300' : 'bg-rose-950 text-rose-400'}`}>
                     {remainingRoads}/30
                   </span>
                 </button>
@@ -492,8 +492,8 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                     buildMode === 'settlement'
                       ? 'bg-amber-500 text-slate-950 border-white shadow-lg scale-105'
                       : canAffordSettlement() && remainingSettlements > 0
-                      ? 'bg-[#22150c] hover:bg-[#342013] border-[#6b4220] text-[#f2e6d6]'
-                      : 'bg-[#120b06]/60 border-[#2b170c] text-[#6d5543] cursor-not-allowed'
+                      ? 'bg-[#2b180d] hover:bg-[#3e2414] border-[#7a4d25] text-[#f7eee1]'
+                      : 'bg-[#180f08]/60 border-[#3a2011] text-[#856b57] cursor-not-allowed'
                   }`}
                   title="Siedlung bauen"
                 >
@@ -508,7 +508,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                     <ResourceIcon type="wheat" className="w-3 h-3" />
                     {myPlayer.role === 'builder' && <span className="text-[8px] text-amber-300 font-bold">-1</span>}
                   </span>
-                  <span className={`text-[8px] sm:text-[9px] font-mono font-bold px-1 rounded mt-0.5 ${remainingSettlements > 0 ? 'bg-[#3b2311] text-emerald-300' : 'bg-rose-950 text-rose-400'}`}>
+                  <span className={`text-[8px] sm:text-[9px] font-mono font-bold px-1 rounded mt-0.5 ${remainingSettlements > 0 ? 'bg-[#402410] text-emerald-300' : 'bg-rose-950 text-rose-400'}`}>
                     {remainingSettlements}/5
                   </span>
                 </button>
@@ -522,8 +522,8 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                     buildMode === 'city'
                       ? 'bg-amber-500 text-slate-950 border-white shadow-lg scale-105'
                       : canAffordCity() && remainingCities > 0 && hasSettlementToUpgrade
-                      ? 'bg-[#22150c] hover:bg-[#342013] border-[#6b4220] text-[#f2e6d6]'
-                      : 'bg-[#120b06]/60 border-[#2b170c] text-[#6d5543] cursor-not-allowed'
+                      ? 'bg-[#2b180d] hover:bg-[#3e2414] border-[#7a4d25] text-[#f7eee1]'
+                      : 'bg-[#180f08]/60 border-[#3a2011] text-[#856b57] cursor-not-allowed'
                   }`}
                   title={!hasSettlementToUpgrade ? 'Erfordert eine bestehende Siedlung' : 'Siedlung zur Stadt aufwerten'}
                 >
@@ -537,7 +537,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                     <ResourceIcon type="wheat" className="w-3 h-3" />
                     <span className="text-[9px]">2x</span>
                   </span>
-                  <span className={`text-[8px] sm:text-[9px] font-mono font-bold px-1 rounded mt-0.5 ${remainingCities > 0 ? 'bg-[#3b2311] text-sky-300' : 'bg-rose-950 text-rose-400'}`}>
+                  <span className={`text-[8px] sm:text-[9px] font-mono font-bold px-1 rounded mt-0.5 ${remainingCities > 0 ? 'bg-[#402410] text-sky-300' : 'bg-rose-950 text-rose-400'}`}>
                     {hasSettlementToUpgrade ? `${remainingCities}/4` : 'Keine Siedl.'}
                   </span>
                 </button>
@@ -548,8 +548,8 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                   onClick={() => setIsTradeOpen(!isTradeOpen)}
                   className={`p-2 sm:p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 text-xs font-bold transition-all ${
                     isTradeOpen
-                      ? 'bg-[#42220f] border-amber-400 text-amber-200 shadow-md scale-105'
-                      : 'bg-[#22150c] hover:bg-[#342013] border-[#6b4220] text-[#f2e6d6]'
+                      ? 'bg-[#4a2612] border-amber-400 text-amber-200 shadow-md scale-105'
+                      : 'bg-[#2b180d] hover:bg-[#3e2414] border-[#7a4d25] text-[#f7eee1]'
                   }`}
                   title="Handeln: Bank (4:1) oder Rohstoffe an Mitspieler verschenken"
                 >
@@ -558,7 +558,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                     <span className="font-['MedievalSharp',serif] text-[11px] sm:text-xs">Handel</span>
                   </div>
                   <span className="text-[10px] font-normal text-amber-300">4:1 & Team</span>
-                  <span className="text-[8px] sm:text-[9px] font-mono font-bold px-1 rounded mt-0.5 bg-[#3b2311] text-amber-300">
+                  <span className="text-[8px] sm:text-[9px] font-mono font-bold px-1 rounded mt-0.5 bg-[#402410] text-amber-300">
                     {isTradeOpen ? 'Schließen' : 'Öffnen'}
                   </span>
                 </button>
@@ -566,16 +566,16 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
 
               {/* Interactive Trading Panel */}
               {isTradeOpen && (
-                <div className="bg-[#120b06] border-2 border-amber-600/80 rounded-xl p-3 space-y-3">
+                <div className="bg-[#1a1009] border-2 border-amber-600/80 rounded-xl p-3 space-y-3">
                   {/* Trade Mode Tabs */}
-                  <div className="flex border-b border-[#3d2311] pb-2 gap-1.5 flex-wrap">
+                  <div className="flex border-b border-[#522f17] pb-2 gap-1.5 flex-wrap">
                     <button
                       type="button"
                       onClick={() => setTradeTab('bank')}
                       className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                         tradeTab === 'bank'
                           ? 'bg-amber-600 text-slate-950 shadow'
-                          : 'bg-[#201208] text-[#c4aa90] hover:text-white'
+                          : 'bg-[#2d1a0d] text-[#dec2a6] hover:text-white'
                       }`}
                     >
                       <ArrowLeftRight className="w-3.5 h-3.5" />
@@ -589,7 +589,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                             tradeTab === 'trade'
                               ? 'bg-amber-600 text-slate-950 shadow'
-                              : 'bg-[#201208] text-[#c4aa90] hover:text-white'
+                              : 'bg-[#2d1a0d] text-[#dec2a6] hover:text-white'
                           }`}
                         >
                           <Users className="w-3.5 h-3.5" />
@@ -601,7 +601,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                             tradeTab === 'request'
                               ? 'bg-amber-600 text-slate-950 shadow'
-                              : 'bg-[#201208] text-[#c4aa90] hover:text-white'
+                              : 'bg-[#2d1a0d] text-[#dec2a6] hover:text-white'
                           }`}
                         >
                           <HelpCircle className="w-3.5 h-3.5" />
@@ -613,7 +613,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                             tradeTab === 'gift'
                               ? 'bg-amber-600 text-slate-950 shadow'
-                              : 'bg-[#201208] text-[#c4aa90] hover:text-white'
+                              : 'bg-[#2d1a0d] text-[#dec2a6] hover:text-white'
                           }`}
                         >
                           <Gift className="w-3.5 h-3.5" />
@@ -626,14 +626,14 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                   {/* Bank & Harbor Trade */}
                   {tradeTab === 'bank' && (
                     <div className="space-y-2 text-xs">
-                      <p className="text-[11px] text-[#c9b59e]">
+                      <p className="text-[11px] text-[#dec2a6]">
                         Tausche Rohstoffe bei der Bank (Standard 4:1, oder 3:1 / 2:1 durch deine See-Häfen).
                       </p>
 
                       <div className="grid grid-cols-2 gap-3 pt-1">
                         {/* Give */}
                         <div>
-                          <span className="block text-[10px] uppercase font-bold text-[#a8825c] mb-1">
+                          <span className="block text-[10px] uppercase font-bold text-[#c79e75] mb-1">
                             Du gibst ({currentGiveRatio}x):
                           </span>
                           <div className="space-y-1">
@@ -653,8 +653,8 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                                     isSelected
                                       ? 'bg-amber-500 text-slate-950 font-bold border-white'
                                       : isEligible
-                                      ? 'bg-[#25150c] border-[#5a3617] text-[#e8d5b5] hover:border-amber-500'
-                                      : 'bg-[#140c06] border-[#29170a] text-[#5e4331] cursor-not-allowed opacity-60'
+                                      ? 'bg-[#2e190d] border-[#6e431c] text-[#f7ecd9] hover:border-amber-500'
+                                      : 'bg-[#1a1008] border-[#38200e] text-[#735845] cursor-not-allowed opacity-60'
                                   }`}
                                 >
                                   <span className="flex items-center gap-1.5">
@@ -677,7 +677,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
 
                         {/* Receive 1 */}
                         <div>
-                          <span className="block text-[10px] uppercase font-bold text-[#a8825c] mb-1">
+                          <span className="block text-[10px] uppercase font-bold text-[#c79e75] mb-1">
                             Du erhältst (1x):
                           </span>
                           <div className="space-y-1">
@@ -695,8 +695,8 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                                     isSelected
                                       ? 'bg-emerald-600 text-white font-bold border-white shadow'
                                       : !isSame
-                                      ? 'bg-[#25150c] border-[#5a3617] text-[#e8d5b5] hover:border-emerald-500'
-                                      : 'bg-[#140c06] border-[#29170a] text-[#5e4331] cursor-not-allowed opacity-50'
+                                      ? 'bg-[#2e190d] border-[#6e431c] text-[#f7ecd9] hover:border-emerald-500'
+                                      : 'bg-[#1a1008] border-[#38200e] text-[#735845] cursor-not-allowed opacity-50'
                                   }`}
                                 >
                                   <span className="flex items-center gap-1.5">
@@ -747,7 +747,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                             className={`py-1 px-2 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                               tradeTargetId === ''
                                 ? 'bg-amber-600 text-slate-950 border-white shadow font-black'
-                                : 'bg-[#22150c] border-[#4a2e16] text-[#bda286]'
+                                : 'bg-[#2b180d] border-[#5c3718] text-[#ccb297]'
                             }`}
                           >
                             🌐 Alle Mitspieler
@@ -760,7 +760,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                               className={`py-1 px-2 rounded-lg text-xs font-bold border transition-all truncate cursor-pointer ${
                                 tradeTargetId === t.id
                                   ? 'bg-amber-600 text-slate-950 border-white shadow font-black'
-                                  : 'bg-[#22150c] border-[#4a2e16] text-[#bda286]'
+                                  : 'bg-[#2b180d] border-[#5c3718] text-[#ccb297]'
                               }`}
                             >
                               {t.name} {t.isBot ? '(Bot)' : ''}
@@ -792,8 +792,8 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                                     isSelected
                                       ? 'bg-emerald-600 text-white font-bold border-white shadow'
                                       : isEligible
-                                      ? 'bg-[#25150c] border-[#5a3617] text-[#e8d5b5] hover:border-emerald-500'
-                                      : 'bg-[#140c06] border-[#29170a] text-[#5e4331] cursor-not-allowed opacity-60'
+                                      ? 'bg-[#2e190d] border-[#6e431c] text-[#f7ecd9] hover:border-emerald-500'
+                                      : 'bg-[#1a1008] border-[#38200e] text-[#735845] cursor-not-allowed opacity-60'
                                   }`}
                                 >
                                   <span className="flex items-center gap-1.5">
@@ -827,8 +827,8 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                                     isSelected
                                       ? 'bg-amber-600 text-slate-950 font-bold border-white shadow'
                                       : !isSame
-                                      ? 'bg-[#25150c] border-[#5a3617] text-[#e8d5b5] hover:border-amber-500'
-                                      : 'bg-[#140c06] border-[#29170a] text-[#5e4331] cursor-not-allowed opacity-60'
+                                      ? 'bg-[#2e190d] border-[#6e431c] text-[#f7ecd9] hover:border-amber-500'
+                                      : 'bg-[#1a1008] border-[#38200e] text-[#735845] cursor-not-allowed opacity-60'
                                   }`}
                                 >
                                   <span className="flex items-center gap-1.5">
@@ -858,13 +858,13 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                   {/* Teammate Resource Request (Hilferuf / Bedarf) */}
                   {tradeTab === 'request' && teammates.length > 0 && (
                     <div className="space-y-3 text-xs">
-                      <p className="text-[11px] text-[#c9b59e]">
+                      <p className="text-[11px] text-[#dec2a6]">
                         Frage einen dringend benötigten Rohstoff beim Team an. Mitspieler (und Bots) können dir direkt helfen!
                       </p>
 
                       {/* Request Target */}
                       <div>
-                        <span className="block text-[10px] uppercase font-bold text-[#a8825c] mb-1">
+                        <span className="block text-[10px] uppercase font-bold text-[#c79e75] mb-1">
                           Anfrage richten an:
                         </span>
                         <div className="flex gap-1.5 flex-wrap">
@@ -874,7 +874,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                             className={`py-1 px-2 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                               requestTargetId === ''
                                 ? 'bg-amber-600 text-slate-950 border-white shadow font-black'
-                                : 'bg-[#22150c] border-[#4a2e16] text-[#bda286]'
+                                : 'bg-[#2b180d] border-[#5c3718] text-[#ccb297]'
                             }`}
                           >
                             🌐 Alle Mitspieler
@@ -887,7 +887,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                               className={`py-1 px-2 rounded-lg text-xs font-bold border transition-all truncate cursor-pointer ${
                                 requestTargetId === t.id
                                   ? 'bg-amber-600 text-slate-950 border-white shadow font-black'
-                                  : 'bg-[#22150c] border-[#4a2e16] text-[#bda286]'
+                                  : 'bg-[#2b180d] border-[#5c3718] text-[#ccb297]'
                               }`}
                             >
                               {t.name} {t.isBot ? '(Bot)' : ''}
@@ -898,7 +898,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
 
                       {/* Select Requested Resource */}
                       <div>
-                        <span className="block text-[10px] uppercase font-bold text-[#a8825c] mb-1">
+                        <span className="block text-[10px] uppercase font-bold text-[#c79e75] mb-1">
                           Welchen Rohstoff benötigst du?
                         </span>
                         <div className="grid grid-cols-5 gap-1.5">
@@ -914,7 +914,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                                 className={`p-2 rounded-lg border text-center flex flex-col items-center justify-center transition-all cursor-pointer ${
                                   isSelected
                                     ? 'bg-amber-600 text-slate-950 border-white shadow font-bold scale-105'
-                                    : 'bg-[#22150c] border-[#5a3818] text-[#e8d5b5] hover:border-amber-500'
+                                    : 'bg-[#2b180d] border-[#6e431c] text-[#f7ecd9] hover:border-amber-500'
                                 }`}
                               >
                                 <ResourceIcon type={r} className="w-6 h-6" />
@@ -953,7 +953,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                       </div>
 
                       <div>
-                        <span className="block text-[10px] uppercase font-bold text-[#a8825c] mb-1">
+                        <span className="block text-[10px] uppercase font-bold text-[#c79e75] mb-1">
                           Empfänger auswählen:
                         </span>
                         <div className="grid grid-cols-3 gap-1.5">
@@ -967,7 +967,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                                 className={`py-1.5 px-2 rounded-lg text-xs font-bold border transition-all truncate ${
                                   isSelected
                                     ? 'bg-amber-600 text-slate-950 border-white shadow font-black'
-                                    : 'bg-[#22150c] border-[#4a2e16] text-[#bda286]'
+                                    : 'bg-[#2b180d] border-[#5c3718] text-[#ccb297]'
                                 }`}
                               >
                                 {t.name}
@@ -978,7 +978,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                       </div>
 
                       <div>
-                        <span className="block text-[10px] uppercase font-bold text-[#a8825c] mb-1">
+                        <span className="block text-[10px] uppercase font-bold text-[#c79e75] mb-1">
                           Rohstoff zum Schenken:
                         </span>
                         <div className="grid grid-cols-5 gap-1">
@@ -997,8 +997,8 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                                   isSelected
                                     ? 'bg-emerald-600 text-white border-white shadow font-bold'
                                     : canGift
-                                    ? 'bg-[#22150c] border-[#5a3818] text-[#e8d5b5] hover:border-emerald-500'
-                                    : 'bg-[#140c06] border-[#29170a] text-[#5e4331] cursor-not-allowed opacity-50'
+                                    ? 'bg-[#2b180d] border-[#6e431c] text-[#f7ecd9] hover:border-emerald-500'
+                                    : 'bg-[#1a1008] border-[#38200e] text-[#735845] cursor-not-allowed opacity-50'
                                 }`}
                               >
                                 <ResourceIcon type={r} className="w-6 h-6" />
@@ -1027,7 +1027,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
 
               {/* Build Instructions Banner */}
               {buildMode !== 'none' && (
-                <div className="p-2.5 bg-[#2b1b0d] border border-amber-500/50 rounded-xl text-xs text-amber-300 flex items-center justify-between shadow">
+                <div className="p-2.5 bg-[#341d0e] border border-amber-500/50 rounded-xl text-xs text-amber-300 flex items-center justify-between shadow">
                   <span>
                     {buildMode === 'road' && 'Klicke auf einen der goldenen Kreise an deinen Straßen/Siedlungen!'}
                     {buildMode === 'settlement' && 'Klicke auf einen freien Kreis (an Straße, 2 Kanten Abstand)!'}
@@ -1049,7 +1049,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                   type="button"
                   onClick={onPlayKnight}
                   disabled={!canAffordKnight()}
-                  className="w-1/2 bg-[#25160d] hover:bg-[#382114] disabled:opacity-40 disabled:hover:bg-[#25160d] border border-[#6b4220] text-rose-300 font-bold py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs shadow cursor-pointer disabled:cursor-not-allowed"
+                  className="w-1/2 bg-[#2d1a0e] hover:bg-[#422614] disabled:opacity-40 disabled:hover:bg-[#2d1a0e] border border-[#7a4d25] text-rose-300 font-bold py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs shadow cursor-pointer disabled:cursor-not-allowed"
                   title={
                     myPlayer.role === 'captain'
                       ? 'Kapitän: Kostenloser Ritter! (Räuber vertreiben & Beute)'
@@ -1067,7 +1067,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                 <button
                   type="button"
                   onClick={onEndTurn}
-                  className="w-1/2 bg-gradient-to-r from-[#5a3818] to-[#6d431d] hover:from-[#6d431d] hover:to-[#855829] border border-[#855829] text-[#fff8ec] font-extrabold py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 text-xs shadow-md font-['MedievalSharp',serif] tracking-wider"
+                  className="w-1/2 bg-gradient-to-r from-[#6e431d] to-[#855325] hover:from-[#855325] hover:to-[#9e642e] border border-[#9e642e] text-[#fff8ec] font-extrabold py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 text-xs shadow-md font-['MedievalSharp',serif] tracking-wider"
                 >
                   <span>Zug beenden</span>
                   <ArrowRight className="w-4 h-4" />
@@ -1077,15 +1077,15 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
           )}
         </div>
       ) : (
-        <div className="p-4 bg-[#120b06]/80 rounded-xl border border-[#3b2311] text-center space-y-1">
-          <p className="text-xs font-semibold text-[#e8d5b5]">
+        <div className="p-4 bg-[#1a1009]/90 rounded-xl border border-[#4a2a14] text-center space-y-1">
+          <p className="text-xs font-semibold text-[#f0dfcc]">
             {phase === 'SETUP_SETTLEMENT'
               ? `${activePlayer.name} wählt die Start-Siedlung (Dorf)...`
               : phase === 'SETUP_ROAD'
               ? `${activePlayer.name} baut die Start-Straße...`
               : `${activePlayer.name} plant gerade den nächsten Zug...`}
           </p>
-          <p className="text-[11px] text-[#9c7e65] italic">
+          <p className="text-[11px] text-[#bda087] italic">
             {phase === 'SETUP_SETTLEMENT' || phase === 'SETUP_ROAD'
               ? 'Die Startphase wird reihum durchgeführt.'
               : 'Nutzt den Chat oder plant Absprachen für den gemeinsamen Fremdbau!'}

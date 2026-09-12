@@ -360,7 +360,7 @@ export function addHexToBoard(
   return hex;
 }
 
-// Procedural Fog of War: Expand island when a road is built near empty spaces
+// Procedural Fog of War: Expand island when a road is built near empty spaces without leaving holes
 export function exploreSurroundings(board: BoardState, edgeId: string): HexTile[] {
   const edge = board.edges[edgeId];
   if (!edge) return [];
@@ -374,7 +374,30 @@ export function exploreSurroundings(board: BoardState, edgeId: string): HexTile[
   const touchingHexIds = Array.from(new Set([...v1.adjacentHexIds, ...v2.adjacentHexIds]));
   const existingCoords = new Set(board.hexes.map(h => `${h.q}_${h.r}`));
 
-  // Check neighbor coordinates around all touching hexes
+  const createHex = (q: number, r: number): HexTile => {
+    existingCoords.add(`${q}_${r}`);
+    const isWater = r >= 3;
+
+    let type: HexType = 'water';
+    let letter: string | null = null;
+    let diceNum: number | null = null;
+
+    if (!isWater) {
+      const landTypes: HexType[] = ['wood', 'clay', 'sheep', 'wheat', 'ore'];
+      type = landTypes[Math.floor(Math.random() * landTypes.length)];
+      diceNum = drawNumberToken(board);
+      letter = null;
+    }
+
+    const newHex = addHexToBoard(board, q, r, type, letter, diceNum, false);
+    if (type === 'water') {
+      assignHarborToWaterHex(board, newHex);
+    }
+    newlyDiscovered.push(newHex);
+    return newHex;
+  };
+
+  // 1. Discover empty coordinates directly touching the road's perimeter
   for (const hexId of touchingHexIds) {
     const parts = hexId.split('_').map(Number);
     const q = parts[0];
@@ -384,34 +407,57 @@ export function exploreSurroundings(board: BoardState, edgeId: string): HexTile[
       const nq = q + dir.q;
       const nr = r + dir.r;
       const nKey = `${nq}_${nr}`;
-
-      // Max exploration radius from center (expanded to radius 6 for deep island exploration)
       const dist = Math.max(Math.abs(nq), Math.abs(nr), Math.abs(-nq - nr));
+
       if (dist <= 6 && !existingCoords.has(nKey)) {
-        existingCoords.add(nKey);
+        createHex(nq, nr);
+      }
+    }
+  }
 
-        // Open continent exploration:
-        // The ocean lies strictly on the Southern coast (nr >= 3).
-        // In all other directions (nr < 3, i.e. North, East, West, Northwest, Northeast), it is 100% open mainland.
-        // This ensures the game is never an enclosed island, and can be expanded indefinitely into the continent!
-        const isWater = nr >= 3;
+  // 2. Hole-Filling Pass: Iteratively seal any cavities and gaps
+  // Any empty space with >= 3 neighbors is an interior hole, and >= 2 neighbors near the frontier avoids notches.
+  let holeFilled = true;
+  let iterations = 0;
+  while (holeFilled && iterations < 10) {
+    holeFilled = false;
+    iterations++;
 
-        let type: HexType = 'water';
-        let letter: string | null = null;
-        let diceNum: number | null = null;
+    // Map candidate empty coords -> count of adjacent hexes
+    const candidates = new Map<string, { q: number; r: number; count: number }>();
+    for (const hex of board.hexes) {
+      for (const dir of AXIAL_DIRECTIONS) {
+        const nq = hex.q + dir.q;
+        const nr = hex.r + dir.r;
+        const key = `${nq}_${nr}`;
+        const dist = Math.max(Math.abs(nq), Math.abs(nr), Math.abs(-nq - nr));
 
-        if (!isWater) {
-          const landTypes: HexType[] = ['wood', 'clay', 'sheep', 'wheat', 'ore'];
-          type = landTypes[Math.floor(Math.random() * landTypes.length)];
-          diceNum = drawNumberToken(board);
-          letter = null;
+        if (dist <= 6 && !existingCoords.has(key)) {
+          const entry = candidates.get(key);
+          if (entry) {
+            entry.count++;
+          } else {
+            candidates.set(key, { q: nq, r: nr, count: 1 });
+          }
         }
+      }
+    }
 
-        const newHex = addHexToBoard(board, nq, nr, type, letter, diceNum, false);
-        if (type === 'water') {
-          assignHarborToWaterHex(board, newHex);
-        }
-        newlyDiscovered.push(newHex);
+    for (const [key, cand] of candidates.entries()) {
+      if (existingCoords.has(key)) continue;
+
+      // Check if candidate is near newly discovered frontier
+      const isNearFrontier = newlyDiscovered.some(nh => {
+        const dq = Math.abs(nh.q - cand.q);
+        const dr = Math.abs(nh.r - cand.r);
+        const ds = Math.abs((-nh.q - nh.r) - (-cand.q - cand.r));
+        return Math.max(dq, dr, ds) <= 1;
+      });
+
+      // Fill if it's an interior hole (>= 3 neighbors) or a frontier gap (>= 2 neighbors near frontier)
+      if (cand.count >= 3 || (cand.count >= 2 && isNearFrontier)) {
+        createHex(cand.q, cand.r);
+        holeFilled = true;
       }
     }
   }

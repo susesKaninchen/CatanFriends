@@ -94,8 +94,8 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
 
   if (!roomState) {
     return (
-      <div className="min-h-screen bg-[#0d0906] flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-[#19110a]/95 border-2 border-[#5a3818] rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.9)] p-6 sm:p-8 space-y-6 text-[#e8d5b5]">
+      <div className="min-h-screen bg-[#1c120a] bg-gradient-to-b from-[#2a1b10] via-[#1c120a] to-[#120b06] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-[#22150c]/95 border-2 border-[#73451e] rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.9)] p-6 sm:p-8 space-y-6 text-[#e8d5b5]">
           <div className="text-center space-y-2">
             <div className="flex justify-center mb-3">
               <img
@@ -114,7 +114,7 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
               <button
                 type="button"
                 onClick={onOpenRulebook}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2a1a0f] hover:bg-[#3d2616] border border-[#7a4e22] text-[#d4af37] text-xs font-bold transition-all shadow"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#362012] hover:bg-[#4a2e1a] border border-[#8a5726] text-[#d4af37] text-xs font-bold transition-all shadow"
               >
                 <BookOpen className="w-3.5 h-3.5" />
                 <span>Spielanleitung & Regeln öffnen</span>
@@ -130,7 +130,7 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#a8825c] mb-1.5 font-['Cinzel',serif]">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#bd966f] mb-1.5 font-['Cinzel',serif]">
                 Dein Name
               </label>
               <input
@@ -138,12 +138,12 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
                 value={playerName}
                 onChange={e => setPlayerName(e.target.value)}
                 maxLength={18}
-                className="w-full bg-[#100b06] border border-[#4a2e16] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 font-sans"
+                className="w-full bg-[#1c1109] border border-[#5c3718] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 font-sans"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#a8825c] mb-1.5 font-['Cinzel',serif]">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#bd966f] mb-1.5 font-['Cinzel',serif]">
                 Farbe wählen
               </label>
               <div className="grid grid-cols-4 gap-2">
@@ -155,7 +155,7 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
                     className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 ${
                       selectedColor === c.id
                         ? `${c.bg} text-white border-white shadow-lg scale-105`
-                        : 'bg-[#120b06] border-[#3b2311] text-[#9c7e65] hover:border-[#6b4220]'
+                        : 'bg-[#1c1109] border-[#4a2a14] text-[#b3957a] hover:border-[#7a4d25]'
                     }`}
                   >
                     <div className={`w-2.5 h-2.5 rounded-full ${c.bg}`} />
@@ -166,7 +166,7 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#a8825c] mb-1.5 font-['Cinzel',serif]">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#bd966f] mb-1.5 font-['Cinzel',serif]">
                 Charakter-Rolle
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -177,8 +177,8 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
                     onClick={() => setSelectedRole(r.id)}
                     className={`p-2.5 rounded-xl border text-left transition-all space-y-1 ${
                       selectedRole === r.id
-                        ? 'bg-[#2b1b0d] border-amber-500 shadow-md ring-1 ring-amber-500/40'
-                        : 'bg-[#100b06] border-[#3b2311] text-[#9c7e65] hover:border-[#6b4220]'
+                        ? 'bg-[#341d0e] border-amber-500 shadow-md ring-1 ring-amber-500/40'
+                        : 'bg-[#1c1109] border-[#4a2a14] text-[#b3957a] hover:border-[#7a4d25]'
                     }`}
                   >
                     <div className="flex items-center gap-1.5">
@@ -210,12 +210,12 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
                   value={joinCode}
                   onChange={e => setJoinCode(e.target.value.toUpperCase())}
                   placeholder="CODE (z.B. CATN)"
-                  className="w-1/2 bg-[#100b06] border border-[#4a2e16] rounded-xl px-3 py-2.5 text-center tracking-widest font-mono text-sm text-white placeholder-[#5c3e27] focus:outline-none focus:border-amber-500 uppercase"
+                  className="w-1/2 bg-[#1c1109] border border-[#5c3718] rounded-xl px-3 py-2.5 text-center tracking-widest font-mono text-sm text-white placeholder-[#735237] focus:outline-none focus:border-amber-500 uppercase"
                 />
                 <button
                   type="button"
                   onClick={handleJoin}
-                  className="w-1/2 bg-[#25170d] hover:bg-[#382114] border border-[#6b4220] text-[#f2e6d6] font-bold py-2.5 px-3 rounded-xl transition-all text-xs font-['MedievalSharp',serif]"
+                  className="w-1/2 bg-[#2d1a0e] hover:bg-[#422614] border border-[#7a4d25] text-[#f7eee1] font-bold py-2.5 px-3 rounded-xl transition-all text-xs font-['MedievalSharp',serif]"
                 >
                   Beitreten
                 </button>
@@ -228,9 +228,9 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
   }
 
   return (
-    <div className="min-h-screen bg-[#0d0906] flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-[#19110a]/95 border-2 border-[#5a3818] rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.9)] p-6 sm:p-8 space-y-6 text-[#e8d5b5]">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#472c14] pb-4">
+    <div className="min-h-screen bg-[#1c120a] bg-gradient-to-b from-[#2a1b10] via-[#1c120a] to-[#120b06] flex items-center justify-center p-4">
+      <div className="max-w-2xl w-full bg-[#22150c]/95 border-2 border-[#73451e] rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.9)] p-6 sm:p-8 space-y-6 text-[#e8d5b5]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#5c3718] pb-4">
           <div className="flex items-center gap-3">
             <img
               src="/assets/logo.jpg"
@@ -242,7 +242,7 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
                 Kooperative Spielrunde
               </span>
               <h1 className="text-2xl font-extrabold text-[#fff4e0] flex items-center gap-2 font-['MedievalSharp',serif]">
-                Raumcode: <span className="font-mono text-amber-400 bg-[#2b1b0d] px-3 py-1 rounded-lg border border-amber-600/50">{roomState.roomCode}</span>
+                Raumcode: <span className="font-mono text-amber-400 bg-[#341d0e] px-3 py-1 rounded-lg border border-amber-600/50">{roomState.roomCode}</span>
               </h1>
             </div>
           </div>
@@ -251,7 +251,7 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
               <button
                 type="button"
                 onClick={onOpenRulebook}
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#2a1a0f] hover:bg-[#3d2616] border border-[#7a4e22] rounded-xl text-xs font-bold text-[#d4af37] transition-all"
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#362012] hover:bg-[#4a2e1a] border border-[#8a5726] rounded-xl text-xs font-bold text-[#d4af37] transition-all"
               >
                 <BookOpen className="w-4 h-4" />
                 Regeln
@@ -261,7 +261,7 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
               <button
                 type="button"
                 onClick={handleAddBot}
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#25170d] hover:bg-[#382114] border border-[#6b4220] rounded-xl text-xs font-bold text-sky-300 transition-all font-sans"
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#2d1a0e] hover:bg-[#422614] border border-[#7a4d25] rounded-xl text-xs font-bold text-sky-300 transition-all font-sans"
               >
                 <Bot className="w-4 h-4 text-sky-400" />
                 + Bot hinzufügen
@@ -277,7 +277,7 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
         )}
 
         <div className="space-y-3">
-          <h2 className="text-xs font-semibold text-[#a8825c] uppercase tracking-wider font-['Cinzel',serif]">
+          <h2 className="text-xs font-semibold text-[#bd966f] uppercase tracking-wider font-['Cinzel',serif]">
             Spieler in der Lobby ({roomState.players.length}/4)
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -291,8 +291,8 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
                   key={p.id}
                   className={`p-4 rounded-xl border flex items-center justify-between transition-all ${
                     isMe
-                      ? 'bg-[#2b1b0d] border-amber-500/80 ring-1 ring-amber-500/30'
-                      : 'bg-[#120b06] border-[#3b2311]'
+                      ? 'bg-[#341d0e] border-amber-500/80 ring-1 ring-amber-500/30'
+                      : 'bg-[#1c1109] border-[#4a2a14]'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -313,7 +313,7 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-[#a8825c] mt-0.5 font-sans">
+                      <div className="flex items-center gap-1 text-xs text-[#bd966f] mt-0.5 font-sans">
                         {roleInfo?.icon}
                         <span>{roleInfo?.name}</span>
                       </div>
@@ -326,7 +326,7 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
                         <CheckCircle2 className="w-3.5 h-3.5" /> Bereit
                       </span>
                     ) : (
-                      <span className="text-[#6d5543] text-xs italic font-sans">
+                      <span className="text-[#8e6e54] text-xs italic font-sans">
                         Wartet...
                       </span>
                     )}
@@ -337,24 +337,24 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
           </div>
         </div>
 
-        <div className="p-4 bg-[#120b06] rounded-xl border border-[#472c14] space-y-2">
+        <div className="p-4 bg-[#1c1109] rounded-xl border border-[#5c3718] space-y-2">
           <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5 font-['Cinzel',serif]">
             <span>🛡️</span> Team-Missionsregeln
           </h3>
-          <p className="text-xs text-[#c9b59e] leading-relaxed font-sans">
+          <p className="text-xs text-[#dec2a6] leading-relaxed font-sans">
             Gemeinsam gegen den Räuber! Erfüllt die 4 ausliegenden Quests, bevor ihre D6-Timer ablaufen.
             Nutzt <strong>Fremdbau</strong>, um Mitspielern Gebäude mit euren Rohstoffen zu errichten.
             Bei 4 abgelaufenen Quests verliert das Team sofort!
           </p>
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-[#472c14]">
+        <div className="flex items-center justify-between pt-2 border-t border-[#5c3718]">
           <button
             type="button"
             onClick={handleToggleReady}
             className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all font-['MedievalSharp',serif] ${
               myPlayer?.isReady
-                ? 'bg-[#25170d] hover:bg-[#382114] text-[#d4af37] border border-[#6b4220]'
+                ? 'bg-[#2d1a0e] hover:bg-[#422614] text-[#d4af37] border border-[#7a4d25]'
                 : 'bg-emerald-700 hover:bg-emerald-600 text-white shadow-lg'
             }`}
           >

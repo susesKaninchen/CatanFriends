@@ -268,7 +268,7 @@ export const Board: React.FC<BoardProps> = ({
 
   return (
     <div
-      className="relative w-full max-w-3xl mx-auto aspect-[1.12] bg-[#100c08] rounded-2xl border-2 border-[#5a3818] p-2 shadow-[0_8px_30px_rgba(0,0,0,0.8)] flex items-center justify-center overflow-hidden select-none"
+      className="relative w-full max-w-3xl mx-auto aspect-[1.12] bg-[#1f140c] rounded-2xl border-2 border-[#7a4920] p-2 shadow-[0_8px_30px_rgba(0,0,0,0.6)] flex items-center justify-center overflow-hidden select-none"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
@@ -277,11 +277,11 @@ export const Board: React.FC<BoardProps> = ({
       style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
     >
       {/* Outer wooden vignette */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#1b120a]/40 via-transparent to-[#0a0705]/60 pointer-events-none z-10" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#2a1b10]/20 via-transparent to-[#140d07]/35 pointer-events-none z-10" />
 
       {/* Robber Placement Floating Banner */}
       {isRobberPlacementPhase && (
-        <div className="absolute top-3 left-3 bg-[#2d0c07]/95 backdrop-blur border-2 border-rose-500 rounded-xl px-3.5 py-2 text-xs text-rose-100 flex items-center gap-2.5 shadow-2xl z-20 animate-pulse font-serif pointer-events-none">
+        <div className="absolute top-3 left-3 bg-[#3d110a]/95 backdrop-blur border-2 border-rose-500 rounded-xl px-3.5 py-2 text-xs text-rose-100 flex items-center gap-2.5 shadow-2xl z-20 animate-pulse font-serif pointer-events-none">
           <span className="text-xl">🦹</span>
           <div>
             <span className="font-bold text-amber-300 block font-['MedievalSharp',serif]">Räuber versetzen!</span>
@@ -291,11 +291,11 @@ export const Board: React.FC<BoardProps> = ({
       )}
 
       {/* Interactive Zoom & Pan Controls */}
-      <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-[#1e130b]/95 backdrop-blur border border-[#855829] rounded-xl p-1 shadow-xl z-20">
+      <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-[#26170d]/95 backdrop-blur border border-[#8a5324] rounded-xl p-1 shadow-xl z-20">
         <button
           type="button"
           onClick={handleZoomIn}
-          className="w-7 h-7 flex items-center justify-center rounded-lg bg-[#2a1a0f] hover:bg-[#3d2616] text-amber-300 border border-[#6b4220] transition-colors"
+          className="w-7 h-7 flex items-center justify-center rounded-lg bg-[#382011] hover:bg-[#4d2d18] text-amber-200 border border-[#7a481e] transition-colors"
           title="Vergrößern (Mausrad hoch)"
         >
           <ZoomIn className="w-4 h-4" />
@@ -303,7 +303,7 @@ export const Board: React.FC<BoardProps> = ({
         <button
           type="button"
           onClick={handleZoomOut}
-          className="w-7 h-7 flex items-center justify-center rounded-lg bg-[#2a1a0f] hover:bg-[#3d2616] text-amber-300 border border-[#6b4220] transition-colors"
+          className="w-7 h-7 flex items-center justify-center rounded-lg bg-[#382011] hover:bg-[#4d2d18] text-amber-200 border border-[#7a481e] transition-colors"
           title="Verkleinern (Mausrad runter)"
         >
           <ZoomOut className="w-4 h-4" />
@@ -311,7 +311,7 @@ export const Board: React.FC<BoardProps> = ({
         <button
           type="button"
           onClick={handleResetView}
-          className="w-7 h-7 flex items-center justify-center rounded-lg bg-[#2a1a0f] hover:bg-[#3d2616] text-[#c9b59e] hover:text-white border border-[#6b4220] transition-colors"
+          className="w-7 h-7 flex items-center justify-center rounded-lg bg-[#382011] hover:bg-[#4d2d18] text-[#e0cfbb] hover:text-white border border-[#7a481e] transition-colors"
           title="Ansicht zurücksetzen (Zentrieren)"
         >
           <RotateCcw className="w-3.5 h-3.5" />
@@ -445,7 +445,7 @@ export const Board: React.FC<BoardProps> = ({
                   <polygon
                     points={pointsStr}
                     fill="none"
-                    stroke={canPlaceRobberHere ? '#ef4444' : '#3a2012'}
+                    stroke={canPlaceRobberHere ? '#ef4444' : '#4d2b18'}
                     strokeWidth={canPlaceRobberHere ? 3.5 : 2}
                   />
                 )}
@@ -467,14 +467,13 @@ export const Board: React.FC<BoardProps> = ({
                   <g
                     transform={`translate(${center.x}, ${center.y + 4})`}
                     filter="url(#catan-shadow)"
-                    className={isHarvesting ? 'animate-harvest-token' : undefined}
                   >
                     {/* Harvest golden aura around number token */}
                     {isHarvesting && (
                       <circle
                         r="20"
                         fill="#fbbf24"
-                        fillOpacity="0.3"
+                        fillOpacity="0.35"
                         stroke="#fef08a"
                         strokeWidth="1.5"
                         className="animate-ping"
@@ -486,7 +485,8 @@ export const Board: React.FC<BoardProps> = ({
                       r="16.5"
                       fill="#2e1a0e"
                       stroke={isHarvesting ? '#fbbf24' : '#855829'}
-                      strokeWidth={isHarvesting ? 2 : 1.5}
+                      strokeWidth={isHarvesting ? 2.5 : 1.5}
+                      filter={isHarvesting ? 'url(#catan-gold-glow)' : undefined}
                     />
 
                     {/* Antique parchment inner circular token */}

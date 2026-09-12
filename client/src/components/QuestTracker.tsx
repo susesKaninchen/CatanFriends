@@ -69,9 +69,9 @@ export const QuestTracker: React.FC<QuestTrackerProps> = ({
   const totalTeamPoints = solvedCount + bonusPoints;
 
   return (
-    <div className="bg-[#19110a]/95 border-2 border-[#5a3818] rounded-2xl p-4 shadow-2xl space-y-4 text-[#e8d5b5]">
+    <div className="bg-[#22150c]/95 border-2 border-[#73451e] rounded-2xl p-4 shadow-2xl space-y-4 text-[#e8d5b5]">
       {/* Top Bar: Progress & Skull Counter */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#472c14] pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#5c3718] pb-3">
         <div className="flex items-center gap-2">
           <Trophy className="w-5 h-5 text-[#d4af37]" />
           <div className="flex items-center gap-2 flex-wrap">
@@ -79,7 +79,7 @@ export const QuestTracker: React.FC<QuestTrackerProps> = ({
               Team-Siegpunkte: <span className="text-amber-400 font-mono">{totalTeamPoints}</span> / {targetToWin}
             </span>
             <div className="flex items-center gap-1.5 text-[11px]">
-              <span className="text-[#a8825c] font-sans">({solvedCount} Quests</span>
+              <span className="text-[#bd966f] font-sans">({solvedCount} Quests</span>
               {teamHasLongestRoad && (
                 <span className="bg-amber-950 text-amber-300 border border-amber-600/60 px-1.5 py-0.5 rounded font-sans font-bold">
                   +1 Straße
@@ -90,14 +90,14 @@ export const QuestTracker: React.FC<QuestTrackerProps> = ({
                   +1 Ritter
                 </span>
               )}
-              <span className="text-[#a8825c] font-sans">)</span>
+              <span className="text-[#bd966f] font-sans">)</span>
             </div>
           </div>
         </div>
 
         {/* Failed Quests Skull Tracker (Defeat at 4) */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-[#a8825c] uppercase tracking-wider font-['Cinzel',serif]">
+          <span className="text-xs font-semibold text-[#bd966f] uppercase tracking-wider font-['Cinzel',serif]">
             Fehlschläge (max. 4):
           </span>
           <div className="flex gap-1.5">
@@ -109,7 +109,7 @@ export const QuestTracker: React.FC<QuestTrackerProps> = ({
                   className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all ${
                     hasFailed
                       ? 'bg-rose-950 border-rose-600 text-rose-400 shadow-md animate-bounce'
-                      : 'bg-[#100b06] border-[#3b2311] text-[#5c3e27]'
+                      : 'bg-[#1c1109] border-[#4a2a14] text-[#735237]'
                   }`}
                   title={hasFailed ? 'Quest gescheitert!' : 'Slot intakt'}
                 >
@@ -129,7 +129,7 @@ export const QuestTracker: React.FC<QuestTrackerProps> = ({
           return (
             <div
               key={slot.slotIndex}
-              className={`bg-[#120b06] border ${tierStyle.border} rounded-xl p-3 flex flex-col justify-between space-y-2.5 transition-all relative overflow-hidden`}
+              className={`bg-[#1c1109] border ${tierStyle.border} rounded-xl p-3 flex flex-col justify-between space-y-2.5 transition-all relative overflow-hidden`}
             >
               {/* Header: Slot title, Tier badge, D6 Timer */}
               <div className="flex items-start justify-between gap-2">
@@ -154,10 +154,10 @@ export const QuestTracker: React.FC<QuestTrackerProps> = ({
               </p>
 
               {/* Progress / Deposit Area */}
-              <div className="pt-2 border-t border-[#2b170d] space-y-2">
+              <div className="pt-2 border-t border-[#3d2212] space-y-2">
                 {slot.type === 'DELIVER_RESOURCES' && slot.requiredResources && (
                   <div className="space-y-1.5">
-                    <div className="text-[10px] uppercase font-semibold text-[#a8825c] flex items-center justify-between font-serif">
+                    <div className="text-[10px] uppercase font-semibold text-[#bd966f] flex items-center justify-between font-serif">
                       <span>Bedarf einlagern:</span>
                       <span className="text-[9px] text-amber-300 font-sans font-semibold">Ziel: +1 Siegpunkt</span>
                     </div>
@@ -201,11 +201,11 @@ export const QuestTracker: React.FC<QuestTrackerProps> = ({
                 {/* Road / Settlement Target progress */}
                 {slot.targetCount && (
                   <div className="space-y-1">
-                    <div className="flex justify-between text-[10px] text-[#a8825c] font-semibold">
+                    <div className="flex justify-between text-[10px] text-[#bd966f] font-semibold">
                       <span>Fortschritt:</span>
                       <span className="text-white font-mono">{slot.currentCount} / {slot.targetCount}</span>
                     </div>
-                    <div className="w-full bg-[#201309] rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-[#2b180d] rounded-full h-1.5 overflow-hidden">
                       <div
                         className="bg-amber-500 h-full rounded-full transition-all duration-500"
                         style={{ width: `${Math.min(100, (slot.currentCount / slot.targetCount) * 100)}%` }}

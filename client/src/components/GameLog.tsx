@@ -19,13 +19,13 @@ export const GameLog: React.FC<GameLogProps> = ({ logs }) => {
       case 'alert':
         return <ShieldAlert className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />;
       default:
-        return <Bell className="w-3.5 h-3.5 text-[#a8825c] shrink-0 mt-0.5" />;
+        return <Bell className="w-3.5 h-3.5 text-[#bd966f] shrink-0 mt-0.5" />;
     }
   };
 
   return (
-    <div className="bg-[#19110a]/95 border-2 border-[#5a3818] rounded-2xl p-4 shadow-2xl space-y-3 flex flex-col h-64 text-[#e8d5b5]">
-      <div className="flex items-center gap-2 border-b border-[#472c14] pb-2">
+    <div className="bg-[#22150c]/95 border-2 border-[#73451e] rounded-2xl p-4 shadow-2xl space-y-3 flex flex-col h-64 text-[#e8d5b5]">
+      <div className="flex items-center gap-2 border-b border-[#5c3718] pb-2">
         <ScrollText className="w-4 h-4 text-[#d4af37]" />
         <h3 className="font-bold text-xs uppercase tracking-wider text-[#dfcfba] font-['Cinzel',serif]">
           Insel-Chronik (Ereignisse)
@@ -41,7 +41,7 @@ export const GameLog: React.FC<GameLogProps> = ({ logs }) => {
                 ? 'bg-rose-950/70 border-rose-800 text-rose-200'
                 : entry.type === 'quest'
                 ? 'bg-emerald-950/70 border-emerald-800 text-emerald-200 font-semibold'
-                : 'bg-[#100b06] border-[#3b2311] text-[#c9b59e]'
+                : 'bg-[#1c1109] border-[#4a2a14] text-[#dec2a6]'
             }`}
           >
             {getLogIcon(entry.type)}

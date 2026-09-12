@@ -245,9 +245,9 @@ export const App: React.FC = () => {
   const isMyTurn = activePlayer.id === myPlayerId;
 
   return (
-    <div className="min-h-screen bg-[#0e0a07] text-[#e8d5b5] p-2 sm:p-4 md:p-6 flex flex-col justify-between selection:bg-amber-900 selection:text-amber-100">
+    <div className="min-h-screen bg-[#1e150e] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#2b1c11] via-[#1a1109] to-[#120b06] text-[#f7ecd9] p-2 sm:p-4 md:p-6 flex flex-col justify-between selection:bg-amber-800 selection:text-amber-100">
       {/* Top Navigation Bar with Medieval Styling */}
-      <header className="max-w-7xl w-full mx-auto flex flex-wrap items-center justify-between gap-4 pb-4 border-b-2 border-[#5a3818]">
+      <header className="max-w-7xl w-full mx-auto flex flex-wrap items-center justify-between gap-4 pb-4 border-b-2 border-[#7a4b22]">
         <div className="flex items-center gap-3">
           <img
             src="/assets/logo.jpg"
@@ -255,10 +255,10 @@ export const App: React.FC = () => {
             className="w-11 h-11 rounded-xl border border-[#d4af37] shadow-md object-cover hover:scale-105 transition-transform"
           />
           <div>
-            <h1 className="text-xl font-bold text-[#fff4e0] font-['MedievalSharp',serif] tracking-wider drop-shadow">
+            <h1 className="text-xl font-bold text-[#fff7e6] font-['MedievalSharp',serif] tracking-wider drop-shadow">
               Catan Friends
             </h1>
-            <span className="text-[11px] text-[#d4af37] font-semibold uppercase tracking-wider font-['Cinzel',serif]">
+            <span className="text-[11px] text-[#e5be49] font-semibold uppercase tracking-wider font-['Cinzel',serif]">
               Kooperatives Teamspiel
             </span>
           </div>
@@ -269,17 +269,17 @@ export const App: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsRulebookOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2a1a0f] hover:bg-[#3d2616] border border-[#7a4e22] text-[#d4af37] transition-all shadow hover:shadow-md"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#341e11] hover:bg-[#472a18] border border-[#8a5626] text-[#f0cb5a] transition-all shadow hover:shadow-md"
             title="Spielanleitung ansehen"
           >
             <BookOpen className="w-4 h-4" />
             <span className="font-['MedievalSharp',serif]">Anleitung & Regeln</span>
           </button>
 
-          <div className="bg-[#19110a] border border-[#5a3818] px-3 py-1.5 rounded-xl text-[#dfcfba] font-serif">
-            Raum: <span className="font-mono text-amber-400 font-extrabold">{roomState.roomCode}</span>
+          <div className="bg-[#28180d] border border-[#6b3f1b] px-3 py-1.5 rounded-xl text-[#f2e2ce] font-serif shadow-sm">
+            Raum: <span className="font-mono text-amber-300 font-extrabold">{roomState.roomCode}</span>
           </div>
-          <div className="bg-[#19110a] border border-[#5a3818] px-3 py-1.5 rounded-xl text-[#dfcfba] font-serif">
+          <div className="bg-[#28180d] border border-[#6b3f1b] px-3 py-1.5 rounded-xl text-[#f2e2ce] font-serif shadow-sm">
             Runde: <span className="text-white font-extrabold font-mono">{roomState.roundNumber}</span>
           </div>
         </div>

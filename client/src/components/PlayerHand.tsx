@@ -91,13 +91,13 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
   const citiesLeft = myPlayer.remainingPieces?.cities ?? 4;
 
   return (
-    <div className="bg-[#19110a]/95 border-2 border-[#5a3818] rounded-2xl p-4 shadow-2xl space-y-4 text-[#e8d5b5]">
+    <div className="bg-[#22150c]/95 border-2 border-[#73451e] rounded-2xl p-4 shadow-2xl space-y-4 text-[#e8d5b5]">
       {/* Hand Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#472c14] pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#5c3718] pb-3">
         <div className="flex items-center gap-2">
           <span className="font-['MedievalSharp',serif] font-bold text-base text-[#f7ecd9]">Deine Handkarten</span>
           <span className={`text-xs px-2.5 py-0.5 rounded-full font-mono font-bold ${
-            totalCards > 7 ? 'bg-rose-950 text-rose-300 border border-rose-700 animate-pulse' : 'bg-[#2b180d] text-[#e0cfbb] border border-[#52341b]'
+            totalCards > 7 ? 'bg-rose-950 text-rose-300 border border-rose-700 animate-pulse' : 'bg-[#2b180d] text-[#e0cfbb] border border-[#6b4220]'
           }`}>
             {totalCards} Karte(n) {totalCards > 7 && '(Gefahr bei 7!)'}
           </span>
@@ -105,13 +105,13 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
 
         {/* Player Piece Stock */}
         <div className="flex items-center gap-2 text-xs font-mono">
-          <span className="bg-[#120b06] border border-[#52341b] px-2 py-1 rounded-lg text-amber-300" title="Verbleibende Straßen im Vorrat">
+          <span className="bg-[#1c1109] border border-[#6b4220] px-2 py-1 rounded-lg text-amber-300" title="Verbleibende Straßen im Vorrat">
             🛣️ {roadsLeft}/30
           </span>
-          <span className="bg-[#120b06] border border-[#52341b] px-2 py-1 rounded-lg text-emerald-300" title="Verbleibende Siedlungen">
+          <span className="bg-[#1c1109] border border-[#6b4220] px-2 py-1 rounded-lg text-emerald-300" title="Verbleibende Siedlungen">
             🏠 {settlementsLeft}/5
           </span>
-          <span className="bg-[#120b06] border border-[#52341b] px-2 py-1 rounded-lg text-sky-300" title="Verbleibende Städte">
+          <span className="bg-[#1c1109] border border-[#6b4220] px-2 py-1 rounded-lg text-sky-300" title="Verbleibende Städte">
             🏰 {citiesLeft}/4
           </span>
         </div>
@@ -122,7 +122,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
             className={`px-2 py-1 rounded-lg border font-semibold flex items-center gap-1 ${
               teamHasLongestRoad
                 ? 'bg-amber-950/80 text-amber-300 border-amber-600/60 shadow animate-pulse'
-                : 'bg-[#120b06] text-[#735843] border-[#311c0e]'
+                : 'bg-[#1c1109] text-[#8e6e54] border-[#422512]'
             }`}
             title={
               teamHasLongestRoad
@@ -138,7 +138,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
             className={`px-2 py-1 rounded-lg border font-semibold flex items-center gap-1 ${
               teamHasLargestArmy
                 ? 'bg-rose-950/80 text-rose-300 border-rose-600/60 shadow animate-pulse'
-                : 'bg-[#120b06] text-[#735843] border-[#311c0e]'
+                : 'bg-[#1c1109] text-[#8e6e54] border-[#422512]'
             }`}
             title={
               teamHasLargestArmy
@@ -196,7 +196,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
               <div className="flex-1" />
 
               {/* Bottom Card Ribbon with Name and Count Badge */}
-              <div className="relative z-10 w-full flex items-center justify-between bg-[#19110a]/92 backdrop-blur-md px-2 py-1.5 rounded-xl border border-amber-500/50 shadow-lg">
+              <div className="relative z-10 w-full flex items-center justify-between bg-[#22150c]/95 backdrop-blur-md px-2 py-1.5 rounded-xl border border-amber-500/50 shadow-lg">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <ResourceIcon type={res} className="w-4 h-4 shadow shrink-0" />
                   <span className="text-xs font-black text-[#fff4e0] font-['MedievalSharp',serif] tracking-wide truncate">
@@ -206,7 +206,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
                 <span className={`font-mono font-black text-xs px-2 py-0.5 rounded-lg border shrink-0 ${
                   count > 0
                     ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-slate-950 border-amber-300 shadow'
-                    : 'bg-[#19110a] text-[#806853] border-[#3e2612]'
+                    : 'bg-[#22150c] text-[#91765f] border-[#4a2e16]'
                 }`}>
                   {count}x
                 </span>
@@ -217,8 +217,8 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
       </div>
 
       {/* Teammates Summary Bar */}
-      <div className="pt-2 border-t border-[#472c14]">
-        <span className="text-[10px] uppercase font-bold text-[#a8825c] block mb-2 tracking-wider font-['Cinzel',serif]">
+      <div className="pt-2 border-t border-[#5c3718]">
+        <span className="text-[10px] uppercase font-bold text-[#bd966f] block mb-2 tracking-wider font-['Cinzel',serif]">
           Team-Übersicht & Rohstoffe
         </span>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -231,7 +231,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
             return (
               <div
                 key={teammate.id}
-                className="bg-[#120b06] border border-[#4a2e16] rounded-xl p-2.5 flex items-center justify-between text-xs"
+                className="bg-[#1c1109] border border-[#5c3718] rounded-xl p-2.5 flex items-center justify-between text-xs"
               >
                 <div className="flex items-center gap-2">
                   <div className={`w-3.5 h-3.5 rounded-full shadow ${
@@ -241,7 +241,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
                   }`} />
                   <div>
                     <span className="font-bold text-[#f2e6d6] block leading-tight font-['MedievalSharp',serif]">{teammate.name}</span>
-                    <span className="text-[10px] text-[#a8825c] flex items-center gap-1">
+                    <span className="text-[10px] text-[#bd966f] flex items-center gap-1">
                       {ROLE_ICONS[teammate.role]}
                       {teammate.role}
                     </span>
@@ -259,7 +259,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
                     <span className="flex items-center gap-0.5"><ResourceIcon type="wheat" className="w-3 h-3" />{teammate.resources.wheat}</span>
                     <span className="flex items-center gap-0.5"><ResourceIcon type="ore" className="w-3 h-3" />{teammate.resources.ore}</span>
                   </div>
-                  <span className="text-[9px] text-[#a8825c] font-mono block">
+                  <span className="text-[9px] text-[#bd966f] font-mono block">
                     Bau: {tRoads}S / {tSettlements}H / {tCities}C
                   </span>
                 </div>

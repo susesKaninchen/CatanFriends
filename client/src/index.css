@@ -3,16 +3,16 @@
 @layer base {
   body {
     font-family: 'Spectral', Georgia, serif;
-    background-color: #160e09;
+    background-color: #24170f;
     background-image: 
-      radial-gradient(circle at 50% 20%, rgba(67, 40, 24, 0.4) 0%, rgba(22, 14, 9, 0.95) 75%),
+      radial-gradient(circle at 50% 20%, rgba(105, 66, 38, 0.45) 0%, rgba(34, 21, 13, 0.92) 80%),
       url('/assets/parchment.jpg');
     background-blend-mode: multiply;
     background-size: cover;
     background-attachment: fixed;
     margin: 0;
     padding: 0;
-    color: #f5eedb;
+    color: #f7eedb;
   }
 
   h1, h2, h3, h4, .font-title {
@@ -152,21 +152,6 @@
 
 .animate-harvest-wave {
   animation: harvestWave 2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
-}
-
-@keyframes harvestPulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.12);
-  }
-}
-
-.animate-harvest-token {
-  transform-origin: center;
-  transform-box: fill-box;
-  animation: harvestPulse 1.8s ease-in-out infinite;
 }
 
 @keyframes harvestBadgeBob {
