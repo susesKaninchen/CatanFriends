@@ -2,6 +2,7 @@ import React from 'react';
 import { QuestSlot, ResourceType, ResourceCount } from '../types';
 import { Trophy, Skull, Plus } from 'lucide-react';
 import { OreIcon } from './OreIcon';
+import { ResourceIcon } from './ResourceIcon';
 
 interface QuestTrackerProps {
   questSlots: QuestSlot[];
@@ -14,11 +15,11 @@ interface QuestTrackerProps {
 }
 
 const RESOURCE_LABELS: { [key in ResourceType]: { name: string; icon: React.ReactNode; bg: string; text: string } } = {
-  wood: { name: 'Holz', icon: <span>🌲</span>, bg: 'bg-[#142617]/80 border-emerald-700/60', text: 'text-emerald-300' },
-  clay: { name: 'Lehm', icon: <span>🧱</span>, bg: 'bg-[#31160d]/80 border-amber-700/60', text: 'text-amber-300' },
-  sheep: { name: 'Wolle', icon: <span>🐑</span>, bg: 'bg-[#222b10]/80 border-lime-700/60', text: 'text-lime-300' },
-  wheat: { name: 'Weizen', icon: <span>🌾</span>, bg: 'bg-[#34270b]/80 border-yellow-700/60', text: 'text-amber-200' },
-  ore: { name: 'Erz', icon: <OreIcon className="w-3.5 h-3.5 inline-block" />, bg: 'bg-[#181a24]/80 border-slate-600/60', text: 'text-slate-200' }
+  wood: { name: 'Holz', icon: <ResourceIcon type="wood" className="w-4 h-4 inline-block" />, bg: 'bg-[#142617]/80 border-emerald-700/60', text: 'text-emerald-300' },
+  clay: { name: 'Lehm', icon: <ResourceIcon type="clay" className="w-4 h-4 inline-block" />, bg: 'bg-[#31160d]/80 border-amber-700/60', text: 'text-amber-300' },
+  sheep: { name: 'Wolle', icon: <ResourceIcon type="sheep" className="w-4 h-4 inline-block" />, bg: 'bg-[#222b10]/80 border-lime-700/60', text: 'text-lime-300' },
+  wheat: { name: 'Weizen', icon: <ResourceIcon type="wheat" className="w-4 h-4 inline-block" />, bg: 'bg-[#34270b]/80 border-yellow-700/60', text: 'text-amber-200' },
+  ore: { name: 'Erz', icon: <ResourceIcon type="ore" className="w-4 h-4 inline-block" />, bg: 'bg-[#181a24]/80 border-slate-600/60', text: 'text-slate-200' }
 };
 
 const TIER_COLORS: { [tier: number]: { badge: string; border: string } } = {

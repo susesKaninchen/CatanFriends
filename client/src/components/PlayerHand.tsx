@@ -2,6 +2,7 @@ import React from 'react';
 import { Player, ResourceType, PlayerRole } from '../types';
 import { Compass, Hammer, Pickaxe, Shield, Award } from 'lucide-react';
 import { OreIcon } from './OreIcon';
+import { ResourceIcon } from './ResourceIcon';
 
 interface PlayerHandProps {
   myPlayer: Player;
@@ -24,48 +25,48 @@ interface ResourceCardConfig {
 const RESOURCE_CONFIG: { [key in ResourceType]: ResourceCardConfig } = {
   wood: {
     name: 'Holz',
-    renderIcon: (size = 'text-3xl') => <span className={size}>🌲</span>,
+    renderIcon: (size = 'w-9 h-9') => <ResourceIcon type="wood" className={size} />,
     bgGradient: 'from-[#0f2413] via-[#1a3821] to-[#0c1c0f]',
     borderColor: 'border-[#2d6a3f]',
     textColor: 'text-emerald-200',
     accentBadge: 'bg-emerald-950/90 text-emerald-300 border-emerald-600/60',
-    cornerIcon: <span className="text-[11px]">🌲</span>
+    cornerIcon: <ResourceIcon type="wood" className="w-3.5 h-3.5" />
   },
   clay: {
     name: 'Lehm',
-    renderIcon: (size = 'text-3xl') => <span className={size}>🧱</span>,
+    renderIcon: (size = 'w-9 h-9') => <ResourceIcon type="clay" className={size} />,
     bgGradient: 'from-[#2e130a] via-[#451f12] to-[#240e06]',
     borderColor: 'border-[#8f3d1b]',
     textColor: 'text-amber-200',
     accentBadge: 'bg-amber-950/90 text-amber-300 border-amber-600/60',
-    cornerIcon: <span className="text-[11px]">🧱</span>
+    cornerIcon: <ResourceIcon type="clay" className="w-3.5 h-3.5" />
   },
   sheep: {
     name: 'Wolle',
-    renderIcon: (size = 'text-3xl') => <span className={size}>🐑</span>,
+    renderIcon: (size = 'w-9 h-9') => <ResourceIcon type="sheep" className={size} />,
     bgGradient: 'from-[#1b260c] via-[#2d3e15] to-[#141d08]',
     borderColor: 'border-[#5b7e28]',
     textColor: 'text-lime-200',
     accentBadge: 'bg-lime-950/90 text-lime-300 border-lime-600/60',
-    cornerIcon: <span className="text-[11px]">🐑</span>
+    cornerIcon: <ResourceIcon type="sheep" className="w-3.5 h-3.5" />
   },
   wheat: {
     name: 'Weizen',
-    renderIcon: (size = 'text-3xl') => <span className={size}>🌾</span>,
+    renderIcon: (size = 'w-9 h-9') => <ResourceIcon type="wheat" className={size} />,
     bgGradient: 'from-[#2c2007] via-[#45330e] to-[#221804]',
     borderColor: 'border-[#a17c24]',
     textColor: 'text-amber-100',
     accentBadge: 'bg-yellow-950/90 text-yellow-300 border-yellow-600/60',
-    cornerIcon: <span className="text-[11px]">🌾</span>
+    cornerIcon: <ResourceIcon type="wheat" className="w-3.5 h-3.5" />
   },
   ore: {
     name: 'Erz',
-    renderIcon: (size = 'w-9 h-9') => <OreIcon className={size} />,
+    renderIcon: (size = 'w-9 h-9') => <ResourceIcon type="ore" className={size} />,
     bgGradient: 'from-[#131722] via-[#202738] to-[#0e111a]',
     borderColor: 'border-[#4b5563]',
     textColor: 'text-slate-100',
     accentBadge: 'bg-slate-900/90 text-sky-200 border-slate-500/60',
-    cornerIcon: <OreIcon className="w-3 h-3 inline-block" />
+    cornerIcon: <ResourceIcon type="ore" className="w-3.5 h-3.5" />
   }
 };
 
@@ -142,40 +143,52 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
           return (
             <div
               key={res}
-              className={`bg-gradient-to-b ${cfg.bgGradient} border-2 ${cfg.borderColor} rounded-xl p-2 sm:p-2.5 flex flex-col items-center justify-between aspect-[0.68] shadow-xl relative overflow-hidden transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:border-amber-400/80 group select-none`}
+              className={`relative rounded-2xl overflow-hidden aspect-[0.66] border-2 shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_12px_28px_rgba(212,175,55,0.35)] select-none group flex flex-col justify-between p-2 ${
+                count > 0
+                  ? 'border-[#d4af37] ring-1 ring-amber-400/50'
+                  : 'border-[#3e2612] opacity-60 saturate-60'
+              }`}
             >
-              {/* Antique card inner filigree outline */}
-              <div className="absolute inset-1 border border-white/10 rounded-lg pointer-events-none" />
+              {/* Full Art AI Card Background */}
+              <img
+                src={`/assets/card_${res}.jpg`}
+                alt={cfg.name}
+                className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+              />
 
-              {/* Top-Left Card Corner Pip (Suit + Count) */}
-              <div className="absolute top-1.5 left-1.5 sm:left-2 flex flex-col items-center leading-none">
-                <span className="font-mono font-bold text-[10px] text-white/90">{count}</span>
-                <span className="mt-0.5 opacity-80">{cfg.cornerIcon}</span>
-              </div>
+              {/* Protective Dark Vignette Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-black/70 pointer-events-none" />
 
-              {/* Bottom-Right Inverted Corner Pip */}
-              <div className="absolute bottom-1.5 right-1.5 sm:right-2 flex flex-col items-center leading-none rotate-180">
-                <span className="font-mono font-bold text-[10px] text-white/90">{count}</span>
-                <span className="mt-0.5 opacity-80">{cfg.cornerIcon}</span>
-              </div>
-
-              {/* Center Medallion Emblem */}
-              <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-[#000000]/40 border border-[#d4af37]/50 flex items-center justify-center mt-2.5 shadow-inner group-hover:scale-110 transition-transform duration-300">
-                {cfg.renderIcon()}
-              </div>
-
-              {/* Card Title Ribbon Banner */}
-              <div className="text-center w-full px-1 z-10">
-                <span className={`block text-[11px] sm:text-xs font-black tracking-wide ${cfg.textColor} font-['MedievalSharp',serif] drop-shadow`}>
-                  {cfg.name}
-                </span>
-              </div>
-
-              {/* Bottom Count Seal */}
-              <div className="mb-0.5 z-10">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-b from-[#382112] to-[#1a0f07] border-2 border-amber-400/80 shadow-lg flex items-center justify-center font-mono font-black text-base text-amber-200">
-                  {count}
+              {/* Top Row: Left & Right Corner Pips with Resource Icon */}
+              <div className="relative z-10 flex items-center justify-between w-full">
+                <div className="flex flex-col items-center leading-none bg-black/65 backdrop-blur-sm px-1.5 py-1 rounded-lg border border-amber-500/40 shadow">
+                  <span className="font-mono font-black text-xs text-amber-200">{count}</span>
+                  <ResourceIcon type={res} className="w-3.5 h-3.5 mt-0.5" />
                 </div>
+                <div className="flex flex-col items-center leading-none bg-black/65 backdrop-blur-sm px-1.5 py-1 rounded-lg border border-amber-500/40 shadow">
+                  <span className="font-mono font-black text-xs text-amber-200">{count}</span>
+                  <ResourceIcon type={res} className="w-3.5 h-3.5 mt-0.5" />
+                </div>
+              </div>
+
+              {/* Center Space for Art */}
+              <div className="flex-1" />
+
+              {/* Bottom Card Ribbon with Name and Count Badge */}
+              <div className="relative z-10 w-full flex items-center justify-between bg-[#19110a]/92 backdrop-blur-md px-2 py-1.5 rounded-xl border border-amber-500/50 shadow-lg">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <ResourceIcon type={res} className="w-4 h-4 shadow shrink-0" />
+                  <span className="text-xs font-black text-[#fff4e0] font-['MedievalSharp',serif] tracking-wide truncate">
+                    {cfg.name}
+                  </span>
+                </div>
+                <span className={`font-mono font-black text-xs px-2 py-0.5 rounded-lg border shrink-0 ${
+                  count > 0
+                    ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-slate-950 border-amber-300 shadow'
+                    : 'bg-[#19110a] text-[#806853] border-[#3e2612]'
+                }`}>
+                  {count}x
+                </span>
               </div>
             </div>
           );
@@ -214,13 +227,17 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
                   </div>
                 </div>
 
-                <div className="text-right space-y-0.5">
+                <div className="text-right space-y-1">
                   <span className="font-mono font-bold text-white block text-xs">
                     {teamTotal} Karten
                   </span>
-                  <span className="text-[9px] text-[#8e6e53] font-mono block">
-                    H{teammate.resources.wood} L{teammate.resources.clay} W{teammate.resources.sheep} G{teammate.resources.wheat} E{teammate.resources.ore}
-                  </span>
+                  <div className="flex items-center justify-end gap-1.5 text-[10px] text-[#e8d5b5]">
+                    <span className="flex items-center gap-0.5"><ResourceIcon type="wood" className="w-3 h-3" />{teammate.resources.wood}</span>
+                    <span className="flex items-center gap-0.5"><ResourceIcon type="clay" className="w-3 h-3" />{teammate.resources.clay}</span>
+                    <span className="flex items-center gap-0.5"><ResourceIcon type="sheep" className="w-3 h-3" />{teammate.resources.sheep}</span>
+                    <span className="flex items-center gap-0.5"><ResourceIcon type="wheat" className="w-3 h-3" />{teammate.resources.wheat}</span>
+                    <span className="flex items-center gap-0.5"><ResourceIcon type="ore" className="w-3 h-3" />{teammate.resources.ore}</span>
+                  </div>
                   <span className="text-[9px] text-[#a8825c] font-mono block">
                     Bau: {tRoads}S / {tSettlements}H / {tCities}C
                   </span>

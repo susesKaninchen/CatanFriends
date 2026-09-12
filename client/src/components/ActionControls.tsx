@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BoardState, GamePhase, Player, PlayerColor, ResourceType } from '../types';
 import { Dices, Hammer, Home, Castle, Shield, ArrowRight, UserCheck, BookOpen, ArrowLeftRight, Gift } from 'lucide-react';
 import { OreIcon } from './OreIcon';
+import { ResourceIcon } from './ResourceIcon';
 
 interface ActionControlsProps {
   phase: GamePhase;
@@ -31,11 +32,11 @@ const COLOR_MAP: { [key in PlayerColor]: { name: string; bg: string; text: strin
 };
 
 const RESOURCE_INFO: { [key in ResourceType]: { name: string; icon: React.ReactNode } } = {
-  wood: { name: 'Holz', icon: <span>🌲</span> },
-  clay: { name: 'Lehm', icon: <span>🧱</span> },
-  sheep: { name: 'Wolle', icon: <span>🐑</span> },
-  wheat: { name: 'Weizen', icon: <span>🌾</span> },
-  ore: { name: 'Erz', icon: <OreIcon className="w-3.5 h-3.5 inline-block" /> }
+  wood: { name: 'Holz', icon: <ResourceIcon type="wood" className="w-4 h-4 inline-block" /> },
+  clay: { name: 'Lehm', icon: <ResourceIcon type="clay" className="w-4 h-4 inline-block" /> },
+  sheep: { name: 'Wolle', icon: <ResourceIcon type="sheep" className="w-4 h-4 inline-block" /> },
+  wheat: { name: 'Weizen', icon: <ResourceIcon type="wheat" className="w-4 h-4 inline-block" /> },
+  ore: { name: 'Erz', icon: <ResourceIcon type="ore" className="w-4 h-4 inline-block" /> }
 };
 
 export const ActionControls: React.FC<ActionControlsProps> = ({
@@ -279,8 +280,10 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                     <Hammer className="w-3.5 h-3.5 text-amber-400" />
                     <span className="font-['MedievalSharp',serif] text-[11px] sm:text-xs">Straße</span>
                   </div>
-                  <span className="text-[10px] font-normal tracking-tight">
-                    {myPlayer.role === 'pioneer' ? '🌲/🧱' : '🌲 🧱'}
+                  <span className="text-[10px] font-normal tracking-tight flex items-center justify-center gap-1">
+                    <ResourceIcon type="wood" className="w-3.5 h-3.5" />
+                    {myPlayer.role === 'pioneer' ? '/' : '+'}
+                    <ResourceIcon type="clay" className="w-3.5 h-3.5" />
                   </span>
                   <span className={`text-[8px] sm:text-[9px] font-mono font-bold px-1 rounded mt-0.5 ${remainingRoads > 0 ? 'bg-[#3b2311] text-amber-300' : 'bg-rose-950 text-rose-400'}`}>
                     {remainingRoads}/30
@@ -305,8 +308,12 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                     <Home className="w-3.5 h-3.5 text-emerald-400" />
                     <span className="font-['MedievalSharp',serif] text-[11px] sm:text-xs">Siedlung</span>
                   </div>
-                  <span className="text-[10px] font-normal tracking-tight">
-                    {myPlayer.role === 'builder' ? '🌲🧱🐑🌾-1' : '🌲🧱🐑🌾'}
+                  <span className="text-[10px] font-normal tracking-tight flex items-center justify-center gap-0.5">
+                    <ResourceIcon type="wood" className="w-3 h-3" />
+                    <ResourceIcon type="clay" className="w-3 h-3" />
+                    <ResourceIcon type="sheep" className="w-3 h-3" />
+                    <ResourceIcon type="wheat" className="w-3 h-3" />
+                    {myPlayer.role === 'builder' && <span className="text-[8px] text-amber-300 font-bold">-1</span>}
                   </span>
                   <span className={`text-[8px] sm:text-[9px] font-mono font-bold px-1 rounded mt-0.5 ${remainingSettlements > 0 ? 'bg-[#3b2311] text-emerald-300' : 'bg-rose-950 text-rose-400'}`}>
                     {remainingSettlements}/5
@@ -331,9 +338,11 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                     <Castle className="w-3.5 h-3.5 text-sky-400" />
                     <span className="font-['MedievalSharp',serif] text-[11px] sm:text-xs">Stadt</span>
                   </div>
-                  <span className="text-[10px] font-normal tracking-tight flex items-center gap-0.5">
-                    <OreIcon className="w-3 h-3" />
-                    <span>3x 🌾2x</span>
+                  <span className="text-[10px] font-normal tracking-tight flex items-center justify-center gap-0.5">
+                    <ResourceIcon type="ore" className="w-3 h-3" />
+                    <span className="text-[9px]">3x</span>
+                    <ResourceIcon type="wheat" className="w-3 h-3" />
+                    <span className="text-[9px]">2x</span>
                   </span>
                   <span className={`text-[8px] sm:text-[9px] font-mono font-bold px-1 rounded mt-0.5 ${remainingCities > 0 ? 'bg-[#3b2311] text-sky-300' : 'bg-rose-950 text-rose-400'}`}>
                     {hasSettlementToUpgrade ? `${remainingCities}/4` : 'Keine Siedl.'}
@@ -552,7 +561,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                                     : 'bg-[#140c06] border-[#29170a] text-[#5e4331] cursor-not-allowed opacity-50'
                                 }`}
                               >
-                                <span className="text-sm">{RESOURCE_INFO[r].icon}</span>
+                                <ResourceIcon type={r} className="w-6 h-6" />
                                 <span className="text-[10px] font-mono mt-0.5">{count}</span>
                               </button>
                             );
