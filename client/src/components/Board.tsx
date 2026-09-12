@@ -454,8 +454,8 @@ export const Board: React.FC<BoardProps> = ({
                   <polygon
                     points={pointsStr}
                     fill="none"
-                    stroke={canPlaceRobberHere ? '#ef4444' : '#4d2b18'}
-                    strokeWidth={canPlaceRobberHere ? 3.5 : 2}
+                    stroke={canPlaceRobberHere ? '#ef4444' : isWater ? '#0369a1' : '#3d200f'}
+                    strokeWidth={canPlaceRobberHere ? 3.5 : 2.2}
                   />
                 )}
 
@@ -563,41 +563,6 @@ export const Board: React.FC<BoardProps> = ({
                   </g>
                 )}
 
-                {/* Desert Medallion when Robber is not on this desert tile */}
-                {hex.type === 'desert' && !isRobberHere && (
-                  <g transform={`translate(${center.x}, ${center.y})`} filter="url(#catan-shadow)">
-                    {/* Outer dark wooden ring */}
-                    <circle r="16.5" fill="#2e1a0e" stroke="#855829" strokeWidth="1.5" />
-                    {/* Antique parchment inner circular token */}
-                    <circle r="14" fill="url(#token-parchment)" stroke="#b58d59" strokeWidth="0.8" />
-                    <text
-                      x="0"
-                      y="-2"
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fontSize="11"
-                      fontWeight="900"
-                      fill="#78350f"
-                      fontFamily="Cinzel, serif"
-                    >
-                      🏜️
-                    </text>
-                    <text
-                      x="0"
-                      y="7"
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fontSize="7"
-                      fontWeight="900"
-                      fill="#78350f"
-                      fontFamily="Cinzel, serif"
-                      letterSpacing="0.5"
-                    >
-                      WÜSTE
-                    </text>
-                  </g>
-                )}
-
                 {/* Robber Meeple - Static, crisp 3D wooden pawn silhouette with menacing eyes */}
                 {isRobberHere && (
                   <g
@@ -635,9 +600,9 @@ export const Board: React.FC<BoardProps> = ({
                       opacity="0.45"
                     />
 
-                    {/* Prominent Robber Badge */}
+                    {/* Prominent Robber Badge - wide enough for text and emoji */}
                     <g transform="translate(0, 20)">
-                      <rect x="-19" y="-6.5" width="38" height="13" rx="4" fill="#18181b" stroke="#ef4444" strokeWidth="1" />
+                      <rect x="-27" y="-7" width="54" height="14" rx="4" fill="#18181b" stroke="#ef4444" strokeWidth="1" />
                       <text x="0" y="0.5" textAnchor="middle" dominantBaseline="central" fontSize="7.5" fontWeight="900" fill="#fca5a5" fontFamily="Cinzel, serif">
                         🏴‍☠️ RÄUBER
                       </text>
@@ -828,38 +793,39 @@ export const Board: React.FC<BoardProps> = ({
 
             return (
               <g key={edge.id}>
-                {/* Built Road: Distinct, vibrant player colored 3D wooden beam */}
+                {/* Built Road: Distinct, authentic neutral 3D wooden beam belonging to the whole team */}
                 {isBuilt && edge.road && (
-                  <g filter="url(#catan-shadow)" className="animate-road-draw">
+                  <g className="animate-road-draw">
                     {/* Heavy dark outline for maximum visibility on all terrains */}
                     <line
                       x1={v1.x}
                       y1={v1.y}
                       x2={v2.x}
                       y2={v2.y}
-                      stroke={COLOR_STROKE_MAP[edge.road.ownerColor] || '#0f172a'}
-                      strokeWidth="10"
+                      stroke="#1c0d02"
+                      strokeWidth="9.5"
                       strokeLinecap="round"
                     />
-                    {/* Vibrant player color core */}
+                    {/* Rich golden honey wood core (neutral team road) */}
                     <line
                       x1={v1.x}
                       y1={v1.y}
                       x2={v2.x}
                       y2={v2.y}
-                      stroke={COLOR_MAP[edge.road.ownerColor] || '#ef4444'}
+                      stroke="#c28340"
                       strokeWidth="6.5"
                       strokeLinecap="round"
                     />
-                    {/* Top edge highlight */}
+                    {/* Warm amber grain surface highlight */}
                     <line
                       x1={v1.x}
                       y1={v1.y}
                       x2={v2.x}
                       y2={v2.y}
-                      stroke="rgba(255, 255, 255, 0.45)"
+                      stroke="#fde047"
                       strokeWidth="2"
                       strokeLinecap="round"
+                      opacity="0.9"
                     />
                   </g>
                 )}
