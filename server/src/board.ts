@@ -6,7 +6,7 @@ export const HEX_RADIUS = 56; // Size in SVG units
 export function hexToPixel(q: number, r: number, radius: number = HEX_RADIUS): { x: number; y: number } {
   const x = radius * (Math.sqrt(3) * q + (Math.sqrt(3) / 2) * r);
   const y = radius * ((3 / 2) * r);
-  return { x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100 };
+  return { x, y };
 }
 
 export function getHexCornerOffsets(radius: number = HEX_RADIUS): Array<{ x: number; y: number }> {
@@ -14,8 +14,8 @@ export function getHexCornerOffsets(radius: number = HEX_RADIUS): Array<{ x: num
   for (let i = 0; i < 6; i++) {
     const angleRad = (Math.PI / 180) * (60 * i - 30);
     corners.push({
-      x: Math.round(radius * Math.cos(angleRad) * 100) / 100,
-      y: Math.round(radius * Math.sin(angleRad) * 100) / 100
+      x: radius * Math.cos(angleRad),
+      y: radius * Math.sin(angleRad)
     });
   }
   return corners;
@@ -114,14 +114,18 @@ export const STANDARD_HARBOR_POOL: HarborType[] = [
   'wood', 'clay', 'sheep', 'wheat', 'ore'
 ];
 
-export function drawHarborType(board: BoardState): HarborType {
+export function drawHarborType(board: BoardState): HarborType | null {
   if (!board.harborPool || board.harborPool.length === 0) {
-    board.harborPool = shuffleArray([...STANDARD_HARBOR_POOL]);
+    return null;
   }
   return board.harborPool.pop()!;
 }
 
-export function assignHarborToWaterHex(board: BoardState, waterHex: HexTile): void {
+export function assignHarborToWaterHex(board: BoardState, waterHex: HexTile): boolean {
+  if (!board.harborPool || board.harborPool.length === 0) {
+    return false;
+  }
+
   const center = hexToPixel(waterHex.q, waterHex.r, HEX_RADIUS);
   const cornerOffsets = getHexCornerOffsets(HEX_RADIUS);
 
@@ -148,46 +152,23 @@ export function assignHarborToWaterHex(board: BoardState, waterHex: HexTile): vo
     }
   }
 
+  if (candidateEdges.length === 0) return false;
+
   const hType = drawHarborType(board);
+  if (!hType) return false;
+
   const harbor: Harbor = {
     type: hType,
     ratio: hType === 'generic' ? 3 : 2,
     waterHexId: waterHex.id
   };
 
-  if (candidateEdges.length > 0) {
-    const chosen = candidateEdges[0];
-    chosen.v1.harbor = harbor;
-    chosen.v2.harbor = harbor;
-    waterHex.harborVertexId = chosen.v1.id;
-    waterHex.harbor = harbor;
-    return;
-  }
-
-  // Fallback if no full edge touches land: check single vertices
-  const candidates: Vertex[] = [];
-  for (let i = 0; i < 6; i++) {
-    const vx = center.x + cornerOffsets[i].x;
-    const vy = center.y + cornerOffsets[i].y;
-    const vKey = makeVertexKey(vx, vy);
-    const vertex = board.vertices[vKey];
-    if (vertex && !vertex.harbor) {
-      const hasLand = vertex.adjacentHexIds.some(hId => {
-        const h = board.hexes.find(hex => hex.id === hId);
-        return h && h.type !== 'water';
-      });
-      if (hasLand) {
-        candidates.push(vertex);
-      }
-    }
-  }
-
-  if (candidates.length === 0) return;
-
-  const chosenVertex = candidates[0];
-  chosenVertex.harbor = harbor;
-  waterHex.harborVertexId = chosenVertex.id;
+  const chosen = candidateEdges[0];
+  chosen.v1.harbor = harbor;
+  chosen.v2.harbor = harbor;
+  waterHex.harborVertexId = chosen.v1.id;
   waterHex.harbor = harbor;
+  return true;
 }
 
 export function generateBoard(): BoardState {
@@ -255,44 +236,6 @@ export function generateBoard(): BoardState {
       diceNum,
       isDesert // Robber initially on desert
     );
-  });
-
-  // Surrounding water ring (18 ocean hexes around the island)
-  const waterRingCoords = [
-    { q: 3, r: 0 },
-    { q: 3, r: -1 },
-    { q: 3, r: -2 },
-    { q: 3, r: -3 },
-    { q: 2, r: -3 },
-    { q: 1, r: -3 },
-    { q: 0, r: -3 },
-    { q: -1, r: -2 },
-    { q: -2, r: -1 },
-    { q: -3, r: 0 },
-    { q: -3, r: 1 },
-    { q: -3, r: 2 },
-    { q: -3, r: 3 },
-    { q: -2, r: 3 },
-    { q: -1, r: 3 },
-    { q: 0, r: 3 },
-    { q: 1, r: 2 },
-    { q: 2, r: 1 }
-  ];
-
-  // Add surrounding coastal ocean hexes and place the 9 standard Catan harbors
-  waterRingCoords.forEach((coord, i) => {
-    const waterHex = addHexToBoard(
-      board,
-      coord.q,
-      coord.r,
-      'water',
-      null,
-      null,
-      false
-    );
-    if (i % 2 === 0) {
-      assignHarborToWaterHex(board, waterHex);
-    }
   });
 
   return board;
@@ -399,107 +342,108 @@ export function addHexToBoard(
   return hex;
 }
 
-// Procedural Fog of War: Expand island when a road is built near empty spaces without leaving holes
-export function exploreSurroundings(board: BoardState, edgeId: string): HexTile[] {
-  const edge = board.edges[edgeId];
-  if (!edge) return [];
-
+// Local Fog of War: Uncover ONLY the directly adjacent empty hexes when a road or settlement is built
+export function exploreAdjacent(
+  board: BoardState,
+  location: { edgeId?: string; vertexId?: string }
+): HexTile[] {
   const newlyDiscovered: HexTile[] = [];
-  const v1 = board.vertices[edge.vertex1Id];
-  const v2 = board.vertices[edge.vertex2Id];
-  if (!v1 || !v2) return [];
-
-  // Get all hexes touching the edge's vertices
-  const touchingHexIds = Array.from(new Set([...v1.adjacentHexIds, ...v2.adjacentHexIds]));
   const existingCoords = new Set(board.hexes.map(h => `${h.q}_${h.r}`));
+  const candidateCoords = new Map<string, { q: number; r: number }>();
 
-  const createHex = (q: number, r: number): HexTile => {
-    existingCoords.add(`${q}_${r}`);
-    const isWater = r >= 3;
+  if (location.edgeId) {
+    const edge = board.edges[location.edgeId];
+    if (!edge) return [];
+    const v1 = board.vertices[edge.vertex1Id];
+    const v2 = board.vertices[edge.vertex2Id];
+    if (!v1 || !v2) return [];
 
+    // Road placement: find the empty hex across this edge (touches both v1 and v2)
+    for (const hexId of edge.adjacentHexIds) {
+      const parts = hexId.split('_').map(Number);
+      const hq = parts[0];
+      const hr = parts[1];
+
+      for (const dir of AXIAL_DIRECTIONS) {
+        const nq = hq + dir.q;
+        const nr = hr + dir.r;
+        const key = `${nq}_${nr}`;
+
+        if (existingCoords.has(key) || candidateCoords.has(key)) continue;
+
+        const center = hexToPixel(nq, nr, HEX_RADIUS);
+        const d1 = Math.hypot(center.x - v1.x, center.y - v1.y);
+        const d2 = Math.hypot(center.x - v2.x, center.y - v2.y);
+
+        if (Math.abs(d1 - HEX_RADIUS) < 3.0 && Math.abs(d2 - HEX_RADIUS) < 3.0) {
+          const axialDist = Math.max(Math.abs(nq), Math.abs(nr), Math.abs(-nq - nr));
+          if (axialDist <= 6) {
+            candidateCoords.set(key, { q: nq, r: nr });
+          }
+        }
+      }
+    }
+  } else if (location.vertexId) {
+    const vertex = board.vertices[location.vertexId];
+    if (!vertex) return [];
+
+    // Settlement placement: find empty hexes touching this vertex (at distance HEX_RADIUS)
+    for (const hexId of vertex.adjacentHexIds) {
+      const parts = hexId.split('_').map(Number);
+      const hq = parts[0];
+      const hr = parts[1];
+
+      for (const dir of AXIAL_DIRECTIONS) {
+        const nq = hq + dir.q;
+        const nr = hr + dir.r;
+        const key = `${nq}_${nr}`;
+
+        if (existingCoords.has(key) || candidateCoords.has(key)) continue;
+
+        const center = hexToPixel(nq, nr, HEX_RADIUS);
+        const dist = Math.hypot(center.x - vertex.x, center.y - vertex.y);
+
+        if (Math.abs(dist - HEX_RADIUS) < 3.0) {
+          const axialDist = Math.max(Math.abs(nq), Math.abs(nr), Math.abs(-nq - nr));
+          if (axialDist <= 6) {
+            candidateCoords.set(key, { q: nq, r: nr });
+          }
+        }
+      }
+    }
+  }
+
+  // Create discovered adjacent hexes (strictly local, no cascade)
+  for (const [key, coord] of candidateCoords.entries()) {
+    existingCoords.add(key);
+
+    const isWater = coord.r >= 3;
     let type: HexType = 'water';
-    let letter: string | null = null;
     let diceNum: number | null = null;
 
     if (!isWater) {
       const landTypes: HexType[] = ['wood', 'clay', 'sheep', 'wheat', 'ore'];
       type = landTypes[Math.floor(Math.random() * landTypes.length)];
       diceNum = drawNumberToken(board);
-      letter = null;
     }
 
-    const newHex = addHexToBoard(board, q, r, type, letter, diceNum, false);
+    const newHex = addHexToBoard(board, coord.q, coord.r, type, null, diceNum, false);
     if (type === 'water') {
-      assignHarborToWaterHex(board, newHex);
+      // Not every water tile gets a harbor:
+      // Only coastal water tiles bordering land (r === 3) have a ~50% chance of a harbor, up to max 9 harbors
+      const isCoastal = coord.r === 3;
+      const shouldHaveHarbor = isCoastal && Math.random() < 0.5 && Boolean(board.harborPool && board.harborPool.length > 0);
+      if (shouldHaveHarbor) {
+        assignHarborToWaterHex(board, newHex);
+      }
     }
     newlyDiscovered.push(newHex);
-    return newHex;
-  };
-
-  // 1. Discover empty coordinates directly touching the road's perimeter
-  for (const hexId of touchingHexIds) {
-    const parts = hexId.split('_').map(Number);
-    const q = parts[0];
-    const r = parts[1];
-
-    for (const dir of AXIAL_DIRECTIONS) {
-      const nq = q + dir.q;
-      const nr = r + dir.r;
-      const nKey = `${nq}_${nr}`;
-      const dist = Math.max(Math.abs(nq), Math.abs(nr), Math.abs(-nq - nr));
-
-      if (dist <= 6 && !existingCoords.has(nKey)) {
-        createHex(nq, nr);
-      }
-    }
-  }
-
-  // 2. Hole-Filling Pass: Iteratively seal any cavities and gaps
-  // Any empty space with >= 3 neighbors is an interior hole, and >= 2 neighbors near the frontier avoids notches.
-  let holeFilled = true;
-  let iterations = 0;
-  while (holeFilled && iterations < 10) {
-    holeFilled = false;
-    iterations++;
-
-    // Map candidate empty coords -> count of adjacent hexes
-    const candidates = new Map<string, { q: number; r: number; count: number }>();
-    for (const hex of board.hexes) {
-      for (const dir of AXIAL_DIRECTIONS) {
-        const nq = hex.q + dir.q;
-        const nr = hex.r + dir.r;
-        const key = `${nq}_${nr}`;
-        const dist = Math.max(Math.abs(nq), Math.abs(nr), Math.abs(-nq - nr));
-
-        if (dist <= 6 && !existingCoords.has(key)) {
-          const entry = candidates.get(key);
-          if (entry) {
-            entry.count++;
-          } else {
-            candidates.set(key, { q: nq, r: nr, count: 1 });
-          }
-        }
-      }
-    }
-
-    for (const [key, cand] of candidates.entries()) {
-      if (existingCoords.has(key)) continue;
-
-      // Check if candidate is near newly discovered frontier
-      const isNearFrontier = newlyDiscovered.some(nh => {
-        const dq = Math.abs(nh.q - cand.q);
-        const dr = Math.abs(nh.r - cand.r);
-        const ds = Math.abs((-nh.q - nh.r) - (-cand.q - cand.r));
-        return Math.max(dq, dr, ds) <= 1;
-      });
-
-      // Fill if it's an interior hole (>= 3 neighbors) or a frontier gap (>= 2 neighbors near frontier)
-      if (cand.count >= 3 || (cand.count >= 2 && isNearFrontier)) {
-        createHex(cand.q, cand.r);
-        holeFilled = true;
-      }
-    }
   }
 
   return newlyDiscovered;
+}
+
+// Backward compatibility alias for edge-based exploration
+export function exploreSurroundings(board: BoardState, edgeId: string): HexTile[] {
+  return exploreAdjacent(board, { edgeId });
 }

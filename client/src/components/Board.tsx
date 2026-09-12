@@ -366,10 +366,11 @@ export const Board: React.FC<BoardProps> = ({
             const corners = getHexCornerPoints(center);
             const pointsStr = corners.map((p) => `${p.x},${p.y}`).join(' ');
             const isWater = hex.type === 'water';
-            const canPlaceRobberHere = isRobberPlacementPhase && !isWater && !hex.hasRobber;
+            const isRobberHere = Boolean(hex.hasRobber || hex.id === board.robberHexId);
+            const canPlaceRobberHere = isRobberPlacementPhase && !isWater && !isRobberHere;
             const isRolledHex = isDiceHarvestActive && !isWater && hex.diceNumber === diceSum;
-            const isHarvesting = isRolledHex && !hex.hasRobber;
-            const isBlockedByRobber = isRolledHex && hex.hasRobber;
+            const isHarvesting = isRolledHex && !isRobberHere;
+            const isBlockedByRobber = isRolledHex && isRobberHere;
 
             return (
               <g
@@ -440,6 +441,14 @@ export const Board: React.FC<BoardProps> = ({
                     stroke="#ef4444"
                     strokeWidth="4"
                     className="animate-pulse"
+                  />
+                ) : isRobberHere ? (
+                  <polygon
+                    points={pointsStr}
+                    fill="#7f1d1d"
+                    fillOpacity="0.18"
+                    stroke="#dc2626"
+                    strokeWidth="3"
                   />
                 ) : (
                   <polygon
@@ -554,9 +563,48 @@ export const Board: React.FC<BoardProps> = ({
                   </g>
                 )}
 
-                {/* Robber Meeple - Static, crisp 3D wooden pawn silhouette with menace hover */}
-                {hex.hasRobber && (
-                  <g transform={`translate(${center.x}, ${center.y - 2})`} filter="url(#catan-shadow)" className="animate-robber-hover">
+                {/* Desert Medallion when Robber is not on this desert tile */}
+                {hex.type === 'desert' && !isRobberHere && (
+                  <g transform={`translate(${center.x}, ${center.y})`} filter="url(#catan-shadow)">
+                    {/* Outer dark wooden ring */}
+                    <circle r="16.5" fill="#2e1a0e" stroke="#855829" strokeWidth="1.5" />
+                    {/* Antique parchment inner circular token */}
+                    <circle r="14" fill="url(#token-parchment)" stroke="#b58d59" strokeWidth="0.8" />
+                    <text
+                      x="0"
+                      y="-2"
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      fontSize="11"
+                      fontWeight="900"
+                      fill="#78350f"
+                      fontFamily="Cinzel, serif"
+                    >
+                      🏜️
+                    </text>
+                    <text
+                      x="0"
+                      y="7"
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      fontSize="7"
+                      fontWeight="900"
+                      fill="#78350f"
+                      fontFamily="Cinzel, serif"
+                      letterSpacing="0.5"
+                    >
+                      WÜSTE
+                    </text>
+                  </g>
+                )}
+
+                {/* Robber Meeple - Static, crisp 3D wooden pawn silhouette with menacing eyes */}
+                {isRobberHere && (
+                  <g
+                    transform={`translate(${center.x}, ${hex.diceNumber !== null ? center.y - 12 : center.y})`}
+                    filter="url(#catan-shadow)"
+                    className="animate-robber-hover pointer-events-none"
+                  >
                     {/* Ground drop shadow */}
                     <ellipse cx="0" cy="15" rx="14" ry="5.5" fill="#000000" opacity="0.65" />
 
@@ -586,6 +634,14 @@ export const Board: React.FC<BoardProps> = ({
                       fill="none"
                       opacity="0.45"
                     />
+
+                    {/* Prominent Robber Badge */}
+                    <g transform="translate(0, 20)">
+                      <rect x="-19" y="-6.5" width="38" height="13" rx="4" fill="#18181b" stroke="#ef4444" strokeWidth="1" />
+                      <text x="0" y="0.5" textAnchor="middle" dominantBaseline="central" fontSize="7.5" fontWeight="900" fill="#fca5a5" fontFamily="Cinzel, serif">
+                        🏴‍☠️ RÄUBER
+                      </text>
+                    </g>
                   </g>
                 )}
               </g>

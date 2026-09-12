@@ -15,7 +15,7 @@ import {
   ActiveTradeProposal,
   TradeProposalType
 } from './types.js';
-import { generateBoard, getNextRobberLetter, getPreviousRobberLetter, ROBBER_LETTER_ORDER, getTileTwoTilesNorth, hexToPixel } from './board.js';
+import { generateBoard, getNextRobberLetter, getPreviousRobberLetter, ROBBER_LETTER_ORDER, hexToPixel, exploreAdjacent } from './board.js';
 import { createQuestSlot, initializeQuestSlots } from './quests.js';
 
 export class GameManager {
@@ -300,8 +300,9 @@ export class GameManager {
     const hexesWithNumber = state.board.hexes.filter(h => h.diceNumber === diceSum);
 
     for (const hex of hexesWithNumber) {
-      if (hex.hasRobber) {
-        this.addLog(state, `Räuber blockiert Hexfeld ${hex.letter} (${hex.type})! Keine Rohstoffe.`, 'alert');
+      if (hex.hasRobber || hex.id === state.board.robberHexId) {
+        const numStr = hex.diceNumber ? `Zahl ${hex.diceNumber}` : 'Wüste';
+        this.addLog(state, `Räuber blockiert Ertrag auf ${hex.type} (${numStr})! Keine Rohstoffe.`, 'alert');
         continue;
       }
 
@@ -613,6 +614,16 @@ export class GameManager {
 
     this.addLog(state, `${activePlayer.name} baut eine ${isSetup ? 'Startstraße' : 'gemeinsame Straße für das Team'}.`, 'build');
 
+    // Reveal adjacent empty hexes when building a road
+    const newlyDiscoveredRoad = exploreAdjacent(state.board, { edgeId });
+    if (newlyDiscoveredRoad.length > 0) {
+      const landParts = newlyDiscoveredRoad.filter(h => h.type !== 'water').map(h => `${h.type} (${h.diceNumber})`);
+      const waterCount = newlyDiscoveredRoad.filter(h => h.type === 'water').length;
+      const descParts: string[] = [...landParts];
+      if (waterCount > 0) descParts.push(`${waterCount}x Ozean`);
+      this.addLog(state, `Entdeckung! Neues Feld aufgedeckt: ${descParts.join(', ')}.`, 'info');
+    }
+
     if (isSetup) {
       state.setupTurnIndex += 1;
       if (state.setupTurnIndex < state.players.length) {
@@ -625,14 +636,8 @@ export class GameManager {
           setTimeout(() => this.executeBotSetupTurn(roomCode, nextPlayer.id), 1000);
         }
       } else {
-        // Setup complete! Position Robber 2 tiles north of what was built
-        const northHex = getTileTwoTilesNorth(state.board, state.lastBuiltSetupVertexId || edge.vertex1Id);
-        if (northHex) {
-          state.board.hexes.forEach(h => { h.hasRobber = false; });
-          northHex.hasRobber = true;
-          state.board.robberHexId = northHex.id;
-          this.addLog(state, `Gründungsphase beendet! Der Räuber lauert 2 Felder nördlich auf Feld ${northHex.id} (${northHex.type}).`, 'alert');
-        }
+        // Setup complete: Robber remains on the desert until moved by a 7, knight, or patrol
+        this.addLog(state, `Gründungsphase beendet! Der Räuber lauert vorerst in der Wüste.`, 'info');
 
         state.activePlayerIndex = 0;
         state.phase = 'TURN_DICE';
@@ -737,12 +742,23 @@ export class GameManager {
       builtByColor: activePlayer.color
     };
 
+    // Reveal adjacent empty hexes when building a settlement
+    const newlyDiscoveredSettlement = exploreAdjacent(state.board, { vertexId });
+    if (newlyDiscoveredSettlement.length > 0) {
+      const landParts = newlyDiscoveredSettlement.filter(h => h.type !== 'water').map(h => `${h.type} (${h.diceNumber})`);
+      const waterCount = newlyDiscoveredSettlement.filter(h => h.type === 'water').length;
+      const descParts: string[] = [...landParts];
+      if (waterCount > 0) descParts.push(`${waterCount}x Ozean`);
+      this.addLog(state, `Entdeckung! Neues Feld aufgedeckt: ${descParts.join(', ')}.`, 'info');
+    }
+
     if (isSetup) {
       state.lastBuiltSetupVertexId = vertexId;
 
-      // Startrohstoffe wo man gebaut hat (direkte Auszahlung der angrenzenden Ertragsfelder)
+      // Startrohstoffe wo man gebaut hat (direkte Auszahlung aller angrenzenden Ertragsfelder, inkl. neu aufgedeckter)
+      const currentTouchingHexes = vertex.adjacentHexIds.map(hId => state.board.hexes.find(h => h.id === hId)).filter(Boolean);
       const gained: string[] = [];
-      touchingHexes.forEach(h => {
+      currentTouchingHexes.forEach(h => {
         if (h && h.type !== 'desert' && h.type !== 'water') {
           const res = h.type as ResourceType;
           activePlayer.resources[res] = (activePlayer.resources[res] || 0) + 1;

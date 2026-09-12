@@ -361,11 +361,11 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                 Dynamisches Insel-Wachstum & Küsten-Häfen
               </h3>
               <p>
-                Die Insel beginnt als großes <strong>19-Hex-Kernland</strong> mit allen 5 Rohstoffarten und der Wüste. Die weite Welt dahinter wird durch Straßenbau erkundet!
+                Die Insel beginnt als großes <strong>19-Hex-Kernland</strong> mit allen 5 Rohstoffarten und der Wüste. Die weite Welt dahinter wird beim Bauen erkundet!
               </p>
               <ul className="list-disc pl-5 space-y-2 text-xs text-[#cfbeaa]">
                 <li>
-                  <strong>Straßen als Erkundungswerkzeug:</strong> Baut ein Spieler eine Straße in Richtung des Inselrandes, wird das umliegende Gelände aufgedeckt.
+                  <strong>Bauen als Erkundungswerkzeug:</strong> Wird eine Straße oder Siedlung am Rand des bekannten Gebiets gebaut, werden die direkt anliegenden Felder aufgedeckt (keine riesigen Kaskaden, sondern Schritt für Schritt).
                 </li>
                 <li>
                   <strong>Endloser Kontinent:</strong> Nach Norden, Osten und Westen erstrecken sich unendliche Landmassen mit neuen Rohstofffeldern, Zahlenchips und Räuber-Routen.
