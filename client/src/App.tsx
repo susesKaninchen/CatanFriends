@@ -337,6 +337,7 @@ export const App: React.FC = () => {
             isMyTurn={isMyTurn}
             disabled={!isMyTurn}
             diceValues={roomState.diceValues}
+            lastBuiltSetupVertexId={roomState.lastBuiltSetupVertexId}
           />
 
           <PlayerHand

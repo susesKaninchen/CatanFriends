@@ -13,6 +13,7 @@ interface BoardProps {
   isMyTurn?: boolean;
   disabled?: boolean;
   diceValues?: [number, number];
+  lastBuiltSetupVertexId?: string | null;
 }
 
 const HEX_RADIUS = 56;
@@ -84,7 +85,8 @@ export const Board: React.FC<BoardProps> = ({
   phase,
   isMyTurn,
   disabled,
-  diceValues
+  diceValues,
+  lastBuiltSetupVertexId
 }) => {
   // Compute active dice roll sum for harvest tile highlight
   const diceSum = diceValues ? diceValues[0] + diceValues[1] : null;
@@ -199,9 +201,10 @@ export const Board: React.FC<BoardProps> = ({
       if (!v1 || !v2) return;
 
       if (isSetupRoad) {
-        const connectsToMyBuilding =
-          (v1.building && v1.building.ownerColor === targetColor) ||
-          (v2.building && v2.building.ownerColor === targetColor);
+        const connectsToMyBuilding = lastBuiltSetupVertexId
+          ? edge.vertex1Id === lastBuiltSetupVertexId || edge.vertex2Id === lastBuiltSetupVertexId
+          : (v1.building && v1.building.ownerColor === targetColor) ||
+            (v2.building && v2.building.ownerColor === targetColor);
         if (connectsToMyBuilding) {
           valid.add(edge.id);
         }
@@ -218,7 +221,7 @@ export const Board: React.FC<BoardProps> = ({
     });
 
     return valid;
-  }, [board.edges, board.vertices, buildMode, isSetupRoad, targetColor, disabled]);
+  }, [board.edges, board.vertices, buildMode, isSetupRoad, targetColor, disabled, lastBuiltSetupVertexId]);
 
   // Rule 2: Valid Settlements
   // Must be empty, not pure water, respect distance rule.

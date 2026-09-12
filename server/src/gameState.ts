@@ -236,13 +236,29 @@ export class GameManager {
     return true;
   }
 
+  private getSetupOrder(playerCount: number): number[] {
+    if (playerCount <= 2) {
+      // 1-2 players: 2 settlements and 2 roads each
+      if (playerCount === 1) return [0, 0];
+      // Serpentine for 2 players: P0 -> P1 -> P1 -> P0
+      return [0, 1, 1, 0];
+    }
+    // 3-4 players: 1 settlement and 1 road each
+    const order: number[] = [];
+    for (let i = 0; i < playerCount; i++) {
+      order.push(i);
+    }
+    return order;
+  }
+
   public startGame(roomCode: string): { success: boolean; message?: string } {
     const state = this.getRoom(roomCode);
     if (!state) return { success: false, message: 'Raum nicht gefunden.' };
     if (state.phase !== 'LOBBY') return { success: false, message: 'Spiel läuft bereits.' };
 
+    const setupOrder = this.getSetupOrder(state.players.length);
     state.phase = 'SETUP_SETTLEMENT';
-    state.activePlayerIndex = 0;
+    state.activePlayerIndex = setupOrder[0];
     state.setupTurnIndex = 0;
     state.roundNumber = 1;
     state.pointsPerPlayer = state.pointsPerPlayer || 10;
@@ -256,9 +272,18 @@ export class GameManager {
       p.tradesRemainingThisTurn = 1;
     });
 
-    const activePlayer = state.players[0];
-    this.addLog(state, 'Das Spiel hat begonnen! Gründungsphase: Jeder Spieler gründet 1 Siedlung und 1 Straße.', 'alert');
-    this.addLog(state, `Gründungsphase: ${activePlayer.name} wählt eine freie Kreuzung für die Startsiedlung.`, 'info');
+    const activePlayer = state.players[state.activePlayerIndex];
+    const settlementsPerPlayer = state.players.length <= 2 ? 2 : 1;
+    this.addLog(
+      state,
+      `Das Spiel hat begonnen! Gründungsphase: ${state.players.length <= 2 ? '1-2 Spieler: Jeder gründet 2 Siedlungen und 2 Straßen!' : '3-4 Spieler: Jeder gründet 1 Siedlung und 1 Straße.'}`,
+      'alert'
+    );
+    this.addLog(
+      state,
+      `Gründungsphase (1/${setupOrder.length}): ${activePlayer.name} wählt eine freie Kreuzung für die ${settlementsPerPlayer > 1 ? 'erste ' : ''}Startsiedlung.`,
+      'info'
+    );
 
     if (activePlayer.isBot) {
       setTimeout(() => this.executeBotSetupTurn(roomCode, activePlayer.id), 1000);
@@ -648,19 +673,26 @@ export class GameManager {
     }
 
     if (isSetup) {
+      const setupOrder = this.getSetupOrder(state.players.length);
       state.setupTurnIndex += 1;
-      if (state.setupTurnIndex < state.players.length) {
-        state.activePlayerIndex = state.setupTurnIndex;
+      if (state.setupTurnIndex < setupOrder.length) {
+        state.activePlayerIndex = setupOrder[state.setupTurnIndex];
         state.phase = 'SETUP_SETTLEMENT';
         state.lastBuiltSetupVertexId = null;
         const nextPlayer = state.players[state.activePlayerIndex];
-        this.addLog(state, `Gründungsphase: ${nextPlayer.name} ist an der Reihe für Startsiedlung und Startstraße.`, 'info');
+        const isSecondRound = state.setupTurnIndex >= state.players.length;
+        const roundLabel = isSecondRound ? 'zweite' : 'erste';
+        this.addLog(
+          state,
+          `Gründungsphase (${state.setupTurnIndex + 1}/${setupOrder.length}): ${nextPlayer.name} ist an der Reihe für die ${roundLabel} Startsiedlung und Startstraße.`,
+          'info'
+        );
         if (nextPlayer.isBot) {
           setTimeout(() => this.executeBotSetupTurn(roomCode, nextPlayer.id), 1000);
         }
       } else {
         // Setup complete: Robber remains on the desert until moved by a 7, knight, or patrol
-        this.addLog(state, `Gründungsphase beendet! Der Räuber lauert vorerst in der Wüste.`, 'info');
+        this.addLog(state, 'Gründungsphase beendet! Der Räuber lauert vorerst in der Wüste.', 'info');
 
         state.activePlayerIndex = 0;
         state.phase = 'TURN_DICE';
@@ -674,7 +706,12 @@ export class GameManager {
         const score = this.calculateTeamVictoryPoints(state);
         state.teamVictoryPoints = score.totalPoints;
         const firstPlayer = state.players[0];
-        this.addLog(state, `Alle Startsiedlungen und Startstraßen errichtet! Das Team startet mit ${score.totalPoints} Siegpunkten (${state.players.length} Siedlungen). Das Spiel beginnt: ${firstPlayer.name} würfelt!`, 'alert');
+        const totalSettlements = Object.values(state.board.vertices).filter(v => v.building?.type === 'settlement').length;
+        this.addLog(
+          state,
+          `Alle Startsiedlungen und Startstraßen errichtet! Das Team startet mit ${score.totalPoints} Siegpunkten (${totalSettlements} Siedlungen). Das Spiel beginnt: ${firstPlayer.name} würfelt!`,
+          'alert'
+        );
         if (firstPlayer.isBot) {
           setTimeout(() => this.executeBotTurn(roomCode, firstPlayer.id), 1200);
         }

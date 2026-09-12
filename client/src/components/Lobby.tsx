@@ -413,6 +413,7 @@ export const Lobby: React.FC<LobbyProps> = ({ roomState, myPlayerId, onOpenRuleb
           <p className="text-xs text-[#dec2a6] leading-relaxed font-sans">
             Gemeinsam gegen den Räuber! Erfüllt die ausliegenden Quests, bevor ihre D6-Timer ablaufen, baut Straßen und Siedlungen aus.
             Nutzt <strong>Fremdbau</strong>, um Mitspielern Gebäude mit euren Rohstoffen zu errichten.
+            Bei 1-2 Spielern startet jeder mit <strong>2 Siedlungen und 2 Straßen</strong>, bei 3-4 Spielern mit <strong>1 Siedlung und 1 Straße</strong>.
             Bei 4 abgelaufenen Quests verliert das Team sofort!
           </p>
         </div>

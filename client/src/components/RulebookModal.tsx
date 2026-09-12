@@ -166,6 +166,25 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                   </div>
                 </div>
               </div>
+              <div className="bg-[#241a10] border border-[#5c3e1e] rounded-xl p-4 space-y-2">
+                <h4 className="font-bold text-[#f59e0b] flex items-center gap-2">
+                  <span>🏡</span> Gründungsphase & Startrohstoffe
+                </h4>
+                <p className="text-xs text-[#c9b59e] leading-relaxed">
+                  Damit kleinere Teams faire Startchancen haben, richtet sich der Spielbeginn nach der Gruppengröße:
+                </p>
+                <ul className="list-disc pl-5 space-y-1 text-xs text-[#cfbeaa]">
+                  <li>
+                    <strong>1-2 Spieler:</strong> Jeder Spieler darf mit <strong>2 Siedlungen und 2 Straßen</strong> starten (serpentine Reihenfolge).
+                  </li>
+                  <li>
+                    <strong>3-4 Spieler:</strong> Jeder Spieler startet mit <strong>1 Siedlung und 1 Straße</strong>.
+                  </li>
+                  <li>
+                    <strong>Sofortige Startrohstoffe:</strong> Für jede gegründete Startsiedlung erhält der Spieler sofort je 1 Rohstoff von allen direkt angrenzenden Ertragsfeldern.
+                  </li>
+                </ul>
+              </div>
               <div className="bg-[#2a1210] border border-[#6b231d] rounded-xl p-4 space-y-2">
                 <h4 className="font-bold text-[#f87171] flex items-center gap-2">
                   <span>💀</span> Niederlagebedingung (4 Fehlschläge)
