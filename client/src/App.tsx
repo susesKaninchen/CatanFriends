@@ -274,6 +274,8 @@ export const App: React.FC = () => {
             myResources={myPlayer.resources}
             isMyTurn={isMyTurn && roomState.phase === 'TURN_ACTIONS'}
             onDeposit={handleDepositQuest}
+            teamHasLongestRoad={roomState.teamHasLongestRoad}
+            teamHasLargestArmy={roomState.teamHasLargestArmy}
           />
 
           {/* Action & Building Controls */}
@@ -287,6 +289,8 @@ export const App: React.FC = () => {
             buildMode={buildMode}
             targetColor={targetColor}
             board={roomState.board}
+            teamHasLongestRoad={roomState.teamHasLongestRoad}
+            teamHasLargestArmy={roomState.teamHasLargestArmy}
             onSetBuildMode={setBuildMode}
             onSetTargetColor={setTargetColor}
             onRollDice={handleRollDice}

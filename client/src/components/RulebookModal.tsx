@@ -129,7 +129,7 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                   <span>🏆</span> Siegesbedingung
                 </h4>
                 <p className="text-xs text-[#c9b59e]">
-                  Erfüllt insgesamt 12 Quests über alle Quest-Stufen hinweg als Team. Jeder erledigte Auftrag bringt euch dem endgültigen Triumph näher!
+                  Erreicht als Team mindestens <strong>10 Team-Siegpunkte</strong>! Siegpunkte erhaltet ihr durch gelöste Quests (+1 SP pro Quest) sowie die beiden kooperativen Team-Meilensteine: <strong>Längste Handelsstraße</strong> (+1 SP) und <strong>Größte Rittermacht</strong> (+1 SP).
                 </p>
               </div>
               <div className="bg-[#2a1210] border border-[#6b231d] rounded-xl p-4 space-y-2">
@@ -137,8 +137,21 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                   <span>💀</span> Niederlagebedingung
                 </h4>
                 <p className="text-xs text-[#e5b3af]">
-                  Sollte die Insel von Katastrophen überrollt werden oder zu viele Quests scheitern (4 Fehlschläge), verliert das Team gemeinsam.
+                  Sollte die Insel von Katastrophen überrollt werden oder zu viele Quests an ihren Zeitlimits scheitern (4 Fehlschläge), verliert das Team gemeinsam.
                 </p>
+              </div>
+              <div className="bg-[#1f1910] border border-[#6b4e28] rounded-xl p-4 space-y-2">
+                <h4 className="font-bold text-[#f4d068] flex items-center gap-2">
+                  <span>⭐</span> Kooperative Team-Meilensteine
+                </h4>
+                <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#cfbeaa]">
+                  <li>
+                    <strong>Längste Handelsstraße (ab 7 Straßen):</strong> +1 Siegpunkt, +1 zusätzliche Schenkung pro Zug, 3:1 Bankhandel auch ohne Hafen und +1 W6-Timer für künftige Quests.
+                  </li>
+                  <li>
+                    <strong>Größte Rittermacht (ab 3 Rittern):</strong> +1 Siegpunkt, schleudert den Räuber maximal weit weg, betäubt ihn für 1 Runde und halbiert seine Patrouille (nur noch jede 2. Runde).
+                  </li>
+                </ul>
               </div>
             </div>
           )}
@@ -156,10 +169,10 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                   <strong>Ticken der Zeit:</strong> Zu Beginn jeder vollen Spielrunde wird der W6-Timer für alle offenen Quests um 1 Punkt reduziert (z. B. von 4 auf 3).
                 </li>
                 <li>
-                  <strong>Ablauf:</strong> Erreicht ein Timer 0, scheitert der Auftrag und wird durch eine neue Herausforderung ersetzt. Zudem drohen dem Team empfindliche Strafen!
+                  <strong>Ablauf:</strong> Erreicht ein Timer 0, scheitert der Auftrag und wird durch eine neue Herausforderung ersetzt. Bei 4 Fehlschlägen hat das Team verloren!
                 </li>
                 <li>
-                  <strong>Rohstoff-Einzahlung:</strong> Viele Quests verlangen Rohstofflieferungen (z. B. 4 Holz). Jeder Spieler kann in seinem Zug per Klick auf die Einzahlungs-Schaltfläche passende Rohstoffe direkt einzahlen. Jede erfüllte Quest bringt dem Team 1 Siegpunkt für den Gesamtsieg!
+                  <strong>Rohstoff-Einzahlung:</strong> Quests verlangen Rohstofflieferungen (z. B. Holz oder Erz). Eingezahlte Rohstoffe sind sicher vor der Räuber-7 gelagert! Jede erfüllte Quest bringt dem Team 1 Siegpunkt.
                 </li>
                 <li>
                   <strong>Bau- und Verbindungsquests:</strong> Manche Aufträge fordern den Bau einer bestimmten Anzahl Straßen oder Siedlungen auf bestimmten Landschaften.
@@ -185,16 +198,32 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                     Wird eine <strong>7</strong> gewürfelt, zieht der Räuber sofort zum nächsten Buchstaben seiner Route (z. B. von D nach E).
                   </li>
                   <li>
-                    Alle Spieler mit mehr als <strong>7 Handkarten</strong> müssen sofort die Hälfte ihrer Karten abgeben.
+                    Alle Spieler mit mehr als <strong>7 Handkarten</strong> müssen sofort die Hälfte ihrer Karten abgeben. Eingelagerte Quest-Rohstoffe sind geschützt!
                   </li>
                   <li>
                     Alle Siedlungen und Städte, die direkt an das Zielfeld des Räubers angrenzen, werden geplündert (jeder betroffene Spieler verliert 1 Rohstoffkarte).
                   </li>
                 </ul>
               </div>
-              <p className="text-xs text-[#c9b59e]">
-                <strong>Ritterkarte & Kapitän:</strong> Der Kapitän kann gespielte Ritterkarten einsetzen, um den Räuber auf seiner Route um 2 Felder zurückzudrängen und wertvolle Zeit für das Team zu gewinnen!
-              </p>
+              <div className="bg-[#241510] border border-[#5e2d1d] rounded-xl p-4 space-y-2">
+                <h4 className="font-bold text-rose-400 text-xs uppercase tracking-wider">
+                  Ritter anheuern & Räuber zurückwerfen
+                </h4>
+                <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#cfbeaa]">
+                  <li>
+                    <strong>Für alle Spieler:</strong> Jeder Spieler kann in seinem Zug für 1x Erz, 1x Wolle und 1x Weizen einen Ritter rufen.
+                  </li>
+                  <li>
+                    <strong>Kapitän-Vorteil:</strong> Der Kapitän erhält pro Zug 1 kostenlosen Ritter!
+                  </li>
+                  <li>
+                    <strong>Progressiver Rückstoß:</strong> Jeder Ritter drängt den Räuber auf der Route zurück und erbeutet 1 Rohstoffkarte. Je mehr Ritter das Team versammelt hat, desto weiter wird der Räuber nach hinten geworfen!
+                  </li>
+                  <li>
+                    <strong>Größte Rittermacht (ab 3 Rittern):</strong> Bringt +1 Siegpunkt, verbannt den Räuber an den fernsten Punkt der Insel, betäubt ihn für 1 Runde und halbiert seine Patrouille auf jede 2. Runde!
+                  </li>
+                </ul>
+              </div>
             </div>
           )}
 
@@ -246,20 +275,20 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
           {activeTab === 'exploration' && (
             <div className="space-y-4">
               <h3 className="text-lg font-bold font-['MedievalSharp',serif] text-[#f4caa1] border-b border-[#5a3818] pb-1">
-                Dynamisches Insel-Wachstum & Ozeane
+                Dynamisches Insel-Wachstum & Küsten-Häfen
               </h3>
               <p>
-                Die Insel beginnt als kompaktes <strong>7-Hex-Kernland</strong>. Die weite Welt dahinter liegt im Verborgenen!
+                Die Insel beginnt als großes <strong>19-Hex-Kernland</strong> mit allen 5 Rohstoffarten und der Wüste. Die weite Welt dahinter wird durch Straßenbau erkundet!
               </p>
               <ul className="list-disc pl-5 space-y-2 text-xs text-[#cfbeaa]">
                 <li>
-                  <strong>Straßen als Erkundungswerkzeug:</strong> Baut ein Spieler eine Straße in Richtung des unerforschten Inselrandes, wird das umliegende Gelände aufgedeckt.
+                  <strong>Straßen als Erkundungswerkzeug:</strong> Baut ein Spieler eine Straße in Richtung des Inselrandes, wird das umliegende Gelände aufgedeckt.
                 </li>
                 <li>
-                  <strong>Zufällige Landschaften:</strong> Neue Felder können fruchtbares Land (Wald, Hügel, Weideland, Ackerland, Gebirge) mit Würfelzahlen und Räuber-Buchstaben sein.
+                  <strong>Endloser Kontinent:</strong> Nach Norden, Osten und Westen erstrecken sich unendliche Landmassen mit neuen Rohstofffeldern, Zahlenchips und Räuber-Routen.
                 </li>
                 <li>
-                  <strong>Ozean & Wasser-Sperren:</strong> Zu 25% trifft eure Expedition auf offenes Meer. Auf reinen Wasserfeldern können <em>weder Straßen noch Siedlungen</em> gebaut werden - ihr müsst einen anderen Weg um die Küste finden!
+                  <strong>Südküste & Häfen:</strong> Stoßt ihr weit nach Süden vor, trefft ihr auf das offene Meer und strategische See-Häfen (2:1 Spezial-Häfen und 3:1 Allzweck-Häfen für günstigen Bankhandel)!
                 </li>
               </ul>
             </div>
@@ -271,12 +300,12 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                 Authentische Baulimits
               </h3>
               <p>
-                Wie im originalen Brettspiel besitzt jeder Spieler einen streng begrenzten Vorrat an Baumaterialien:
+                Wie im originalen Brettspiel besitzt jeder Spieler einen begrenzten Vorrat an Baumaterialien:
               </p>
               <div className="grid grid-cols-3 gap-3 pt-1">
                 <div className="bg-[#22160d] border border-[#5a381a] rounded-xl p-3 text-center">
                   <div className="text-2xl mb-1">🛣️</div>
-                  <span className="font-bold text-white block text-sm">15 Straßen</span>
+                  <span className="font-bold text-white block text-sm">30 Straßen</span>
                   <span className="text-[10px] text-[#b39578]">Pro Spieler</span>
                 </div>
                 <div className="bg-[#22160d] border border-[#5a381a] rounded-xl p-3 text-center">

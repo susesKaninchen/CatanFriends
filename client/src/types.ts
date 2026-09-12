@@ -160,4 +160,5 @@ export interface GameRoomState {
   teamHasLongestRoad: boolean;
   teamHasLargestArmy: boolean;
   robberMovedThisRound: boolean;
+  robberStunnedRounds?: number;
 }

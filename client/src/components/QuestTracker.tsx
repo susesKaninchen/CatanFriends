@@ -12,6 +12,8 @@ interface QuestTrackerProps {
   myResources: ResourceCount;
   isMyTurn: boolean;
   onDeposit: (slotIndex: number, resource: ResourceType, amount: number) => void;
+  teamHasLongestRoad?: boolean;
+  teamHasLargestArmy?: boolean;
 }
 
 const RESOURCE_LABELS: { [key in ResourceType]: { name: string; icon: React.ReactNode; bg: string; text: string } } = {
@@ -59,17 +61,38 @@ export const QuestTracker: React.FC<QuestTrackerProps> = ({
   targetToWin,
   myResources,
   isMyTurn,
-  onDeposit
+  onDeposit,
+  teamHasLongestRoad,
+  teamHasLargestArmy
 }) => {
+  const bonusPoints = (teamHasLongestRoad ? 1 : 0) + (teamHasLargestArmy ? 1 : 0);
+  const totalTeamPoints = solvedCount + bonusPoints;
+
   return (
     <div className="bg-[#19110a]/95 border-2 border-[#5a3818] rounded-2xl p-4 shadow-2xl space-y-4 text-[#e8d5b5]">
       {/* Top Bar: Progress & Skull Counter */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#472c14] pb-3">
         <div className="flex items-center gap-2">
           <Trophy className="w-5 h-5 text-[#d4af37]" />
-          <span className="font-['MedievalSharp',serif] font-bold text-base text-[#fff4e0]">
-            Missions-Siegpunkte: <span className="text-amber-400 font-mono">{solvedCount}</span> / {targetToWin}
-          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-['MedievalSharp',serif] font-bold text-base text-[#fff4e0]">
+              Team-Siegpunkte: <span className="text-amber-400 font-mono">{totalTeamPoints}</span> / {targetToWin}
+            </span>
+            <div className="flex items-center gap-1.5 text-[11px]">
+              <span className="text-[#a8825c] font-sans">({solvedCount} Quests</span>
+              {teamHasLongestRoad && (
+                <span className="bg-amber-950 text-amber-300 border border-amber-600/60 px-1.5 py-0.5 rounded font-sans font-bold">
+                  +1 Straße
+                </span>
+              )}
+              {teamHasLargestArmy && (
+                <span className="bg-rose-950 text-rose-300 border border-rose-600/60 px-1.5 py-0.5 rounded font-sans font-bold">
+                  +1 Ritter
+                </span>
+              )}
+              <span className="text-[#a8825c] font-sans">)</span>
+            </div>
+          </div>
         </div>
 
         {/* Failed Quests Skull Tracker (Defeat at 4) */}

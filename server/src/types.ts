@@ -165,4 +165,5 @@ export interface GameRoomState {
   teamHasLongestRoad: boolean; // >= 7 roads connected
   teamHasLargestArmy: boolean; // >= 3 knights played
   robberMovedThisRound: boolean;
+  robberStunnedRounds?: number;
 }

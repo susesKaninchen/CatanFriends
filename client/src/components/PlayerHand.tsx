@@ -118,18 +118,36 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
 
         {/* Team Milestones */}
         <div className="flex items-center gap-2 text-xs">
-          <span className={`px-2 py-1 rounded-lg border font-semibold flex items-center gap-1 ${
-            teamHasLongestRoad ? 'bg-amber-950/80 text-amber-300 border-amber-600/60 shadow' : 'bg-[#120b06] text-[#735843] border-[#311c0e]'
-          }`}>
+          <span
+            className={`px-2 py-1 rounded-lg border font-semibold flex items-center gap-1 ${
+              teamHasLongestRoad
+                ? 'bg-amber-950/80 text-amber-300 border-amber-600/60 shadow animate-pulse'
+                : 'bg-[#120b06] text-[#735843] border-[#311c0e]'
+            }`}
+            title={
+              teamHasLongestRoad
+                ? 'Handelsstraße aktiv: +1 SP, +1 Schenkung/Zug, 3:1 Bankhandel, +1 W6-Timer'
+                : 'Handelsstraße: Ab 7 zusammenhängenden Straßen (+1 SP, +1 Handel, 3:1 Bank, +1 W6)'
+            }
+          >
             <Award className="w-3.5 h-3.5" />
-            Handelsstraße ({teamHasLongestRoad ? '+1 W6' : '<7'})
+            Handelsstraße {teamHasLongestRoad ? '(+1 SP / 3:1)' : '(<7)'}
           </span>
 
-          <span className={`px-2 py-1 rounded-lg border font-semibold flex items-center gap-1 ${
-            teamHasLargestArmy ? 'bg-rose-950/80 text-rose-300 border-rose-600/60 shadow' : 'bg-[#120b06] text-[#735843] border-[#311c0e]'
-          }`}>
+          <span
+            className={`px-2 py-1 rounded-lg border font-semibold flex items-center gap-1 ${
+              teamHasLargestArmy
+                ? 'bg-rose-950/80 text-rose-300 border-rose-600/60 shadow animate-pulse'
+                : 'bg-[#120b06] text-[#735843] border-[#311c0e]'
+            }`}
+            title={
+              teamHasLargestArmy
+                ? 'Größte Rittermacht aktiv: +1 SP, Weit-Rückstoß, 1 Runde Betäubung, Patrouille nur jede 2. Runde'
+                : 'Rittermacht: Ab 3 Rittern im Team (+1 SP, Max-Rückstoß, Betäubung, 1/2 Patrouille)'
+            }
+          >
             <Shield className="w-3.5 h-3.5" />
-            Rittermacht ({teamHasLargestArmy ? 'Aktiv' : '<3'})
+            Rittermacht {teamHasLargestArmy ? '(+1 SP / Exil)' : '(<3)'}
           </span>
         </div>
       </div>

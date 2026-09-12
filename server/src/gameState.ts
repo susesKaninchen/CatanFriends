@@ -13,7 +13,7 @@ import {
   QuestType,
   HexType
 } from './types.js';
-import { generateBoard, getNextRobberLetter, getPreviousRobberLetter, ROBBER_LETTER_ORDER, exploreSurroundings, getTileTwoTilesNorth } from './board.js';
+import { generateBoard, getNextRobberLetter, getPreviousRobberLetter, ROBBER_LETTER_ORDER, exploreSurroundings, getTileTwoTilesNorth, hexToPixel } from './board.js';
 import { createQuestSlot, initializeQuestSlots } from './quests.js';
 
 export class GameManager {
@@ -853,17 +853,22 @@ export class GameManager {
     });
   }
 
+  private checkTeamVictory(state: GameRoomState) {
+    const totalPoints = state.solvedQuestsCount + (state.teamHasLongestRoad ? 1 : 0) + (state.teamHasLargestArmy ? 1 : 0);
+    if (totalPoints >= state.targetQuestsToWin && state.phase !== 'GAME_OVER_VICTORY') {
+      state.phase = 'GAME_OVER_VICTORY';
+      this.addLog(state, `SIEG! Das Team hat ${totalPoints} Siegpunkte erreicht (Quests: ${state.solvedQuestsCount}, Meilensteine: ${(state.teamHasLongestRoad ? 1 : 0) + (state.teamHasLargestArmy ? 1 : 0)}) und Catan gerettet!`, 'alert');
+    }
+  }
+
   private completeQuest(state: GameRoomState, slot: QuestSlot) {
     slot.isCompleted = true;
     state.solvedQuestsCount += 1;
 
     this.addLog(state, `ERFOLG: Quest "${slot.title}" erfüllt! (${state.solvedQuestsCount} gelöst)`, 'quest');
 
-    if (state.solvedQuestsCount >= state.targetQuestsToWin) {
-      state.phase = 'GAME_OVER_VICTORY';
-      this.addLog(state, `SIEG! Das Team hat ${state.solvedQuestsCount} Quests gemeistert und Catan gerettet!`, 'alert');
-      return;
-    }
+    this.checkTeamVictory(state);
+    if (state.phase === 'GAME_OVER_VICTORY') return;
 
     // Advance slot to next tier
     const nextTier = Math.min(6, slot.tier + 1);
@@ -873,7 +878,10 @@ export class GameManager {
     this.addLog(state, `Neuer Auftrag für Slot ${slot.slotIndex + 1}: "${newSlot.title}" (Stufe ${newSlot.tier}, W6-Timer: ${newSlot.d6Timer}).`, 'quest');
   }
 
-  // Captain / Knight card: banishes robber to uninhabited land hex + increments knight count
+  // Knight card / recruitment:
+  // Captain can play 1 free knight per turn.
+  // Other roles can recruit a knight for 1x Erz, 1x Wolle, 1x Weizen.
+  // The more knights the team has, the further back the robber is banished!
   public playKnightCard(roomCode: string, playerId: string): { success: boolean; message?: string } {
     const state = this.getRoom(roomCode);
     if (!state) return { success: false, message: 'Raum nicht gefunden.' };
@@ -886,45 +894,77 @@ export class GameManager {
       return { success: false, message: 'Ritterkarte kann nur in der Aktionsphase gespielt werden.' };
     }
 
+    const isCaptain = activePlayer.role === 'captain';
+    if (!isCaptain) {
+      if (activePlayer.resources.ore < 1 || activePlayer.resources.sheep < 1 || activePlayer.resources.wheat < 1) {
+        return { success: false, message: 'Ritter anheuern erfordert: 1x Erz, 1x Wolle und 1x Weizen.' };
+      }
+      activePlayer.resources.ore -= 1;
+      activePlayer.resources.sheep -= 1;
+      activePlayer.resources.wheat -= 1;
+    }
+
     activePlayer.knightsPlayed += 1;
 
     // Check Largest Army milestone (>= 3 knights in team)
     const teamTotalKnights = state.players.reduce((sum, p) => sum + p.knightsPlayed, 0);
-    if (teamTotalKnights >= 3 && !state.teamHasLargestArmy) {
-      state.teamHasLargestArmy = true;
-      this.addLog(state, 'MEILENSTEIN: Größte Rittermacht erreicht! Der Räuber patrouilliert nur noch jede 2. Runde!', 'alert');
-    }
 
-    // Knight banishes the robber to a harmless uninhabited land tile (0 buildings)
+    // Progressive Robber Exile: The more knights the team has, the further the robber is banished
     const candidateHexes = state.board.hexes.filter(h => h.type !== 'water' && h.id !== state.board.robberHexId);
+    if (candidateHexes.length === 0) return { success: false, message: 'Kein Zielfeld verfügbar.' };
 
-    // Find hexes with 0 buildings
-    const uninhabited = candidateHexes.filter(hex => {
+    const scoredHexes = candidateHexes.map(hex => {
+      const center = hexToPixel(hex.q, hex.r);
+      let minBuildingDist = Infinity;
+      let hasBuildingDirectly = false;
+
       for (const vKey of Object.keys(state.board.vertices)) {
         const v = state.board.vertices[vKey];
-        if (v.adjacentHexIds.includes(hex.id) && v.building) {
-          return false;
+        if (v.building) {
+          const d = Math.hypot(center.x - v.x, center.y - v.y);
+          if (d < minBuildingDist) minBuildingDist = d;
+          if (v.adjacentHexIds.includes(hex.id)) hasBuildingDirectly = true;
         }
       }
-      return true;
+
+      const pips = hex.diceNumber ? (6 - Math.abs(7 - hex.diceNumber)) : 0;
+      return { hex, minBuildingDist, hasBuildingDirectly, pips };
     });
 
-    let targetHex = candidateHexes[0];
-    if (uninhabited.length > 0) {
-      uninhabited.sort((a, b) => {
-        const pipsA = a.diceNumber ? (6 - Math.abs(7 - a.diceNumber)) : 0;
-        const pipsB = b.diceNumber ? (6 - Math.abs(7 - b.diceNumber)) : 0;
-        return pipsA - pipsB;
-      });
-      targetHex = uninhabited[0];
+    const safeHexes = scoredHexes.filter(h => !h.hasBuildingDirectly);
+    const pool = safeHexes.length > 0 ? safeHexes : scoredHexes;
+
+    // Sort by minBuildingDist descending (furthest away from team buildings first)
+    pool.sort((a, b) => b.minBuildingDist - a.minBuildingDist);
+
+    // Pick exile distance based on teamTotalKnights
+    let chosenIndex = 0;
+    if (teamTotalKnights >= 3) {
+      chosenIndex = 0; // Absolute furthest hex away (maximum exile)
+    } else if (teamTotalKnights === 2) {
+      chosenIndex = Math.min(pool.length - 1, Math.floor(Math.random() * Math.min(2, pool.length)));
+    } else {
+      chosenIndex = Math.min(pool.length - 1, Math.floor(Math.random() * Math.min(4, pool.length)));
     }
+
+    const targetHex = pool[chosenIndex].hex;
 
     state.board.hexes.forEach(h => { h.hasRobber = false; });
     targetHex.hasRobber = true;
     state.board.robberHexId = targetHex.id;
 
     const numStr = targetHex.diceNumber ? `Zahl ${targetHex.diceNumber}` : 'Wüste';
-    this.addLog(state, `${activePlayer.name} spielt eine Ritterkarte! Der Ritter vertreibt den Räuber auf ein unbewohntes Feld (${targetHex.type}, ${numStr})!`, 'alert');
+    this.addLog(state, `${activePlayer.name} ${isCaptain ? 'befiehlt die Ritterwache' : 'heuert einen Ritter an'} (Team-Ritter: ${teamTotalKnights})! Der Räuber wird ${teamTotalKnights >= 3 ? 'maximal weit in die Einöde verbannt' : `${teamTotalKnights}x weiter zurückgedrängt`} auf ${targetHex.type} (${numStr})!`, 'alert');
+
+    if (teamTotalKnights >= 3) {
+      if (!state.teamHasLargestArmy) {
+        state.teamHasLargestArmy = true;
+        this.addLog(state, 'MEILENSTEIN: Größte Rittermacht erreicht (>= 3 Ritter)! +1 Siegpunkt für das Team! Der Räuber patrouilliert nur noch jede 2. Runde!', 'alert');
+        this.checkTeamVictory(state);
+      }
+      state.robberStunnedRounds = 1;
+      this.addLog(state, 'Ritterwache überwältigt den Räuber: Seine nächste Patrouille fällt komplett aus!', 'info');
+    }
 
     return { success: true };
   }
@@ -945,7 +985,7 @@ export class GameManager {
       return { success: false, message: 'Bitte unterschiedliche Rohstoffe wählen.' };
     }
 
-    const ratio = this.getPlayerTradeRatio(state.board, activePlayer.color, giveRes);
+    const ratio = this.getPlayerTradeRatio(state.board, activePlayer.color, giveRes, state.teamHasLongestRoad);
 
     if (activePlayer.resources[giveRes] < ratio) {
       return { success: false, message: `Du benötigst ${ratio}x ${giveRes} für diesen Handel (${ratio}:1).` };
@@ -954,13 +994,13 @@ export class GameManager {
     activePlayer.resources[giveRes] -= ratio;
     activePlayer.resources[getRes] += 1;
 
-    const ratioLabel = ratio === 2 ? '2:1 Spezial-Hafen' : ratio === 3 ? '3:1 See-Hafen' : '4:1 Standard-Bank';
+    const ratioLabel = ratio === 2 ? '2:1 Spezial-Hafen' : ratio === 3 ? (state.teamHasLongestRoad ? '3:1 Handelsstraße' : '3:1 See-Hafen') : '4:1 Standard-Bank';
     this.addLog(state, `${activePlayer.name} tauscht ${ratio}x ${giveRes} gegen 1x ${getRes} (${ratioLabel}).`, 'info');
     return { success: true };
   }
 
-  public getPlayerTradeRatio(board: BoardState, playerColor: PlayerColor, res: ResourceType): number {
-    let bestRatio = 4;
+  public getPlayerTradeRatio(board: BoardState, playerColor: PlayerColor, res: ResourceType, teamHasLongestRoad: boolean = false): number {
+    let bestRatio = teamHasLongestRoad ? 3 : 4;
     for (const vKey of Object.keys(board.vertices)) {
       const v = board.vertices[vKey];
       if (v.building && v.harbor && v.building.ownerColor === playerColor) {
@@ -1057,12 +1097,17 @@ export class GameManager {
     this.addLog(state, `=== RUNDE ${state.roundNumber} STARTET ===`, 'info');
 
     // 1. Robber Patrol
-    // If Largest Army active: moves only on even rounds
-    const shouldRobberPatrol = !state.teamHasLargestArmy || (state.roundNumber % 2 === 0);
-    if (shouldRobberPatrol) {
-      this.patrolRobberToNeighbor(state);
+    if ((state.robberStunnedRounds ?? 0) > 0) {
+      state.robberStunnedRounds = (state.robberStunnedRounds ?? 0) - 1;
+      this.addLog(state, 'Ritterwache: Der überwältigte Räuber ist betäubt und setzt seine Patrouille aus!', 'info');
     } else {
-      this.addLog(state, 'Ritterwache hält den Räuber diese Runde auf!', 'info');
+      // If Largest Army active: moves only on even rounds
+      const shouldRobberPatrol = !state.teamHasLargestArmy || (state.roundNumber % 2 === 0);
+      if (shouldRobberPatrol) {
+        this.patrolRobberToNeighbor(state);
+      } else {
+        this.addLog(state, 'Ritterwache hält den Räuber diese Runde auf!', 'info');
+      }
     }
 
     // 2. D6 Quest Timers decrement
@@ -1100,7 +1145,8 @@ export class GameManager {
         points += b.type === 'city' ? 2 : 1;
       }
     }
-    return Math.max(1, points);
+    const roadBonus = state.teamHasLongestRoad ? 1 : 0;
+    return Math.max(1, points) + roadBonus;
   }
 
   private updateLongestRoad(state: GameRoomState) {
@@ -1110,7 +1156,12 @@ export class GameManager {
 
     if (totalRoads >= 7 && !state.teamHasLongestRoad) {
       state.teamHasLongestRoad = true;
-      this.addLog(state, 'MEILENSTEIN: Längste Handelsstraße erreicht (>= 7 Straßen)! Alle künftigen Quests erhalten +1 W6-Timer!', 'alert');
+      const activePlayer = state.players[state.activePlayerIndex];
+      if (activePlayer) {
+        activePlayer.tradesRemainingThisTurn += 1;
+      }
+      this.addLog(state, 'MEILENSTEIN: Längste Handelsstraße erreicht (>= 7 Straßen)! +1 Siegpunkt für das Team, +1 Schenkung pro Zug, 3:1 Bankhandel und +1 W6-Timer!', 'alert');
+      this.checkTeamVictory(state);
     }
   }
 

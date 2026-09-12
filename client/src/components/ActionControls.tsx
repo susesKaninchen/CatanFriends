@@ -20,6 +20,8 @@ interface ActionControlsProps {
   onPlayKnight: () => void;
   onEndTurn: () => void;
   onOpenRulebook?: () => void;
+  teamHasLongestRoad?: boolean;
+  teamHasLargestArmy?: boolean;
   onTradeBank?: (giveRes: ResourceType, getRes: ResourceType) => void;
   onGiftResource?: (targetPlayerId: string, resource: ResourceType) => void;
 }
@@ -49,6 +51,8 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
   buildMode,
   targetColor,
   board,
+  teamHasLongestRoad,
+  teamHasLargestArmy,
   onSetBuildMode,
   onSetTargetColor,
   onRollDice,
@@ -126,8 +130,19 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
     return myPlayer.resources.ore >= 3 && myPlayer.resources.wheat >= 2;
   };
 
+  const canAffordKnight = () => {
+    if (myPlayer.role === 'captain') {
+      return true;
+    }
+    return (
+      myPlayer.resources.ore >= 1 &&
+      myPlayer.resources.sheep >= 1 &&
+      myPlayer.resources.wheat >= 1
+    );
+  };
+
   const getTradeRatio = (res: ResourceType): number => {
-    let ratio = 4;
+    let ratio = teamHasLongestRoad ? 3 : 4;
     if (!board || !board.vertices) return ratio;
     for (const vKey of Object.keys(board.vertices)) {
       const v = board.vertices[vKey];
@@ -652,24 +667,31 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                 </div>
               )}
 
-              {/* Captain / Knight Card & End Turn */}
+              {/* Knight Recruitment & End Turn */}
               <div className="flex gap-2 pt-1">
-                {myPlayer.role === 'captain' && (
-                  <button
-                    type="button"
-                    onClick={onPlayKnight}
-                    className="w-1/2 bg-[#25160d] hover:bg-[#382114] border border-[#6b4220] text-rose-300 font-bold py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs shadow"
-                    title="Ritterkarte spielen: Räuber versetzen und Karte erbeuten"
-                  >
-                    <Shield className="w-4 h-4 text-rose-400" />
-                    Ritterkarte
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={onPlayKnight}
+                  disabled={!canAffordKnight()}
+                  className="w-1/2 bg-[#25160d] hover:bg-[#382114] disabled:opacity-40 disabled:hover:bg-[#25160d] border border-[#6b4220] text-rose-300 font-bold py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs shadow cursor-pointer disabled:cursor-not-allowed"
+                  title={
+                    myPlayer.role === 'captain'
+                      ? 'Kapitän: Kostenloser Ritter! (Räuber vertreiben & Beute)'
+                      : 'Ritter anheuern (1x Erz, 1x Wolle, 1x Weizen): Räuber vertreiben & Beute'
+                  }
+                >
+                  <Shield className="w-4 h-4 text-rose-400" />
+                  <span>
+                    {myPlayer.role === 'captain'
+                      ? 'Ritter (Gratis)'
+                      : 'Ritter (1E/1W/1G)'}
+                  </span>
+                </button>
 
                 <button
                   type="button"
                   onClick={onEndTurn}
-                  className={`${myPlayer.role === 'captain' ? 'w-1/2' : 'w-full'} bg-gradient-to-r from-[#5a3818] to-[#6d431d] hover:from-[#6d431d] hover:to-[#855829] border border-[#855829] text-[#fff8ec] font-extrabold py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 text-xs shadow-md font-['MedievalSharp',serif] tracking-wider`}
+                  className="w-1/2 bg-gradient-to-r from-[#5a3818] to-[#6d431d] hover:from-[#6d431d] hover:to-[#855829] border border-[#855829] text-[#fff8ec] font-extrabold py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 text-xs shadow-md font-['MedievalSharp',serif] tracking-wider"
                 >
                   <span>Zug beenden</span>
                   <ArrowRight className="w-4 h-4" />

@@ -256,24 +256,6 @@ export function generateBoard(): BoardState {
     );
   });
 
-  // Coastal water tiles in Ring 3 with authentic Catan harbors (9 coastal water tiles)
-  const ring3WaterCoords = [
-    { q: 3, r: 0 },
-    { q: 3, r: -2 },
-    { q: 2, r: -3 },
-    { q: 0, r: -3 },
-    { q: -2, r: -1 },
-    { q: -3, r: 1 },
-    { q: -3, r: 3 },
-    { q: -1, r: 3 },
-    { q: 1, r: 2 }
-  ];
-
-  ring3WaterCoords.forEach(coord => {
-    const waterHex = addHexToBoard(board, coord.q, coord.r, 'water', null, null, false);
-    assignHarborToWaterHex(board, waterHex);
-  });
-
   return board;
 }
 
@@ -408,37 +390,11 @@ export function exploreSurroundings(board: BoardState, edgeId: string): HexTile[
       if (dist <= 6 && !existingCoords.has(nKey)) {
         existingCoords.add(nKey);
 
-        // Water Clustering Algorithm:
-        // Inspect already placed neighbor hexes around (nq, nr)
-        let waterNeighbors = 0;
-        let landNeighbors = 0;
-        for (const nDir of AXIAL_DIRECTIONS) {
-          const adjQ = nq + nDir.q;
-          const adjR = nr + nDir.r;
-          const neighborHex = board.hexes.find(h => h.q === adjQ && h.r === adjR);
-          if (neighborHex) {
-            if (neighborHex.type === 'water') {
-              waterNeighbors++;
-            } else {
-              landNeighbors++;
-            }
-          }
-        }
-
-        // Clustering probability:
-        // - Deep inland (surrounded by 3+ land): 0% water to prevent ugly single-tile inland puddles
-        // - Adjacent to existing water: higher chance (55% if 1 water neighbor, 75% if 2+ water neighbors)
-        // - Open land boundary with 0 water neighbors: low base chance (8%)
-        let isWater = false;
-        if (landNeighbors >= 3) {
-          isWater = false;
-        } else if (waterNeighbors >= 2) {
-          isWater = Math.random() < 0.75;
-        } else if (waterNeighbors === 1) {
-          isWater = Math.random() < 0.55;
-        } else {
-          isWater = Math.random() < 0.08;
-        }
+        // Open continent exploration:
+        // The ocean lies strictly on the Southern coast (nr >= 3).
+        // In all other directions (nr < 3, i.e. North, East, West, Northwest, Northeast), it is 100% open mainland.
+        // This ensures the game is never an enclosed island, and can be expanded indefinitely into the continent!
+        const isWater = nr >= 3;
 
         let type: HexType = 'water';
         let letter: string | null = null;
