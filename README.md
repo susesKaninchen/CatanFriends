@@ -9,7 +9,7 @@ Gemeinsam statt gegeneinander: Erkundet einen unendlichen Kontinent, erfüllt mo
 ## Spielfeatures & Spielmechanik
 
 ### 1. Kooperatives Teamspiel & Siegesbedingungen
-- **Gemeinsames Ziel**: Erreicht als Team mindestens **10 Team-Siegpunkte**, bevor 4 Quests fehlschlagen.
+- **Gemeinsames Ziel**: Erreicht als Team mindestens **4 Team-Siegpunkte**, bevor 4 Quests fehlschlagen.
 - **Siegpunkte-Quellen**:
   - Jede gelöste Quest bringt **+1 Team-Siegpunkt**.
   - **Längste Handelsstraße** (ab 7 zusammenhängenden Straßen) bringt **+1 Team-Siegpunkt**.
@@ -18,8 +18,9 @@ Gemeinsam statt gegeneinander: Erkundet einen unendlichen Kontinent, erfüllt mo
 
 ### 2. Modulare Quests mit W6-Würfel-Timer & Vorratsspeicher
 - **4 aktive Quest-Slots**: Ständig 4 offene Herausforderungen mit W6-Timer (6 bis 1 Runde).
+- **Einsteigerfreundliche Stufe-1-Quests**: Zu Beginn benötigt jede Quest nur 1 Rohstoff oder 1 Straße, damit das Team direkt Fahrt aufnehmen kann.
 - **Runden-Countdown**: Zu Beginn jeder vollen Spielrunde sinkt der Timer aller offenen Quests um 1.
-- **Bedarf einlagern (Schutz vor der 7)**: Rohstoffe für Quests (z. B. Holz oder Erz) können schrittweise eingezahlt werden. Eingelagerte Ressourcen sind **vollständig vor dem Räuber geschützt**, wenn eine 7 gewürfelt wird!
+- **Bedarf einlagern (Schutz vor der 7 & Timer-Verlängerung)**: Rohstoffe für Quests (z. B. Holz oder Erz) können schrittweise eingezahlt werden. Eingelagerte Ressourcen sind **vollständig vor dem Räuber geschützt**, wenn eine 7 gewürfelt wird! Zudem steigt der W6-Timer bei jeder Einzahlung um **+3 Runden** (bis max. 6), was gezieltes Herauszögern und Vorbereiten ermöglicht.
 
 ### 3. Handels-, Tausch- und Hilfesystem (4 Modi)
 - **🏛️ Bankhandel & Häfen**: Standardkurs 4:1. An 3:1 Allzweckhäfen oder mit der *Längsten Handelsstraße* sinkt die Quote auf 3:1. An 2:1 Spezial-Häfen handelt das Team Rohstoffe 2:1.
