@@ -159,6 +159,9 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
               {/* Protective Dark Vignette Gradient */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-black/70 pointer-events-none" />
 
+              {/* Shimmer sweep effect on hover */}
+              <div className="absolute inset-0 catan-card-shimmer opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
               {/* Top Row: Left & Right Corner Pips with Resource Icon */}
               <div className="relative z-10 flex items-center justify-between w-full">
                 <div className="flex flex-col items-center leading-none bg-black/65 backdrop-blur-sm px-1.5 py-1 rounded-lg border border-amber-500/40 shadow">

@@ -66,3 +66,175 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #96613c;
 }
+
+/* Dynamic Catan Game Animations */
+@keyframes buildingPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  65% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+  85% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-building-pop {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: buildingPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes roadDraw {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-road-draw {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: roadDraw 0.4s ease-out forwards;
+}
+
+@keyframes cityUpgradeBurst {
+  0% {
+    transform: scale(0.5) translateY(10px);
+    filter: drop-shadow(0 0 16px #fbbf24);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12) translateY(-4px);
+    filter: drop-shadow(0 0 24px #f59e0b);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.8));
+    opacity: 1;
+  }
+}
+
+.animate-city-upgrade {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: cityUpgradeBurst 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes harvestWave {
+  0% {
+    r: 16px;
+    opacity: 0.95;
+    stroke-width: 3.5px;
+  }
+  100% {
+    r: 54px;
+    opacity: 0;
+    stroke-width: 0.8px;
+  }
+}
+
+.animate-harvest-wave {
+  animation: harvestWave 2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+}
+
+@keyframes harvestPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+.animate-harvest-token {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: harvestPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes harvestBadgeBob {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-harvest-badge {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: harvestBadgeBob 1.6s ease-in-out infinite;
+}
+
+@keyframes robberProwl {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-robber-hover {
+  animation: robberProwl 3s ease-in-out infinite;
+}
+
+@keyframes diceTumble {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(-15deg) scale(1.15);
+  }
+  50% {
+    transform: rotate(15deg) scale(1.1);
+  }
+  75% {
+    transform: rotate(-8deg) scale(1.05);
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+.animate-dice-tumble {
+  animation: diceTumble 0.25s infinite ease-in-out;
+}
+
+@keyframes shimmerSweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.catan-card-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(251, 191, 36, 0.2) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmerSweep 3s infinite;
+}

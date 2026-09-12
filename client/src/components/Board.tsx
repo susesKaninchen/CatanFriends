@@ -12,6 +12,7 @@ interface BoardProps {
   phase?: GamePhase;
   isMyTurn?: boolean;
   disabled?: boolean;
+  diceValues?: [number, number];
 }
 
 const HEX_RADIUS = 56;
@@ -82,8 +83,15 @@ export const Board: React.FC<BoardProps> = ({
   onSelectHex,
   phase,
   isMyTurn,
-  disabled
+  disabled,
+  diceValues
 }) => {
+  // Compute active dice roll sum for harvest tile highlight
+  const diceSum = diceValues ? diceValues[0] + diceValues[1] : null;
+  const isDiceHarvestActive = Boolean(
+    diceSum !== null && diceSum >= 2 && diceSum <= 12 && diceSum !== 7 && phase === 'TURN_ACTIONS'
+  );
+
   // Pan and Zoom Interactive State
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -325,6 +333,11 @@ export const Board: React.FC<BoardProps> = ({
             <stop offset="100%" stopColor="#e2cca0" />
           </radialGradient>
 
+          {/* Radiant Golden Harvest Glow Filter */}
+          <filter id="catan-gold-glow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#fbbf24" floodOpacity="0.85" />
+          </filter>
+
           {/* Wooden Charcoal Robber Gradient */}
           <linearGradient id="robber-wood" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#3f3f46" />
@@ -354,6 +367,9 @@ export const Board: React.FC<BoardProps> = ({
             const pointsStr = corners.map((p) => `${p.x},${p.y}`).join(' ');
             const isWater = hex.type === 'water';
             const canPlaceRobberHere = isRobberPlacementPhase && !isWater && !hex.hasRobber;
+            const isRolledHex = isDiceHarvestActive && !isWater && hex.diceNumber === diceSum;
+            const isHarvesting = isRolledHex && !hex.hasRobber;
+            const isBlockedByRobber = isRolledHex && hex.hasRobber;
 
             return (
               <g
@@ -392,13 +408,47 @@ export const Board: React.FC<BoardProps> = ({
                   />
                 )}
 
-                {/* Wooden border outline without dashed lines */}
-                <polygon
-                  points={pointsStr}
-                  fill="none"
-                  stroke={canPlaceRobberHere ? '#ef4444' : '#3a2012'}
-                  strokeWidth={canPlaceRobberHere ? 3.5 : 2}
-                />
+                {/* Harvest Golden Glowing Wave Ring */}
+                {isHarvesting && (
+                  <circle
+                    cx={center.x}
+                    cy={center.y + 4}
+                    r="20"
+                    fill="none"
+                    stroke="#fef08a"
+                    strokeWidth="2.5"
+                    className="animate-harvest-wave pointer-events-none"
+                  />
+                )}
+
+                {/* Wooden border outline / Harvest Glow */}
+                {isHarvesting ? (
+                  <polygon
+                    points={pointsStr}
+                    fill="#f59e0b"
+                    fillOpacity="0.22"
+                    stroke="#fbbf24"
+                    strokeWidth="4"
+                    className="animate-pulse"
+                    filter="url(#catan-gold-glow)"
+                  />
+                ) : isBlockedByRobber ? (
+                  <polygon
+                    points={pointsStr}
+                    fill="#ef4444"
+                    fillOpacity="0.22"
+                    stroke="#ef4444"
+                    strokeWidth="4"
+                    className="animate-pulse"
+                  />
+                ) : (
+                  <polygon
+                    points={pointsStr}
+                    fill="none"
+                    stroke={canPlaceRobberHere ? '#ef4444' : '#3a2012'}
+                    strokeWidth={canPlaceRobberHere ? 3.5 : 2}
+                  />
+                )}
 
                 {/* Glowing warning halo if targetable for robber placement */}
                 {canPlaceRobberHere && (
@@ -414,13 +464,29 @@ export const Board: React.FC<BoardProps> = ({
 
                 {/* Clean Number Token without letters */}
                 {hex.diceNumber !== null && !isWater && (
-                  <g transform={`translate(${center.x}, ${center.y + 4})`} filter="url(#catan-shadow)">
+                  <g
+                    transform={`translate(${center.x}, ${center.y + 4})`}
+                    filter="url(#catan-shadow)"
+                    className={isHarvesting ? 'animate-harvest-token' : undefined}
+                  >
+                    {/* Harvest golden aura around number token */}
+                    {isHarvesting && (
+                      <circle
+                        r="20"
+                        fill="#fbbf24"
+                        fillOpacity="0.3"
+                        stroke="#fef08a"
+                        strokeWidth="1.5"
+                        className="animate-ping"
+                      />
+                    )}
+
                     {/* Outer dark wooden ring */}
                     <circle
                       r="16.5"
                       fill="#2e1a0e"
-                      stroke="#855829"
-                      strokeWidth="1.5"
+                      stroke={isHarvesting ? '#fbbf24' : '#855829'}
+                      strokeWidth={isHarvesting ? 2 : 1.5}
                     />
 
                     {/* Antique parchment inner circular token */}
@@ -464,9 +530,33 @@ export const Board: React.FC<BoardProps> = ({
                   </g>
                 )}
 
-                {/* Robber Meeple - Static, crisp 3D wooden pawn silhouette without rectangular clipping */}
+                {/* Floating Harvest Ertrag Badge */}
+                {isHarvesting && (
+                  <g transform={`translate(${center.x}, ${center.y - 25})`} filter="url(#catan-shadow)" className="pointer-events-none">
+                    <g className="animate-harvest-badge">
+                      <rect x="-24" y="-8.5" width="48" height="17" rx="8.5" fill="#2d1709" stroke="#fbbf24" strokeWidth="1.2" />
+                      <text x="0" y="0.5" textAnchor="middle" dominantBaseline="central" fontSize="9.5" fontWeight="900" fill="#fef08a" fontFamily="MedievalSharp, serif">
+                        ✨ Ertrag
+                      </text>
+                    </g>
+                  </g>
+                )}
+
+                {/* Floating Blocked Badge if Robber blocks rolled tile */}
+                {isBlockedByRobber && (
+                  <g transform={`translate(${center.x}, ${center.y - 32})`} filter="url(#catan-shadow)" className="pointer-events-none">
+                    <g className="animate-harvest-badge">
+                      <rect x="-28" y="-8.5" width="56" height="17" rx="8.5" fill="#3f0f0f" stroke="#ef4444" strokeWidth="1.2" />
+                      <text x="0" y="0.5" textAnchor="middle" dominantBaseline="central" fontSize="9" fontWeight="900" fill="#fca5a5" fontFamily="MedievalSharp, serif">
+                        🏴‍☠️ Blockiert
+                      </text>
+                    </g>
+                  </g>
+                )}
+
+                {/* Robber Meeple - Static, crisp 3D wooden pawn silhouette with menace hover */}
                 {hex.hasRobber && (
-                  <g transform={`translate(${center.x}, ${center.y - 2})`} filter="url(#catan-shadow)">
+                  <g transform={`translate(${center.x}, ${center.y - 2})`} filter="url(#catan-shadow)" className="animate-robber-hover">
                     {/* Ground drop shadow */}
                     <ellipse cx="0" cy="15" rx="14" ry="5.5" fill="#000000" opacity="0.65" />
 
@@ -684,7 +774,7 @@ export const Board: React.FC<BoardProps> = ({
               <g key={edge.id}>
                 {/* Built Road: Authentic natural 3D wooden beam */}
                 {isBuilt && (
-                  <g filter="url(#catan-shadow)">
+                  <g filter="url(#catan-shadow)" className="animate-road-draw">
                     {/* Dark timber foundation */}
                     <line
                       x1={v1.x}
@@ -765,7 +855,7 @@ export const Board: React.FC<BoardProps> = ({
               <g key={vertex.id} transform={`translate(${vertex.x}, ${vertex.y})`}>
                 {/* Built Settlement: Authentic gable cottage with wood trim and player color */}
                 {isBuilt && building.type === 'settlement' && (
-                  <g filter="url(#catan-shadow)">
+                  <g className="animate-building-pop" filter="url(#catan-shadow)">
                     {/* Base trim / shadow outline */}
                     <polygon
                       points="0,-14 12,-4 12,10 -12,10 -12,-4"
@@ -789,7 +879,7 @@ export const Board: React.FC<BoardProps> = ({
 
                 {/* Built City: Authentic grand fortress with double tower and cathedral crest */}
                 {isBuilt && building.type === 'city' && (
-                  <g filter="url(#catan-shadow)">
+                  <g className="animate-city-upgrade" filter="url(#catan-shadow)">
                     {/* Silhouette shadow */}
                     <polygon
                       points="-14,-5 -10,-5 -10,-12 -5,-12 -5,-5 5,-5 5,-12 10,-12 10,-5 14,-5 14,11 -14,11"

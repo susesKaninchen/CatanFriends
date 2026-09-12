@@ -68,7 +68,7 @@ export const QuestTracker: React.FC<QuestTrackerProps> = ({
         <div className="flex items-center gap-2">
           <Trophy className="w-5 h-5 text-[#d4af37]" />
           <span className="font-['MedievalSharp',serif] font-bold text-base text-[#fff4e0]">
-            Gelöste Quests: <span className="text-amber-400 font-mono">{solvedCount}</span> / {targetToWin}
+            Missions-Siegpunkte: <span className="text-amber-400 font-mono">{solvedCount}</span> / {targetToWin}
           </span>
         </div>
 
@@ -111,9 +111,12 @@ export const QuestTracker: React.FC<QuestTrackerProps> = ({
               {/* Header: Slot title, Tier badge, D6 Timer */}
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 mb-1">
+                  <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${tierStyle.badge}`}>
                       Stufe {slot.tier}
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-500/40 bg-amber-950/70 text-amber-300">
+                      ⭐ +1 Siegpunkt
                     </span>
                   </div>
                   <h3 className="font-bold text-xs text-[#f4caa1] leading-snug font-['MedievalSharp',serif] break-words">
@@ -133,7 +136,7 @@ export const QuestTracker: React.FC<QuestTrackerProps> = ({
                   <div className="space-y-1.5">
                     <div className="text-[10px] uppercase font-semibold text-[#a8825c] flex items-center justify-between font-serif">
                       <span>Bedarf einlagern:</span>
-                      <span className="text-[9px] text-amber-400 font-sans">Schützt vor 7er</span>
+                      <span className="text-[9px] text-amber-300 font-sans font-semibold">Ziel: +1 Siegpunkt</span>
                     </div>
                     <div className="grid grid-cols-2 gap-1.5">
                       {Object.entries(slot.requiredResources).map(([rKey, needed]) => {
@@ -159,7 +162,7 @@ export const QuestTracker: React.FC<QuestTrackerProps> = ({
                               <button
                                 type="button"
                                 onClick={() => onDeposit(slot.slotIndex, res, 1)}
-                                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black w-5 h-5 rounded flex items-center justify-center transition-all shadow shrink-0 ml-1"
+                                className="bg-amber-500 hover:bg-amber-400 active:scale-90 text-slate-950 font-black w-5 h-5 rounded flex items-center justify-center transition-transform shadow shrink-0 ml-1"
                                 title={`1x ${meta.name} einzahlen`}
                               >
                                 <Plus className="w-3 h-3 stroke-[3]" />

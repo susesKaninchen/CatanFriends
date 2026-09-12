@@ -159,7 +159,7 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                   <strong>Ablauf:</strong> Erreicht ein Timer 0, scheitert der Auftrag und wird durch eine neue Herausforderung ersetzt. Zudem drohen dem Team empfindliche Strafen!
                 </li>
                 <li>
-                  <strong>Rohstoff-Einzahlung:</strong> Viele Quests verlangen Rohstofflieferungen (z. B. 4 Holz). Jeder Spieler kann in seinem Zug per Klick auf die Einzahlungs-Schaltfläche passende Rohstoffe direkt spenden. Eingezahlte Rohstoffe sind vor der 7 des Räubers geschützt!
+                  <strong>Rohstoff-Einzahlung:</strong> Viele Quests verlangen Rohstofflieferungen (z. B. 4 Holz). Jeder Spieler kann in seinem Zug per Klick auf die Einzahlungs-Schaltfläche passende Rohstoffe direkt einzahlen. Jede erfüllte Quest bringt dem Team 1 Siegpunkt für den Gesamtsieg!
                 </li>
                 <li>
                   <strong>Bau- und Verbindungsquests:</strong> Manche Aufträge fordern den Bau einer bestimmten Anzahl Straßen oder Siedlungen auf bestimmten Landschaften.

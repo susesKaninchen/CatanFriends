@@ -251,6 +251,7 @@ export const App: React.FC = () => {
             phase={roomState.phase}
             isMyTurn={isMyTurn}
             disabled={!isMyTurn}
+            diceValues={roomState.diceValues}
           />
 
           <PlayerHand

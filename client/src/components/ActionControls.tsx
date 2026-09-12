@@ -64,6 +64,26 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
   const [getRes, setGetRes] = useState<ResourceType>('ore');
   const [giftTargetId, setGiftTargetId] = useState<string>('');
   const [giftRes, setGiftRes] = useState<ResourceType>('wood');
+  const [isRolling, setIsRolling] = useState(false);
+  const [animDice, setAnimDice] = useState<[number, number]>([1, 1]);
+
+  const handleRollClick = () => {
+    if (isRolling) return;
+    setIsRolling(true);
+    let count = 0;
+    const interval = setInterval(() => {
+      setAnimDice([
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1
+      ]);
+      count++;
+      if (count >= 7) {
+        clearInterval(interval);
+        setIsRolling(false);
+        onRollDice();
+      }
+    }, 55);
+  };
 
   const diceSum = diceValues[0] + diceValues[1];
   const targetPlayer = players.find(p => p.color === targetColor) || myPlayer;
@@ -155,14 +175,14 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
           <div className="flex items-center gap-2 bg-[#100b06] px-3 py-1.5 rounded-xl border border-[#52341b]">
             <span className="text-xs text-[#a8825c] font-semibold">Würfel:</span>
             <div className="flex gap-1.5 font-mono font-black text-sm">
-              <span className="w-6 h-6 bg-[#25170d] text-white rounded flex items-center justify-center border border-[#6b4220]">
-                {diceValues[0]}
+              <span className={`w-6 h-6 bg-[#25170d] text-white rounded flex items-center justify-center border transition-all ${isRolling ? 'border-amber-400 text-amber-300 animate-dice-tumble' : 'border-[#6b4220]'}`}>
+                {isRolling ? animDice[0] : diceValues[0]}
               </span>
-              <span className="w-6 h-6 bg-[#25170d] text-white rounded flex items-center justify-center border border-[#6b4220]">
-                {diceValues[1]}
+              <span className={`w-6 h-6 bg-[#25170d] text-white rounded flex items-center justify-center border transition-all ${isRolling ? 'border-amber-400 text-amber-300 animate-dice-tumble' : 'border-[#6b4220]'}`}>
+                {isRolling ? animDice[1] : diceValues[1]}
               </span>
               <span className={`px-2 py-0.5 rounded font-extrabold ${diceSum === 7 ? 'bg-rose-950 text-rose-400 border border-rose-800' : 'text-amber-400'}`}>
-                = {diceSum}
+                = {isRolling ? animDice[0] + animDice[1] : diceSum}
               </span>
             </div>
           </div>
@@ -215,11 +235,12 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
           {phase === 'TURN_DICE' && (
             <button
               type="button"
-              onClick={onRollDice}
-              className="w-full bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-black py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm border border-amber-300 font-['MedievalSharp',serif] tracking-wider"
+              onClick={handleRollClick}
+              disabled={isRolling}
+              className="w-full bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-black py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm border border-amber-300 font-['MedievalSharp',serif] tracking-wider active:scale-95 cursor-pointer disabled:opacity-85"
             >
-              <Dices className="w-5 h-5" />
-              Würfel werfen!
+              <Dices className={`w-5 h-5 ${isRolling ? 'animate-dice-tumble text-amber-900' : ''}`} />
+              {isRolling ? 'Die Würfel rollen...' : 'Würfel werfen!'}
             </button>
           )}
 
