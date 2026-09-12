@@ -171,7 +171,7 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                   <span>💀</span> Niederlagebedingung (4 Fehlschläge)
                 </h4>
                 <p className="text-xs text-[#e5b3af] leading-relaxed">
-                  Quests fordern euch heraus und lenken vom Siedlungsbau ab: Bei 4 abgelaufenen Quests verliert das Team sofort! Jeder Rohstoff-Zuschuss verlängert jedoch den W6-Timer der Quest um +2 Runden (maximal 6 Runden).
+                  Quests fordern euch heraus und lenken vom Siedlungsbau ab: Bei 4 abgelaufenen Quests verliert das Team sofort! Eingezahlte Rohstoffe sind vor dem Räuber geschützt, aber der W6-Timer läuft unerbittlich jede Runde weiter. Erfüllt die Aufträge rechtzeitig gemeinsam!
                 </p>
               </div>
               <div className="bg-[#1f1910] border border-[#6b4e28] rounded-xl p-4 space-y-2">

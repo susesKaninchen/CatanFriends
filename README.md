@@ -22,7 +22,7 @@ Gemeinsam statt gegeneinander: Erkundet einen unendlichen Kontinent, erfüllt mo
 - **4 aktive Quest-Slots**: Ständig 4 offene Herausforderungen mit W6-Timer (6 bis 1 Runde).
 - **Balancierte Auftragsstufen (Tiers 1 bis 6)**: Von ersten Holz- und Lehm-Lieferungen (2 Rohstoffe) über Straßenbau- und Siedlungs-Aufträge bis hin zum monumentalen Endgame.
 - **Runden-Countdown**: Zu Beginn jeder vollen Spielrunde sinkt der Timer aller offenen Quests um 1.
-- **Bedarf einlagern (Schutz vor der 7 & Zeitgewinn)**: Rohstoffe für Quests können schrittweise eingezahlt werden. Eingelagerte Ressourcen sind **vollständig vor dem Räuber geschützt**, wenn eine 7 gewürfelt wird! Zudem steigt der W6-Timer bei jeder Einzahlung um **+2 Runden** (bis max. 6), was gezieltes Abwenden drohender Fehlschläge ermöglicht.
+- **Bedarf einlagern (Schutz vor der 7)**: Rohstoffe für Quests können schrittweise eingezahlt werden. Eingelagerte Ressourcen sind **vollständig vor dem Räuber geschützt**, wenn eine 7 gewürfelt wird! Der W6-Timer läuft pro Spielrunde weiter, sodass das Team die geforderten Waren vor Ablauf der Runden bereitstellen muss.
 
 ### 3. Handels-, Tausch- und Hilfesystem (4 Modi)
 - **🏛️ Bankhandel & Häfen**: Standardkurs 4:1. An 3:1 Allzweckhäfen oder mit der *Längsten Handelsstraße* sinkt die Quote auf 3:1. An 2:1 Spezial-Häfen handelt das Team Rohstoffe 2:1.
