@@ -2,24 +2,70 @@
 
 Eine moderne Mehrspieler-Webanwendung für ein kooperatives Catan-Brettspielerlebnis in Echtzeit.
 
-Gemeinsam statt gegeneinander: Erkundet eine prozedural wachsende Insel, erfüllt kooperative Quests, handelt Rohstoffe und verteidigt euer Reich gegen den Räuber!
+Gemeinsam statt gegeneinander: Erkundet einen unendlichen Kontinent, erfüllt modulare Team-Quests mit W6-Timern, handelt über 4 Tausch-Modi, spielt mit kooperativen KI-Bots und verteidigt euer Reich gegen die Patrouille des Räubers!
 
 ---
 
-## Spielfeatures & Besonderheiten
+## Spielfeatures & Spielmechanik
 
-- **Kooperatives Spielziel**: Erfüllt gemeinsam modulare Quests (Pionier der Insel, Hafenmeister, Kornkammer, Festungsbau), bevor die W6-Runden-Timer ablaufen.
-- **Gemeinschaftliche Straßen**: Alle Straßen gehören dem gesamten Team. Jedes Teammitglied kann an bestehende Straßen anbauen (bis zu 30 Straßen pro Spieler).
-- **Prozedurale Insel-Erweiterung**: Das Spielfeld wächst organisch bei jedem Straßenbau an die Küste weiter. Realistisches Gewässer-Clustering sorgt für Buchten, Seen und Fjorde.
-- **Stufenloses Pan & Zoom**: Mausrad zum Zoomen, Ziehen per linker Maustaste zum Verschieben der Karte oder On-Screen-Steuerungselemente.
-- **Interaktiver Räuber**: Bei einer gewürfelten 7 oder beim Ausspielen einer Ritterkarte platziert der aktive Spieler die hölzerne Räuberfigur per Klick auf ein beliebiges Landfeld, erbeutet Rohstoffe von angrenzenden Spielern und blockiert Erträge.
-- **Handelssystem (4:1 Bank & Team-Schenken)**: Tauscht 4 gleiche Rohstoffe bei der Bank gegen einen beliebigen Rohstoff oder verschenkt Rohstoffe an Teammitglieder.
-- **Authentische Mittelalter-Optik**: Verzierter Holz- und Pergament-Look, historische Spielkarten mit Eck-Indizes und Wachssiegel-Countern, handgefertigtes kristallines Erz-Icon und saubere Zahlenchips mit Wahrscheinlichkeitspunkten.
-- **4 Spezial-Rollen**:
+### 1. Kooperatives Teamspiel & Siegesbedingungen
+- **Gemeinsames Ziel**: Erreicht als Team mindestens **10 Team-Siegpunkte**, bevor 4 Quests fehlschlagen.
+- **Siegpunkte-Quellen**:
+  - Jede gelöste Quest bringt **+1 Team-Siegpunkt**.
+  - **Längste Handelsstraße** (ab 7 zusammenhängenden Straßen) bringt **+1 Team-Siegpunkt**.
+  - **Größte Rittermacht** (ab 3 gespielten Rittern) bringt **+1 Team-Siegpunkt**.
+- **Niederlage**: Scheitern 4 Quests durch abgelaufene Zeitlimits, verliert das Team gemeinsam.
+
+### 2. Modulare Quests mit W6-Würfel-Timer & Vorratsspeicher
+- **4 aktive Quest-Slots**: Ständig 4 offene Herausforderungen mit W6-Timer (6 bis 1 Runde).
+- **Runden-Countdown**: Zu Beginn jeder vollen Spielrunde sinkt der Timer aller offenen Quests um 1.
+- **Bedarf einlagern (Schutz vor der 7)**: Rohstoffe für Quests (z. B. Holz oder Erz) können schrittweise eingezahlt werden. Eingelagerte Ressourcen sind **vollständig vor dem Räuber geschützt**, wenn eine 7 gewürfelt wird!
+
+### 3. Handels-, Tausch- und Hilfesystem (4 Modi)
+- **🏛️ Bankhandel & Häfen**: Standardkurs 4:1. An 3:1 Allzweckhäfen oder mit der *Längsten Handelsstraße* sinkt die Quote auf 3:1. An 2:1 Spezial-Häfen handelt das Team Rohstoffe 2:1.
+- **🤝 Mitspieler-Tausch (2-Wege-Tausch)**: Biete 1 Rohstoff im Tausch gegen einen gewünschten Zielrohstoff an (gezielt an einen Mitspieler oder offen ans gesamte Team).
+- **📢 Rohstoff-Anfrage (Hilferuf)**: Fehlt dir 1 Rohstoff für eine Siedlung oder Stadt? Stelle eine Hilfeanfrage! Mitspieler und Bots sehen ein interaktives Banner und können den Rohstoff mit einem Klick übergeben.
+- **🎁 Rohstoff schenken (1-Weg)**: Bedingungslose Unterstützung für Teamkameraden (1 Rohstoffkarte pro Zug, bzw. 2 mit der *Längsten Handelsstraße*).
+
+### 4. Die Patrouille des Räubers & Rittermacht
+- **Feste Patrouillen-Route (A bis R)**: Bei einer gewürfelten 7 zieht der Räuber automatisch zum nächsten Buchstaben seiner Route und plündert angrenzende Siedlungen.
+- **Handkarten-Abwurf**: Spieler mit mehr als 7 Handkarten müssen bei einer 7 die Hälfte ihrer Karten abgeben (eingelagerte Quest-Rohstoffe bleiben geschützt).
+- **Ritter anheuern**: Jeder Spieler kann für 1x Erz, 1x Wolle und 1x Weizen einen Ritter rufen (Kapitän erhält pro Zug 1 kostenlosen Ritter).
+- **Progressiver Rückstoß**: Jeder Ritter wirft den Räuber auf seiner Route nach hinten und erbeutet 1 Rohstoffkarte.
+- **Größte Rittermacht (ab 3 Rittern)**: Schleudert den Räuber maximal weit weg, betäubt ihn für 1 Runde und halbiert seine Patrouille (nur noch jede 2. Runde).
+
+### 5. Kooperative Team-Meilensteine
+- **Längste Handelsstraße (ab 7 Straßen)**:
+  - +1 permanenter Team-Siegpunkt
+  - +1 zusätzliche Schenkung pro Zug (2 Schenkungen)
+  - 3:1 Bankhandel auch ohne See-Hafen
+  - +1 W6-Timer-Puffer für alle künftigen Quests
+- **Größte Rittermacht (ab 3 Rittern)**:
+  - +1 permanenter Team-Siegpunkt
+  - Maximales Exil für den Räuber
+  - Betäubung des Räubers für 1 Runde (kein Raubzug)
+  - Halbierung der Räuber-Aktivität auf jede 2. Runde
+
+### 6. Offener Kontinent & Küsten-Häfen
+- **Unendliche Landmasse**: Das Spiel startet mit dem klassischen 19-Hex-Kernland. Straßenbau nach Norden, Osten und Westen deckt fortlaufend neues Festland mit Rohstoffen und Zahlenchips auf.
+- **Südküste & See-Häfen**: Nach Süden hin trifft das Team auf das offene Meer mit 2:1 Spezial- und 3:1 Allzweck-Häfen.
+
+### 7. KI-Bots & Fremdbau
+- **Kooperative Bots**: Bots (z. B. Bot Mia) können in der Lobby hinzugefügt werden. Sie platzieren Startsiedlungen, würfeln, bedienen Quests und helfen bei Tauschangeboten und Rohstoff-Anfragen verlässlich aus.
+- **Fremdbau**: Ein aktiver Spieler kann mit den eigenen Rohstoffen Straßen, Siedlungen oder Städte in der Farbe seiner Teammitglieder errichten.
+- **4 Charakterrollen**:
   - **Pionier**: Zahlt für Straßen nur 1 Holz oder 1 Lehm.
-  - **Baumeister**: Benötigt für Siedlungen und Städte 1 Rohstoff weniger.
-  - **Schürfer**: Erhält auf Erz- und Getreidefeldern +1 Bonus-Rohstoff.
-  - **Hauptmann**: Drängt den Räuber mit Ritterkarten zurück und schützt das Reich.
+  - **Baumeister**: Benötigt für Siedlungen und Städte je 1 Rohstoff weniger.
+  - **Schürfer**: Erhält auf Erz- und Getreidefeldern bei passendem Wurf +1 Bonus-Rohstoff.
+  - **Hauptmann**: Erhält pro Zug 1 kostenlosen Ritter und wirft den Räuber weiter zurück.
+
+### 8. Dynamische Animationen & Visuals
+- Taumelnde 3D-Würfel mit echter Wurf-Animation.
+- Pulsierende Ertrags-Felder mit goldenem Glow und schwebenden "✨ Ertrag"-Badges.
+- "🏴‍☠️ Blockiert"-Badges für vom Räuber besetzte Rohstofffelder.
+- Generierte, detailreiche Rohstoffkarten und handgefertigte Icons.
+- Stufenloses Pan & Zoom (Mausrad und Drag).
+- Interaktives Regelbuch ("Das Buch der Regeln") im Spiel integriert.
 
 ---
 
