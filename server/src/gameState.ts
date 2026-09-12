@@ -1,6 +1,7 @@
 // Catan Friends - Authoritative Game State Engine
 import {
   GameRoomState,
+  BoardState,
   Player,
   PlayerColor,
   PlayerRole,
@@ -273,7 +274,7 @@ export class GameManager {
   }
 
   private handleSevenRoll(state: GameRoomState, activePlayer: Player) {
-    this.addLog(state, 'Eine 7 gewürfelt! Der Räuber bricht aus!', 'alert');
+    this.addLog(state, 'Eine 7 gewürfelt! Der Räuber schlägt zu!', 'alert');
 
     // 1. Half card discard for players with > 7 resources
     state.players.forEach(player => {
@@ -285,19 +286,67 @@ export class GameManager {
       }
     });
 
-    // 2. Robber placement phase
-    if (activePlayer.isBot) {
-      // Bot chooses a valid hex touching an opponent if possible
-      const availableHexes = state.board.hexes.filter(h => h.type !== 'water' && h.id !== state.board.robberHexId);
-      const chosenHex = availableHexes[Math.floor(Math.random() * availableHexes.length)] || availableHexes[0];
-      if (chosenHex) {
-        this.moveRobberInternal(state, activePlayer, chosenHex.id);
+    // 2. Automated Robber Movement (Cooperative AI: attacks highest-yielding team land tile)
+    this.autoMoveRobber(state);
+    state.phase = 'TURN_ACTIONS';
+  }
+
+  private autoMoveRobber(state: GameRoomState) {
+    const candidateHexes = state.board.hexes.filter(h => h.type !== 'water' && h.id !== state.board.robberHexId);
+    if (candidateHexes.length === 0) return;
+
+    // Threat scoring: (buildings > 0 ? 100 : 0) + buildings * 10 + pips
+    const scoredHexes = candidateHexes.map(hex => {
+      let buildingWeight = 0;
+      const touchingPlayers = new Set<Player>();
+
+      for (const vKey of Object.keys(state.board.vertices)) {
+        const v = state.board.vertices[vKey];
+        if (v.adjacentHexIds.includes(hex.id) && v.building) {
+          buildingWeight += (v.building.type === 'city' ? 2 : 1);
+          const owner = state.players.find(p => p.color === v.building!.ownerColor);
+          if (owner) touchingPlayers.add(owner);
+        }
       }
-      state.phase = 'TURN_ACTIONS';
-    } else {
-      state.phase = 'ROBBER_PLACEMENT';
-      this.addLog(state, `${activePlayer.name} muss den Räuber auf ein Zielfeld versetzen (Feld anklicken)!`, 'alert');
+
+      const pips = hex.diceNumber ? (6 - Math.abs(7 - hex.diceNumber)) : 0;
+      const score = (buildingWeight > 0 ? 100 : 0) + (buildingWeight * 10) + pips;
+
+      return {
+        hex,
+        buildingWeight,
+        pips,
+        score,
+        touchingPlayers: Array.from(touchingPlayers)
+      };
+    });
+
+    scoredHexes.sort((a, b) => b.score - a.score);
+    const maxScore = scoredHexes[0].score;
+    const topCandidates = scoredHexes.filter(h => h.score === maxScore);
+    const chosen = topCandidates[Math.floor(Math.random() * topCandidates.length)];
+
+    // Relocate robber
+    state.board.hexes.forEach(h => { h.hasRobber = false; });
+    chosen.hex.hasRobber = true;
+    state.board.robberHexId = chosen.hex.id;
+
+    // Plunder 1 card from an affected player to the bank
+    const victims = chosen.touchingPlayers.filter(p => Object.values(p.resources).reduce((a, b) => a + b, 0) > 0);
+    let stolenMsg = '';
+    if (victims.length > 0) {
+      const victim = victims[Math.floor(Math.random() * victims.length)];
+      const resKeys: ResourceType[] = ['wood', 'clay', 'sheep', 'wheat', 'ore'];
+      const available = resKeys.filter(r => victim.resources[r] > 0);
+      if (available.length > 0) {
+        const stolen = available[Math.floor(Math.random() * available.length)];
+        victim.resources[stolen]--;
+        stolenMsg = ` und erbeutet 1x ${stolen} von ${victim.name}!`;
+      }
     }
+
+    const numStr = chosen.hex.diceNumber ? `Zahl ${chosen.hex.diceNumber}` : 'Wüste';
+    this.addLog(state, `Der Räuber überfällt automatisch das ertragreichste Feld: ${chosen.hex.type} (${numStr}, ${chosen.pips} Punkte)${stolenMsg}`, 'robber');
   }
 
   public moveRobber(roomCode: string, playerId: string, targetHexId: string): { success: boolean; message?: string } {
@@ -818,12 +867,13 @@ export class GameManager {
 
     // Advance slot to next tier
     const nextTier = Math.min(6, slot.tier + 1);
-    const newSlot = createQuestSlot(slot.slotIndex, nextTier, state.teamHasLongestRoad);
+    const activeTitles = state.questSlots.filter(s => s.slotIndex !== slot.slotIndex).map(s => s.title);
+    const newSlot = createQuestSlot(slot.slotIndex, nextTier, state.teamHasLongestRoad, activeTitles);
     state.questSlots[slot.slotIndex] = newSlot;
     this.addLog(state, `Neuer Auftrag für Slot ${slot.slotIndex + 1}: "${newSlot.title}" (Stufe ${newSlot.tier}, W6-Timer: ${newSlot.d6Timer}).`, 'quest');
   }
 
-  // Captain / Knight card: allows placing robber + increments knight count
+  // Captain / Knight card: banishes robber to uninhabited land hex + increments knight count
   public playKnightCard(roomCode: string, playerId: string): { success: boolean; message?: string } {
     const state = this.getRoom(roomCode);
     if (!state) return { success: false, message: 'Raum nicht gefunden.' };
@@ -837,7 +887,6 @@ export class GameManager {
     }
 
     activePlayer.knightsPlayed += 1;
-    this.addLog(state, `${activePlayer.name} spielt eine Ritterkarte! Wähle ein Feld für den Räuber.`, 'alert');
 
     // Check Largest Army milestone (>= 3 knights in team)
     const teamTotalKnights = state.players.reduce((sum, p) => sum + p.knightsPlayed, 0);
@@ -846,11 +895,41 @@ export class GameManager {
       this.addLog(state, 'MEILENSTEIN: Größte Rittermacht erreicht! Der Räuber patrouilliert nur noch jede 2. Runde!', 'alert');
     }
 
-    state.phase = 'ROBBER_PLACEMENT';
+    // Knight banishes the robber to a harmless uninhabited land tile (0 buildings)
+    const candidateHexes = state.board.hexes.filter(h => h.type !== 'water' && h.id !== state.board.robberHexId);
+
+    // Find hexes with 0 buildings
+    const uninhabited = candidateHexes.filter(hex => {
+      for (const vKey of Object.keys(state.board.vertices)) {
+        const v = state.board.vertices[vKey];
+        if (v.adjacentHexIds.includes(hex.id) && v.building) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    let targetHex = candidateHexes[0];
+    if (uninhabited.length > 0) {
+      uninhabited.sort((a, b) => {
+        const pipsA = a.diceNumber ? (6 - Math.abs(7 - a.diceNumber)) : 0;
+        const pipsB = b.diceNumber ? (6 - Math.abs(7 - b.diceNumber)) : 0;
+        return pipsA - pipsB;
+      });
+      targetHex = uninhabited[0];
+    }
+
+    state.board.hexes.forEach(h => { h.hasRobber = false; });
+    targetHex.hasRobber = true;
+    state.board.robberHexId = targetHex.id;
+
+    const numStr = targetHex.diceNumber ? `Zahl ${targetHex.diceNumber}` : 'Wüste';
+    this.addLog(state, `${activePlayer.name} spielt eine Ritterkarte! Der Ritter vertreibt den Räuber auf ein unbewohntes Feld (${targetHex.type}, ${numStr})!`, 'alert');
+
     return { success: true };
   }
 
-  // Bank Trade (4:1)
+  // Bank & Harbor Trade (4:1, 3:1 generic harbor, or 2:1 resource harbor)
   public tradeWithBank(roomCode: string, playerId: string, giveRes: ResourceType, getRes: ResourceType): { success: boolean; message?: string } {
     const state = this.getRoom(roomCode);
     if (!state) return { success: false, message: 'Raum nicht gefunden.' };
@@ -865,15 +944,35 @@ export class GameManager {
     if (giveRes === getRes) {
       return { success: false, message: 'Bitte unterschiedliche Rohstoffe wählen.' };
     }
-    if (activePlayer.resources[giveRes] < 4) {
-      return { success: false, message: `Du benötigst 4x ${giveRes} für den Bank-Handel (4:1).` };
+
+    const ratio = this.getPlayerTradeRatio(state.board, activePlayer.color, giveRes);
+
+    if (activePlayer.resources[giveRes] < ratio) {
+      return { success: false, message: `Du benötigst ${ratio}x ${giveRes} für diesen Handel (${ratio}:1).` };
     }
 
-    activePlayer.resources[giveRes] -= 4;
+    activePlayer.resources[giveRes] -= ratio;
     activePlayer.resources[getRes] += 1;
 
-    this.addLog(state, `${activePlayer.name} tauscht 4x ${giveRes} gegen 1x ${getRes} bei der Bank (4:1).`, 'info');
+    const ratioLabel = ratio === 2 ? '2:1 Spezial-Hafen' : ratio === 3 ? '3:1 See-Hafen' : '4:1 Standard-Bank';
+    this.addLog(state, `${activePlayer.name} tauscht ${ratio}x ${giveRes} gegen 1x ${getRes} (${ratioLabel}).`, 'info');
     return { success: true };
+  }
+
+  public getPlayerTradeRatio(board: BoardState, playerColor: PlayerColor, res: ResourceType): number {
+    let bestRatio = 4;
+    for (const vKey of Object.keys(board.vertices)) {
+      const v = board.vertices[vKey];
+      if (v.building && v.harbor && v.building.ownerColor === playerColor) {
+        if (v.harbor.type === res) {
+          return 2;
+        }
+        if (v.harbor.type === 'generic') {
+          bestRatio = Math.min(bestRatio, 3);
+        }
+      }
+    }
+    return bestRatio;
   }
 
   // Teammate Resource Gifting
@@ -986,7 +1085,8 @@ export class GameManager {
 
         // Draw next tier quest in this slot
         const nextTier = Math.min(6, slot.tier + 1);
-        state.questSlots[slot.slotIndex] = createQuestSlot(slot.slotIndex, nextTier, state.teamHasLongestRoad);
+        const activeTitles = state.questSlots.filter(s => s.slotIndex !== slot.slotIndex).map(s => s.title);
+        state.questSlots[slot.slotIndex] = createQuestSlot(slot.slotIndex, nextTier, state.teamHasLongestRoad, activeTitles);
       }
     }
     return false;

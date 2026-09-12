@@ -187,10 +187,36 @@ export const QUEST_POOL: { [tier: number]: QuestTemplate[] } = {
   ]
 };
 
-export function createQuestSlot(slotIndex: number, tier: number, teamHasLongestRoad: boolean = false): QuestSlot {
+function shuffleArray<T>(arr: T[]): T[] {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+export function createQuestSlot(
+  slotIndex: number,
+  tier: number,
+  teamHasLongestRoad: boolean = false,
+  activeTitles: string[] = []
+): QuestSlot {
   const effectiveTier = Math.min(6, Math.max(1, tier));
   const pool = QUEST_POOL[effectiveTier] || QUEST_POOL[1];
-  const template = pool[Math.floor(Math.random() * pool.length)];
+
+  // Draw from templates that are not currently active
+  let available = pool.filter(t => !activeTitles.includes(t.title));
+  if (available.length === 0) {
+    // If all in this tier are active, check all tiers for any non-active quest
+    const allTemplates = Object.values(QUEST_POOL).flat();
+    available = allTemplates.filter(t => !activeTitles.includes(t.title));
+    if (available.length === 0) {
+      available = pool;
+    }
+  }
+
+  const template = available[Math.floor(Math.random() * available.length)];
 
   // Longest Road bonus gives +1 to initial D6 timer (max 6)
   const timerBonus = teamHasLongestRoad ? 1 : 0;
@@ -215,5 +241,28 @@ export function createQuestSlot(slotIndex: number, tier: number, teamHasLongestR
 }
 
 export function initializeQuestSlots(teamHasLongestRoad: boolean = false): QuestSlot[] {
-  return [0, 1, 2, 3].map((slotIndex) => createQuestSlot(slotIndex, 1, teamHasLongestRoad));
+  // Draw 4 distinct Tier 1 quests from the set
+  const shuffledTier1 = shuffleArray([...QUEST_POOL[1]]);
+  return [0, 1, 2, 3].map((slotIndex) => {
+    const template = shuffledTier1[slotIndex] || shuffledTier1[0];
+    const timerBonus = teamHasLongestRoad ? 1 : 0;
+    const initialTimer = Math.min(6, template.baseTimer + timerBonus);
+
+    return {
+      slotIndex,
+      tier: 1,
+      title: template.title,
+      description: template.description,
+      type: template.type,
+      d6Timer: initialTimer,
+      maxTimer: initialTimer,
+      requiredResources: template.requiredResources ? { ...template.requiredResources } : undefined,
+      depositedResources: { wood: 0, clay: 0, sheep: 0, wheat: 0, ore: 0 },
+      targetCount: template.targetCount,
+      currentCount: 0,
+      targetResourceType: template.targetResourceType,
+      isCompleted: false,
+      isFailed: false
+    };
+  });
 }

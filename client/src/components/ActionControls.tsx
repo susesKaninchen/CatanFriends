@@ -106,8 +106,23 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
     return myPlayer.resources.ore >= 3 && myPlayer.resources.wheat >= 2;
   };
 
+  const getTradeRatio = (res: ResourceType): number => {
+    let ratio = 4;
+    if (!board || !board.vertices) return ratio;
+    for (const vKey of Object.keys(board.vertices)) {
+      const v = board.vertices[vKey];
+      if (v.building && v.harbor && v.building.ownerColor === myPlayer.color) {
+        if (v.harbor.type === res) return 2;
+        if (v.harbor.type === 'generic') ratio = Math.min(ratio, 3);
+      }
+    }
+    return ratio;
+  };
+
+  const currentGiveRatio = getTradeRatio(giveRes);
+
   const handleExecuteBankTrade = () => {
-    if (onTradeBank && myPlayer.resources[giveRes] >= 4 && giveRes !== getRes) {
+    if (onTradeBank && myPlayer.resources[giveRes] >= currentGiveRatio && giveRes !== getRes) {
       onTradeBank(giveRes, getRes);
     }
   };
@@ -404,23 +419,24 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                     )}
                   </div>
 
-                  {/* 4:1 Bank Trade */}
+                  {/* Bank & Harbor Trade */}
                   {tradeTab === 'bank' && (
                     <div className="space-y-2 text-xs">
                       <p className="text-[11px] text-[#c9b59e]">
-                        Tausche <span className="font-bold text-amber-300">4 gleiche Rohstoffe</span> gegen 1 gewünschten Rohstoff bei der Bank ein.
+                        Tausche Rohstoffe bei der Bank (Standard 4:1, oder 3:1 / 2:1 durch deine See-Häfen).
                       </p>
 
                       <div className="grid grid-cols-2 gap-3 pt-1">
-                        {/* Give 4 */}
+                        {/* Give */}
                         <div>
                           <span className="block text-[10px] uppercase font-bold text-[#a8825c] mb-1">
-                            Du gibst (4x):
+                            Du gibst ({currentGiveRatio}x):
                           </span>
                           <div className="space-y-1">
                             {(['wood', 'clay', 'sheep', 'wheat', 'ore'] as ResourceType[]).map((r) => {
+                              const ratio = getTradeRatio(r);
                               const count = myPlayer.resources[r] || 0;
-                              const isEligible = count >= 4;
+                              const isEligible = count >= ratio;
                               const isSelected = giveRes === r;
 
                               return (
@@ -441,7 +457,14 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                                     {RESOURCE_INFO[r].icon}
                                     <span>{RESOURCE_INFO[r].name}</span>
                                   </span>
-                                  <span className="font-mono font-bold">{count}/4</span>
+                                  <div className="flex flex-col items-end">
+                                    <span className="font-mono font-bold">{count}/{ratio}</span>
+                                    {ratio < 4 && (
+                                      <span className="text-[9px] text-amber-300 font-bold leading-none">
+                                        {ratio === 2 ? '2:1 Hafen' : '3:1 Hafen'}
+                                      </span>
+                                    )}
+                                  </div>
                                 </button>
                               );
                             })}
@@ -487,11 +510,16 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                       <button
                         type="button"
                         onClick={handleExecuteBankTrade}
-                        disabled={myPlayer.resources[giveRes] < 4 || giveRes === getRes}
+                        disabled={myPlayer.resources[giveRes] < currentGiveRatio || giveRes === getRes}
                         className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 disabled:from-stone-800 disabled:to-stone-900 disabled:text-stone-500 text-slate-950 font-bold py-2 rounded-xl border border-amber-300 transition-all text-xs font-['MedievalSharp',serif] shadow flex items-center justify-center gap-2 mt-2"
                       >
                         <ArrowLeftRight className="w-3.5 h-3.5" />
-                        4x {RESOURCE_INFO[giveRes].name} tauschen gegen 1x {RESOURCE_INFO[getRes].name}
+                        {currentGiveRatio}x {RESOURCE_INFO[giveRes].name} tauschen gegen 1x {RESOURCE_INFO[getRes].name}
+                        {currentGiveRatio < 4 && (
+                          <span className="text-[10px] text-amber-950 bg-amber-200 px-1.5 py-0.5 rounded font-black ml-1">
+                            {currentGiveRatio === 2 ? '2:1 Hafen' : '3:1 Hafen'}
+                          </span>
+                        )}
                       </button>
                     </div>
                   )}

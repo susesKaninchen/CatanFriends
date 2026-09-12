@@ -46,6 +46,16 @@ export interface HexTile {
   letter: string | null;
   hasRobber: boolean;
   isDiscovered?: boolean;
+  harborVertexId?: string | null;
+  harbor?: Harbor | null;
+}
+
+export type HarborType = 'generic' | ResourceType;
+
+export interface Harbor {
+  type: HarborType;
+  ratio: 2 | 3;
+  waterHexId: string;
 }
 
 export interface Vertex {
@@ -56,6 +66,7 @@ export interface Vertex {
   adjacentVertexIds: string[];
   adjacentEdgeIds: string[];
   isCoastal?: boolean;
+  harbor?: Harbor | null;
   building: {
     type: 'settlement' | 'city';
     ownerColor: PlayerColor;
@@ -83,6 +94,7 @@ export interface BoardState {
   currentLetter: string;
   unexploredLettersPool: Array<{ letter: string; num: number }>;
   numberTokenPool?: number[];
+  harborPool?: HarborType[];
 }
 
 export type QuestType =

@@ -503,6 +503,170 @@ export const Board: React.FC<BoardProps> = ({
           })}
         </g>
 
+        {/* 1.5 Harbors Layer (Authentic Catan Coastal Piers and Trading Medallions) */}
+        <g id="harbors">
+          {board.hexes
+            .filter((hex) => hex.type === 'water' && hex.harbor)
+            .map((waterHex) => {
+              const harbor = waterHex.harbor!;
+              const waterCenter = hexToPixel(waterHex.q, waterHex.r);
+
+              // Find coastal vertices assigned to this harbor
+              const harborVertices = Object.values(board.vertices).filter(
+                (v) => v.harbor && v.harbor.waterHexId === waterHex.id
+              );
+
+              if (harborVertices.length === 0) return null;
+
+              // Calculate dock medallion position shifted toward water hex center
+              let mx = 0;
+              let my = 0;
+              harborVertices.forEach((v) => {
+                mx += v.x;
+                my += v.y;
+              });
+              mx /= harborVertices.length;
+              my /= harborVertices.length;
+
+              const dx = waterCenter.x - mx;
+              const dy = waterCenter.y - my;
+              const dist = Math.hypot(dx, dy) || 1;
+              const offsetDist = harborVertices.length > 1 ? 22 : 24;
+              const hx = mx + (dx / dist) * offsetDist;
+              const hy = my + (dy / dist) * offsetDist;
+
+              // Check if any building is built on one of these harbor vertices
+              const activeBuilding = harborVertices.find((v) => v.building !== null)?.building;
+
+              return (
+                <g key={`harbor-${waterHex.id}`} filter="url(#catan-shadow)">
+                  {/* Wooden Pier Walkways from coastal vertices to harbor medallion */}
+                  {harborVertices.map((v) => (
+                    <g key={`pier-${v.id}`}>
+                      {/* Dark timber substructure */}
+                      <line
+                        x1={v.x}
+                        y1={v.y}
+                        x2={hx}
+                        y2={hy}
+                        stroke="#221308"
+                        strokeWidth="5.5"
+                        strokeLinecap="round"
+                      />
+                      {/* Warm timber plank surface */}
+                      <line
+                        x1={v.x}
+                        y1={v.y}
+                        x2={hx}
+                        y2={hy}
+                        stroke="#78350f"
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                      />
+                      {/* Wood plank texture highlight */}
+                      <line
+                        x1={v.x}
+                        y1={v.y}
+                        x2={hx}
+                        y2={hy}
+                        stroke="#d97706"
+                        strokeWidth="1.2"
+                        strokeDasharray="2 3"
+                        strokeLinecap="round"
+                        opacity="0.8"
+                      />
+                    </g>
+                  ))}
+
+                  {/* Harbor Trading Medallion */}
+                  <g transform={`translate(${hx}, ${hy})`}>
+                    {/* Active building colored glow halo if settled */}
+                    {activeBuilding && (
+                      <circle
+                        r="18"
+                        fill={COLOR_MAP[activeBuilding.ownerColor]}
+                        fillOpacity="0.3"
+                        className="animate-pulse"
+                      />
+                    )}
+
+                    {/* Outer dark timber ring */}
+                    <circle
+                      r="14"
+                      fill="#261408"
+                      stroke={activeBuilding ? COLOR_MAP[activeBuilding.ownerColor] : '#92400e'}
+                      strokeWidth={activeBuilding ? 2 : 1.5}
+                    />
+
+                    {/* Inner parchment badge */}
+                    <circle
+                      r="11.5"
+                      fill="url(#token-parchment)"
+                      stroke="#b45309"
+                      strokeWidth="0.8"
+                    />
+
+                    {/* Harbor Badge Content */}
+                    {harbor.type === 'generic' ? (
+                      <g>
+                        <text
+                          x="0"
+                          y="-2"
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fontSize="9"
+                          fontWeight="900"
+                          fill="#1e293b"
+                          fontFamily="Cinzel, serif"
+                        >
+                          3:1
+                        </text>
+                        {/* Anchor nautical symbol */}
+                        <text
+                          x="0"
+                          y="6"
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fontSize="7.5"
+                          fill="#0369a1"
+                        >
+                          ⚓
+                        </text>
+                      </g>
+                    ) : (
+                      <g>
+                        <text
+                          x="0"
+                          y="-4"
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fontSize="7.5"
+                          fontWeight="900"
+                          fill="#1e293b"
+                          fontFamily="Cinzel, serif"
+                        >
+                          2:1
+                        </text>
+                        {/* Resource Mini Token */}
+                        <clipPath id={`clip-harbor-icon-${waterHex.id}`}>
+                          <circle cx="0" cy="4" r="5" />
+                        </clipPath>
+                        <image
+                          href={`/assets/icon_${harbor.type}.jpg`}
+                          x="-5"
+                          y="-1"
+                          width="10"
+                          height="10"
+                          clipPath={`url(#clip-harbor-icon-${waterHex.id})`}
+                        />
+                      </g>
+                    )}
+                  </g>
+                </g>
+              );
+            })}
+        </g>
+
         {/* 2. Edges (Roads) Layer */}
         {/* All roads belong to the entire team - authentic warm timber pieces */}
         <g id="edges">

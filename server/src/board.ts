@@ -1,5 +1,5 @@
 // Catan Friends - Board Generator and Procedural Island Expansion
-import { HexTile, HexType, Vertex, Edge, BoardState, ResourceType } from './types.js';
+import { HexTile, HexType, Vertex, Edge, BoardState, ResourceType, Harbor, HarborType } from './types.js';
 
 export const HEX_RADIUS = 56; // Size in SVG units
 
@@ -109,6 +109,87 @@ export function getTileTwoTilesNorth(board: BoardState, vertexId: string): HexTi
   return bestHex;
 }
 
+export const STANDARD_HARBOR_POOL: HarborType[] = [
+  'generic', 'generic', 'generic', 'generic',
+  'wood', 'clay', 'sheep', 'wheat', 'ore'
+];
+
+export function drawHarborType(board: BoardState): HarborType {
+  if (!board.harborPool || board.harborPool.length === 0) {
+    board.harborPool = shuffleArray([...STANDARD_HARBOR_POOL]);
+  }
+  return board.harborPool.pop()!;
+}
+
+export function assignHarborToWaterHex(board: BoardState, waterHex: HexTile): void {
+  const center = hexToPixel(waterHex.q, waterHex.r, HEX_RADIUS);
+  const cornerOffsets = getHexCornerOffsets(HEX_RADIUS);
+
+  // Find candidate edges (pairs of adjacent vertices) that touch this water hex AND at least one land hex
+  const candidateEdges: Array<{ v1: Vertex; v2: Vertex }> = [];
+  for (let i = 0; i < 6; i++) {
+    const nextIdx = (i + 1) % 6;
+    const v1Key = makeVertexKey(center.x + cornerOffsets[i].x, center.y + cornerOffsets[i].y);
+    const v2Key = makeVertexKey(center.x + cornerOffsets[nextIdx].x, center.y + cornerOffsets[nextIdx].y);
+    const v1 = board.vertices[v1Key];
+    const v2 = board.vertices[v2Key];
+    if (v1 && v2 && !v1.harbor && !v2.harbor) {
+      const v1HasLand = v1.adjacentHexIds.some(hId => {
+        const h = board.hexes.find(hex => hex.id === hId);
+        return h && h.type !== 'water';
+      });
+      const v2HasLand = v2.adjacentHexIds.some(hId => {
+        const h = board.hexes.find(hex => hex.id === hId);
+        return h && h.type !== 'water';
+      });
+      if (v1HasLand && v2HasLand) {
+        candidateEdges.push({ v1, v2 });
+      }
+    }
+  }
+
+  const hType = drawHarborType(board);
+  const harbor: Harbor = {
+    type: hType,
+    ratio: hType === 'generic' ? 3 : 2,
+    waterHexId: waterHex.id
+  };
+
+  if (candidateEdges.length > 0) {
+    const chosen = candidateEdges[0];
+    chosen.v1.harbor = harbor;
+    chosen.v2.harbor = harbor;
+    waterHex.harborVertexId = chosen.v1.id;
+    waterHex.harbor = harbor;
+    return;
+  }
+
+  // Fallback if no full edge touches land: check single vertices
+  const candidates: Vertex[] = [];
+  for (let i = 0; i < 6; i++) {
+    const vx = center.x + cornerOffsets[i].x;
+    const vy = center.y + cornerOffsets[i].y;
+    const vKey = makeVertexKey(vx, vy);
+    const vertex = board.vertices[vKey];
+    if (vertex && !vertex.harbor) {
+      const hasLand = vertex.adjacentHexIds.some(hId => {
+        const h = board.hexes.find(hex => hex.id === hId);
+        return h && h.type !== 'water';
+      });
+      if (hasLand) {
+        candidates.push(vertex);
+      }
+    }
+  }
+
+  if (candidates.length === 0) return;
+
+  const chosenVertex = candidates[0];
+  chosenVertex.harbor = harbor;
+  waterHex.harborVertexId = chosenVertex.id;
+  waterHex.harbor = harbor;
+}
+
 export function generateBoard(): BoardState {
   // Complete 19-tile Catan island (radius 2)
   const coreCoords = [
@@ -155,7 +236,8 @@ export function generateBoard(): BoardState {
     robberHexId: '0_0',
     currentLetter: 'A',
     unexploredLettersPool: [],
-    numberTokenPool: shuffleArray([...STANDARD_TOKEN_POOL])
+    numberTokenPool: shuffleArray([...STANDARD_TOKEN_POOL]),
+    harborPool: shuffleArray([...STANDARD_HARBOR_POOL])
   };
 
   coreCoords.forEach((coord, i) => {
@@ -172,6 +254,24 @@ export function generateBoard(): BoardState {
       diceNum,
       isDesert // Robber initially on desert
     );
+  });
+
+  // Coastal water tiles in Ring 3 with authentic Catan harbors (9 coastal water tiles)
+  const ring3WaterCoords = [
+    { q: 3, r: 0 },
+    { q: 3, r: -2 },
+    { q: 2, r: -3 },
+    { q: 0, r: -3 },
+    { q: -2, r: -1 },
+    { q: -3, r: 1 },
+    { q: -3, r: 3 },
+    { q: -1, r: 3 },
+    { q: 1, r: 2 }
+  ];
+
+  ring3WaterCoords.forEach(coord => {
+    const waterHex = addHexToBoard(board, coord.q, coord.r, 'water', null, null, false);
+    assignHarborToWaterHex(board, waterHex);
   });
 
   return board;
@@ -352,6 +452,9 @@ export function exploreSurroundings(board: BoardState, edgeId: string): HexTile[
         }
 
         const newHex = addHexToBoard(board, nq, nr, type, letter, diceNum, false);
+        if (type === 'water') {
+          assignHarborToWaterHex(board, newHex);
+        }
         newlyDiscovered.push(newHex);
       }
     }
