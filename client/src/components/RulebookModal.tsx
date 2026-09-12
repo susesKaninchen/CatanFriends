@@ -270,7 +270,7 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                 Die Patrouille des Räubers
               </h3>
               <p>
-                Der Räuber wandert unerbittlich auf einer festen <strong>Buchstaben-Route (A bis R)</strong> über die Insel.
+                Der Räuber startet zu Spielbeginn in der <strong>Wüste</strong> und lauert dort vorerst friedlich.
               </p>
               <div className="bg-[#2b1710] border border-[#5e381d] rounded-xl p-4 space-y-2">
                 <h4 className="font-bold text-[#f59e0b] text-xs uppercase tracking-wider">
@@ -278,13 +278,13 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                 </h4>
                 <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#cfbeaa]">
                   <li>
-                    Wird eine <strong>7</strong> gewürfelt, zieht der Räuber sofort zum nächsten Buchstaben seiner Route (z. B. von D nach E).
+                    Wird eine <strong>7</strong> gewürfelt oder beginnt eine neue Runde, zieht der Räuber <strong>genau 1 Feld</strong> Schritt für Schritt in Richtung des ertragreichsten Feldes der Siedler.
                   </li>
                   <li>
-                    Alle Spieler mit mehr als <strong>7 Handkarten</strong> müssen sofort die Hälfte ihrer Karten abgeben. Eingelagerte Quest-Rohstoffe sind geschützt!
+                    Alle Spieler mit mehr als <strong>7 Handkarten</strong> müssen bei einer 7 die Hälfte ihrer Handkarten an die Bank abgeben. In Quests eingelagerte Rohstoffe sind sicher!
                   </li>
                   <li>
-                    Alle Siedlungen und Städte, die direkt an das Zielfeld des Räubers angrenzen, werden geplündert (jeder betroffene Spieler verliert 1 Rohstoffkarte).
+                    Erst wenn der Räuber direkt an einer Siedlung oder Stadt steht, blockiert er dort die Erträge und erbeutet bei einer 7 eine Rohstoffkarte von einem betroffenen Spieler.
                   </li>
                 </ul>
               </div>

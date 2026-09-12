@@ -9,6 +9,12 @@ export function hexToPixel(q: number, r: number, radius: number = HEX_RADIUS): {
   return { x, y };
 }
 
+export function hexDistance(h1: { q: number; r: number }, h2: { q: number; r: number }): number {
+  const dq = h1.q - h2.q;
+  const dr = h1.r - h2.r;
+  return (Math.abs(dq) + Math.abs(dr) + Math.abs(-dq - dr)) / 2;
+}
+
 export function getHexCornerOffsets(radius: number = HEX_RADIUS): Array<{ x: number; y: number }> {
   const corners: Array<{ x: number; y: number }> = [];
   for (let i = 0; i < 6; i++) {
