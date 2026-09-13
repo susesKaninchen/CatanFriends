@@ -12,6 +12,8 @@ import {
   QuestSlot,
   QuestType,
   HexType,
+  HexTile,
+  Edge,
   ActiveTradeProposal,
   TradeProposalType
 } from './types.js';
@@ -1557,30 +1559,188 @@ export class GameManager {
     }
   }
 
-  // Bot setup turn AI: smart placement of starting settlement and road
+  // Evaluate vertex value for settlement placement: Red numbers (6, 8), pips, team diversification & expansion
+  private evaluateVertexForSettlement(state: GameRoomState, vertexId: string, bot: Player, isSetup: boolean = false): number {
+    const vertex = state.board.vertices[vertexId];
+    if (!vertex || vertex.building !== null) return -9999;
+
+    // Check distance rule
+    const hasAdjBuilding = vertex.adjacentVertexIds.some(adjId => Boolean(state.board.vertices[adjId]?.building));
+    if (hasAdjBuilding) return -9999;
+
+    const touchingHexes = vertex.adjacentHexIds
+      .map(hId => state.board.hexes.find(h => h.id === hId))
+      .filter((h): h is HexTile => Boolean(h));
+
+    if (touchingHexes.length === 0 || touchingHexes.every(h => h.type === 'water')) return -9999;
+
+    // 1. Pip score & Red Numbers (6, 8)
+    let pipScore = 0;
+    let redNumberBonus = 0;
+    const vertexResources: ResourceType[] = [];
+
+    touchingHexes.forEach(h => {
+      if (h.type !== 'water' && h.type !== 'desert') {
+        const res = h.type as ResourceType;
+        vertexResources.push(res);
+        const pips = h.diceNumber ? (6 - Math.abs(7 - h.diceNumber)) : 0;
+        pipScore += pips * 4;
+        if (h.diceNumber === 6 || h.diceNumber === 8) {
+          redNumberBonus += 14; // Strong bonus for high-frequency red tiles
+        } else if (h.diceNumber === 5 || h.diceNumber === 9) {
+          pipScore += 6; // Boost for 5 and 9
+        }
+      }
+    });
+
+    // 2. Resource Diversity at this vertex
+    const distinctRes = new Set(vertexResources);
+    let diversityBonus = 0;
+    if (distinctRes.size >= 3) diversityBonus += 18;
+    else if (distinctRes.size === 2) diversityBonus += 8;
+
+    // Key engine combinations
+    if (distinctRes.has('wood') && distinctRes.has('clay')) diversityBonus += 12; // Roads/settlements engine
+    if (distinctRes.has('ore') && distinctRes.has('wheat')) diversityBonus += 12; // Cities/knights engine
+
+    // 3. Team resource needs (Scarcity & Coverage)
+    const teamResCoverage: Record<ResourceType, number> = { wood: 0, clay: 0, sheep: 0, wheat: 0, ore: 0 };
+    for (const v of Object.values(state.board.vertices)) {
+      if (v.building) {
+        for (const hId of v.adjacentHexIds) {
+          const h = state.board.hexes.find(hx => hx.id === hId);
+          if (h && h.type !== 'water' && h.type !== 'desert') {
+            teamResCoverage[h.type as ResourceType] += 1;
+          }
+        }
+      }
+    }
+
+    let teamNeedBonus = 0;
+    distinctRes.forEach(res => {
+      if (teamResCoverage[res] === 0) {
+        teamNeedBonus += 30; // HUGE bonus for covering resources the team currently lacks
+      } else if (teamResCoverage[res] === 1) {
+        teamNeedBonus += 10;
+      }
+    });
+
+    // 4. Harbor synergy
+    let harborBonus = 0;
+    if (vertex.harbor) {
+      if (vertex.harbor.type !== 'generic' && distinctRes.has(vertex.harbor.type as ResourceType)) {
+        harborBonus += 20; // 2:1 matching harbor
+      } else if (vertex.harbor.type === 'generic') {
+        harborBonus += 10; // 3:1 harbor
+      }
+    }
+
+    // 5. Room to expand
+    const freeOutgoingEdges = vertex.adjacentEdgeIds.filter(eId => {
+      const e = state.board.edges[eId];
+      return e && e.road === null && !e.isWaterEdge;
+    }).length;
+
+    let expansionBonus = 0;
+    if (freeOutgoingEdges >= 3) expansionBonus += 10;
+    else if (freeOutgoingEdges === 2) expansionBonus += 4;
+    else if (freeOutgoingEdges <= 1) expansionBonus -= 15;
+
+    // Check potential settlement spots 2 steps away
+    let reachableSpotBonus = 0;
+    vertex.adjacentVertexIds.forEach(adjId => {
+      const adjV = state.board.vertices[adjId];
+      if (adjV) {
+        adjV.adjacentVertexIds.forEach(twoStepId => {
+          if (twoStepId !== vertexId) {
+            const twoStepV = state.board.vertices[twoStepId];
+            if (twoStepV && twoStepV.building === null) {
+              const isBlocked = twoStepV.adjacentVertexIds.some(neighborId => Boolean(state.board.vertices[neighborId]?.building));
+              if (!isBlocked) reachableSpotBonus += 4;
+            }
+          }
+        });
+      }
+    });
+
+    return pipScore + redNumberBonus + diversityBonus + teamNeedBonus + harborBonus + expansionBonus + Math.min(16, reachableSpotBonus);
+  }
+
+  // Evaluate setup road direction towards open valuable land, 6/8 tiles and away from dead ends
+  private evaluateEdgeForSetupRoad(state: GameRoomState, edgeId: string, setupVertexId: string): number {
+    const edge = state.board.edges[edgeId];
+    if (!edge || edge.road !== null || edge.isWaterEdge) return -9999;
+
+    const targetVertexId = edge.vertex1Id === setupVertexId ? edge.vertex2Id : edge.vertex1Id;
+    const targetVertex = state.board.vertices[targetVertexId];
+    if (!targetVertex) return -9999;
+
+    let score = 0;
+
+    // 1. Open directions from targetVertex
+    const outgoingEdges = targetVertex.adjacentEdgeIds.filter(eId => {
+      const e = state.board.edges[eId];
+      return e && e.id !== edgeId && e.road === null && !e.isWaterEdge;
+    });
+    score += outgoingEdges.length * 8;
+    if (outgoingEdges.length === 0) score -= 30; // Dead end
+
+    // 2. Reachable settlement spots from targetVertex (distance 2 from setupVertex)
+    targetVertex.adjacentVertexIds.forEach(v2Id => {
+      if (v2Id !== setupVertexId) {
+        const v2 = state.board.vertices[v2Id];
+        if (v2 && v2.building === null) {
+          const hasAdjBuilding = v2.adjacentVertexIds.some(adjId => Boolean(state.board.vertices[adjId]?.building));
+          if (!hasAdjBuilding) {
+            const touching = v2.adjacentHexIds.map(hId => state.board.hexes.find(h => h.id === hId)).filter(Boolean);
+            if (touching.length > 0 && !touching.every(h => h?.type === 'water')) {
+              let spotScore = 15;
+              touching.forEach(h => {
+                if (h && h.type !== 'water' && h.type !== 'desert') {
+                  if (h.diceNumber === 6 || h.diceNumber === 8) spotScore += 10;
+                  else if (h.diceNumber) spotScore += (6 - Math.abs(7 - h.diceNumber)) * 2;
+                }
+              });
+              score += spotScore;
+            }
+          }
+        }
+      }
+    });
+
+    // 3. Exploring fog / new hexes
+    const newlyDiscovered = edge.adjacentHexIds
+      .map(hId => state.board.hexes.find(h => h.id === hId))
+      .filter(h => h && !h.isDiscovered);
+    if (newlyDiscovered.length > 0) {
+      score += 15;
+    }
+
+    // 4. Harbor on targetVertex
+    if (targetVertex.harbor) {
+      score += 10;
+    }
+
+    return score;
+  }
+
+  // Smart Setup Settlement Placement
   private executeBotSetupTurn(roomCode: string, botId: string) {
     const state = this.getRoom(roomCode);
     if (!state || state.players[state.activePlayerIndex]?.id !== botId) return;
     if (state.phase !== 'SETUP_SETTLEMENT') return;
 
+    const bot = state.players.find(p => p.id === botId);
+    if (!bot) return;
+
     const validVertices: Array<{ id: string; score: number }> = [];
     for (const [vId, vertex] of Object.entries(state.board.vertices)) {
       if (vertex.building !== null) continue;
 
-      const hasAdjBuilding = vertex.adjacentVertexIds.some(adjId => Boolean(state.board.vertices[adjId]?.building));
-      if (hasAdjBuilding) continue;
-
-      const touchingHexes = vertex.adjacentHexIds.map(hId => state.board.hexes.find(h => h.id === hId)).filter(Boolean);
-      if (touchingHexes.length === 0 || touchingHexes.every(h => h?.type === 'water')) continue;
-
-      let score = touchingHexes.filter(h => h?.type !== 'water' && h?.type !== 'desert').length * 10;
-      touchingHexes.forEach(h => {
-        if (h && h.diceNumber) {
-          score += 6 - Math.abs(7 - h.diceNumber);
-        }
-      });
-
-      validVertices.push({ id: vId, score });
+      const score = this.evaluateVertexForSettlement(state, vId, bot, true);
+      if (score > -9000) {
+        validVertices.push({ id: vId, score });
+      }
     }
 
     validVertices.sort((a, b) => b.score - a.score);
@@ -1590,6 +1750,7 @@ export class GameManager {
     this.notifyStateChanged(roomCode);
   }
 
+  // Smart Setup Road Direction
   private executeBotSetupRoad(roomCode: string, botId: string, vertexId: string) {
     const state = this.getRoom(roomCode);
     if (!state || state.players[state.activePlayerIndex]?.id !== botId) return;
@@ -1598,50 +1759,320 @@ export class GameManager {
     const vertex = state.board.vertices[vertexId];
     if (!vertex) return;
 
-    const validEdges = vertex.adjacentEdgeIds
-      .map(eId => state.board.edges[eId])
-      .filter((e): e is NonNullable<typeof e> => Boolean(e && e.road === null && !e.isWaterEdge));
+    const candidateEdges = vertex.adjacentEdgeIds
+      .map(eId => ({ edge: state.board.edges[eId], id: eId }))
+      .filter((e): e is { edge: Edge; id: string } => Boolean(e.edge && e.edge.road === null && !e.edge.isWaterEdge));
 
-    const fallbackEdges = vertex.adjacentEdgeIds
-      .map(eId => state.board.edges[eId])
-      .filter((e): e is NonNullable<typeof e> => Boolean(e && e.road === null));
-
-    const chosenEdge = validEdges[0] || fallbackEdges[0];
-    if (chosenEdge) {
-      this.buildRoad(roomCode, botId, chosenEdge.id);
-      this.notifyStateChanged(roomCode);
+    if (candidateEdges.length === 0) {
+      const anyEdge = vertex.adjacentEdgeIds.find(eId => state.board.edges[eId]?.road === null);
+      if (anyEdge) {
+        this.buildRoad(roomCode, botId, anyEdge);
+        this.notifyStateChanged(roomCode);
+      }
+      return;
     }
+
+    const scoredEdges = candidateEdges.map(({ id }) => ({
+      id,
+      score: this.evaluateEdgeForSetupRoad(state, id, vertexId)
+    }));
+
+    scoredEdges.sort((a, b) => b.score - a.score);
+    const chosenEdgeId = scoredEdges[0].id;
+
+    this.buildRoad(roomCode, botId, chosenEdgeId);
+    this.notifyStateChanged(roomCode);
   }
 
-  // Simple autonomous bot AI for testing and multiplayer filling
+  // Intelligent Bot Turn Execution
   private executeBotTurn(roomCode: string, botId: string) {
     const state = this.getRoom(roomCode);
-    if (!state || state.players[state.activePlayerIndex].id !== botId) return;
+    if (!state || state.players[state.activePlayerIndex]?.id !== botId) return;
 
-    // 1. Roll dice
-    this.rollDice(roomCode, botId);
+    // 1. Roll dice if in TURN_DICE
+    if (state.phase === 'TURN_DICE') {
+      this.rollDice(roomCode, botId);
+      this.notifyStateChanged(roomCode);
+    }
+
+    if (state.phase !== 'TURN_ACTIONS') {
+      return;
+    }
+
+    const bot = state.players.find(p => p.id === botId);
+    if (!bot) return;
+
+    // 2. DEFENSE: Check if Robber threatens team settlements and play/recruit Knight
+    const robberHex = state.board.hexes.find(h => h.id === state.board.robberHexId);
+    if (robberHex) {
+      const touchesTeamBuilding = Object.values(state.board.vertices).some(
+        v => v.building && v.adjacentHexIds.includes(robberHex.id)
+      );
+      const isHighValue = robberHex.diceNumber === 6 || robberHex.diceNumber === 8 || robberHex.diceNumber === 5 || robberHex.diceNumber === 9;
+
+      if (touchesTeamBuilding && (isHighValue || (robberHex.diceNumber !== null && state.players.reduce((sum, p) => sum + p.knightsPlayed, 0) === 0))) {
+        if (bot.role === 'captain') {
+          this.playKnightCard(roomCode, botId);
+          this.notifyStateChanged(roomCode);
+        } else if (bot.resources.ore >= 1 && bot.resources.sheep >= 1 && bot.resources.wheat >= 1) {
+          this.playKnightCard(roomCode, botId);
+          this.notifyStateChanged(roomCode);
+        }
+      }
+    }
+
+    // 3. TIME-CRITICAL QUESTS: Prioritize saving quests with low timers (<= 2) or close to completion
+    this.botHandleQuests(roomCode, botId, true);
     this.notifyStateChanged(roomCode);
 
-    // 2. Deposit to quests if matching resources exist
-    state.questSlots.forEach((slot, slotIdx) => {
+    // 4. CITY UPGRADE: High yield & victory point upgrade
+    this.botTryUpgradeCity(roomCode, botId);
+    this.notifyStateChanged(roomCode);
+
+    // 5. SETTLEMENT BUILDING: Expand territory and team income
+    this.botTryBuildSettlement(roomCode, botId);
+    this.notifyStateChanged(roomCode);
+
+    // 6. ROAD EXPANSION: Build towards high-value spots or fog
+    this.botTryBuildRoad(roomCode, botId);
+    this.notifyStateChanged(roomCode);
+
+    // 7. REMAINING QUESTS: Deposit spare resources into open quests
+    this.botHandleQuests(roomCode, botId, false);
+    this.notifyStateChanged(roomCode);
+
+    // 8. End Turn cleanly
+    setTimeout(() => {
+      const currentState = this.getRoom(roomCode);
+      if (
+        currentState &&
+        currentState.phase === 'TURN_ACTIONS' &&
+        currentState.players[currentState.activePlayerIndex]?.id === botId
+      ) {
+        this.endTurn(roomCode, botId);
+        this.notifyStateChanged(roomCode);
+      }
+    }, 1200);
+  }
+
+  // Handle Quests with Urgency Scoring and Trade Assistance
+  private botHandleQuests(roomCode: string, botId: string, onlyUrgent: boolean = false) {
+    const state = this.getRoom(roomCode);
+    if (!state) return;
+    const bot = state.players.find(p => p.id === botId);
+    if (!bot) return;
+
+    const activeSlots = state.questSlots
+      .map((slot, slotIndex) => ({ slot, slotIndex }))
+      .filter(({ slot }) => !slot.isCompleted && !slot.isFailed);
+
+    const scoredSlots = activeSlots.map(entry => {
+      const { slot } = entry;
+      let urgency = 100 - slot.d6Timer * 10;
+      if (slot.d6Timer <= 2) urgency += 500; // Critical
+      else if (slot.d6Timer === 3) urgency += 200;
+
+      let neededCount = 0;
       if (slot.type === 'DELIVER_RESOURCES' && slot.requiredResources) {
-        const bot = state.players.find(p => p.id === botId);
-        if (!bot) return;
-        for (const [r, needed] of Object.entries(slot.requiredResources)) {
+        for (const [r, req] of Object.entries(slot.requiredResources)) {
+          const resKey = r as ResourceType;
+          const deposited = slot.depositedResources[resKey] || 0;
+          neededCount += Math.max(0, (req || 0) - deposited);
+        }
+        if (neededCount <= 2) urgency += 150; // Close to victory point
+      }
+
+      return { ...entry, urgency, neededCount };
+    });
+
+    scoredSlots.sort((a, b) => b.urgency - a.urgency);
+
+    for (const { slot, slotIndex, urgency } of scoredSlots) {
+      if (onlyUrgent && urgency < 200) continue;
+
+      if (slot.type === 'DELIVER_RESOURCES' && slot.requiredResources) {
+        for (const [r, req] of Object.entries(slot.requiredResources)) {
           const res = r as ResourceType;
-          if (bot.resources[res] > 0) {
-            this.depositToQuest(roomCode, botId, slotIdx, res, 1);
+          const currentDep = slot.depositedResources[res] || 0;
+          const stillNeeded = (req || 0) - currentDep;
+
+          if (stillNeeded > 0 && bot.resources[res] > 0) {
+            const amount = Math.min(bot.resources[res], stillNeeded);
+            this.depositToQuest(roomCode, botId, slotIndex, res, amount);
+          }
+        }
+
+        // If quest is critical (timer <= 2) and bot is missing a resource, trade surplus to save it
+        if (slot.d6Timer <= 2) {
+          for (const [r, req] of Object.entries(slot.requiredResources)) {
+            const neededRes = r as ResourceType;
+            const currentDep = slot.depositedResources[neededRes] || 0;
+            const stillNeeded = (req || 0) - currentDep;
+
+            if (stillNeeded > 0 && bot.resources[neededRes] === 0) {
+              const resKeys: ResourceType[] = ['wood', 'clay', 'sheep', 'wheat', 'ore'];
+              for (const giveRes of resKeys) {
+                if (giveRes === neededRes) continue;
+                const ratio = this.getPlayerTradeRatio(state.board, bot.color, giveRes, state.teamHasLongestRoad);
+                if (bot.resources[giveRes] >= ratio) {
+                  const tradeRes = this.tradeWithBank(roomCode, botId, giveRes, neededRes);
+                  if (tradeRes.success && bot.resources[neededRes] > 0) {
+                    this.depositToQuest(roomCode, botId, slotIndex, neededRes, 1);
+                    break;
+                  }
+                }
+              }
+            }
           }
         }
       }
-    });
-    this.notifyStateChanged(roomCode);
+    }
+  }
 
-    // 3. End turn after brief delay
-    setTimeout(() => {
-      this.endTurn(roomCode, botId);
-      this.notifyStateChanged(roomCode);
-    }, 1000);
+  // City Upgrade Strategy
+  private botTryUpgradeCity(roomCode: string, botId: string) {
+    const state = this.getRoom(roomCode);
+    if (!state) return;
+    const bot = state.players.find(p => p.id === botId);
+    if (!bot || bot.remainingPieces.cities <= 0) return;
+
+    const isBuilder = bot.role === 'builder';
+    const discountRes: ResourceType = bot.resources.ore < 3 ? 'ore' : 'wheat';
+    const neededOre = isBuilder && discountRes === 'ore' ? 2 : 3;
+    const neededWheat = isBuilder && discountRes === 'wheat' ? 1 : 2;
+
+    // Check if surplus trade can unlock city
+    if (bot.resources.ore < neededOre || bot.resources.wheat < neededWheat) {
+      const resKeys: ResourceType[] = ['wood', 'clay', 'sheep'];
+      for (const giveRes of resKeys) {
+        const ratio = this.getPlayerTradeRatio(state.board, bot.color, giveRes, state.teamHasLongestRoad);
+        if (bot.resources[giveRes] >= ratio + 1) {
+          if (bot.resources.ore < neededOre) {
+            this.tradeWithBank(roomCode, botId, giveRes, 'ore');
+            break;
+          } else if (bot.resources.wheat < neededWheat) {
+            this.tradeWithBank(roomCode, botId, giveRes, 'wheat');
+            break;
+          }
+        }
+      }
+    }
+
+    if (bot.resources.ore >= neededOre && bot.resources.wheat >= neededWheat) {
+      const mySettlements: Array<{ vId: string; score: number }> = [];
+      for (const [vId, vertex] of Object.entries(state.board.vertices)) {
+        if (vertex.building && vertex.building.type === 'settlement' && vertex.building.ownerColor === bot.color) {
+          let vScore = 0;
+          vertex.adjacentHexIds.forEach(hId => {
+            const h = state.board.hexes.find(hx => hx.id === hId);
+            if (h && h.type !== 'water' && h.type !== 'desert') {
+              if (h.diceNumber === 6 || h.diceNumber === 8) vScore += 25;
+              else if (h.diceNumber) vScore += (6 - Math.abs(7 - h.diceNumber)) * 4;
+            }
+          });
+          mySettlements.push({ vId, score: vScore });
+        }
+      }
+
+      mySettlements.sort((a, b) => b.score - a.score);
+      if (mySettlements.length > 0) {
+        this.buildCity(roomCode, botId, mySettlements[0].vId, isBuilder ? discountRes : undefined);
+      }
+    }
+  }
+
+  // Settlement Building Strategy
+  private botTryBuildSettlement(roomCode: string, botId: string) {
+    const state = this.getRoom(roomCode);
+    if (!state) return;
+    const bot = state.players.find(p => p.id === botId);
+    if (!bot || bot.remainingPieces.settlements <= 0) return;
+
+    const isBuilder = bot.role === 'builder';
+    const req: ResourceCount = { wood: 1, clay: 1, sheep: 1, wheat: 1, ore: 0 };
+    let discountRes: ResourceType | undefined;
+    if (isBuilder) {
+      discountRes = (['wood', 'clay', 'sheep', 'wheat'] as ResourceType[]).find(r => bot.resources[r] === 0) || 'wood';
+      req[discountRes]--;
+    }
+
+    const canAfford = (['wood', 'clay', 'sheep', 'wheat'] as ResourceType[]).every(r => bot.resources[r] >= req[r]);
+    if (!canAfford) return;
+
+    const validSpots: Array<{ id: string; score: number }> = [];
+    for (const [vId, vertex] of Object.entries(state.board.vertices)) {
+      if (vertex.building !== null) continue;
+
+      const hasAdjBuilding = vertex.adjacentVertexIds.some(adjId => Boolean(state.board.vertices[adjId]?.building));
+      if (hasAdjBuilding) continue;
+
+      const hasRoad = vertex.adjacentEdgeIds.some(eId => Boolean(state.board.edges[eId]?.road));
+      if (!hasRoad) continue;
+
+      const score = this.evaluateVertexForSettlement(state, vId, bot, false);
+      if (score > 0) {
+        validSpots.push({ id: vId, score });
+      }
+    }
+
+    validSpots.sort((a, b) => b.score - a.score);
+    if (validSpots.length > 0) {
+      this.buildSettlement(roomCode, botId, validSpots[0].id, undefined, discountRes);
+    }
+  }
+
+  // Road Building Strategy
+  private botTryBuildRoad(roomCode: string, botId: string) {
+    const state = this.getRoom(roomCode);
+    if (!state) return;
+    const bot = state.players.find(p => p.id === botId);
+    if (!bot || bot.remainingPieces.roads <= 0) return;
+
+    const isPioneer = bot.role === 'pioneer';
+    const canAfford = isPioneer
+      ? (bot.resources.wood >= 1 || bot.resources.clay >= 1)
+      : (bot.resources.wood >= 1 && bot.resources.clay >= 1);
+
+    if (!canAfford) return;
+
+    const candidateEdges: Array<{ edgeId: string; score: number }> = [];
+    for (const [eId, edge] of Object.entries(state.board.edges)) {
+      if (edge.road !== null || edge.isWaterEdge) continue;
+
+      const v1 = state.board.vertices[edge.vertex1Id];
+      const v2 = state.board.vertices[edge.vertex2Id];
+      if (!v1 || !v2) continue;
+
+      const touchesBuilding = Boolean(v1.building) || Boolean(v2.building);
+      const touchesRoad =
+        v1.adjacentEdgeIds.some(adjEId => adjEId !== eId && Boolean(state.board.edges[adjEId]?.road)) ||
+        v2.adjacentEdgeIds.some(adjEId => adjEId !== eId && Boolean(state.board.edges[adjEId]?.road));
+
+      if (touchesBuilding || touchesRoad) {
+        let edgeScore = 10;
+        [v1, v2].forEach(v => {
+          v.adjacentHexIds.forEach(hId => {
+            const h = state.board.hexes.find(hx => hx.id === hId);
+            if (h && !h.isDiscovered) edgeScore += 25;
+            else if (h && h.type !== 'water' && h.type !== 'desert') {
+              if (h.diceNumber === 6 || h.diceNumber === 8) edgeScore += 8;
+            }
+          });
+
+          if (v.building === null) {
+            const isBlocked = v.adjacentVertexIds.some(adjId => Boolean(state.board.vertices[adjId]?.building));
+            if (!isBlocked) edgeScore += 20;
+          }
+        });
+
+        candidateEdges.push({ edgeId: eId, score: edgeScore });
+      }
+    }
+
+    candidateEdges.sort((a, b) => b.score - a.score);
+    if (candidateEdges.length > 0) {
+      this.buildRoad(roomCode, botId, candidateEdges[0].edgeId);
+    }
   }
 
   private addLog(state: GameRoomState, message: string, type: GameLogEntry['type']) {
