@@ -341,12 +341,25 @@ export const Board: React.FC<BoardProps> = ({
             <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#fbbf24" floodOpacity="0.85" />
           </filter>
 
-          {/* Wooden Charcoal Robber Gradient */}
+          {/* Premium Turned Wood Charcoal Robber Gradients */}
           <linearGradient id="robber-wood" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#3f3f46" />
             <stop offset="45%" stopColor="#27272a" />
             <stop offset="85%" stopColor="#18181b" />
             <stop offset="100%" stopColor="#09090b" />
+          </linearGradient>
+
+          <radialGradient id="robber-pawn-body" cx="35%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="#52525b" />
+            <stop offset="40%" stopColor="#27272a" />
+            <stop offset="80%" stopColor="#18181b" />
+            <stop offset="100%" stopColor="#09090b" />
+          </radialGradient>
+
+          <linearGradient id="robber-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#fef08a" />
+            <stop offset="50%" stopColor="#ca8a04" />
+            <stop offset="100%" stopColor="#854d0e" />
           </linearGradient>
 
           {/* Clip path for each hex polygon */}
@@ -448,10 +461,11 @@ export const Board: React.FC<BoardProps> = ({
                 ) : isRobberHere ? (
                   <polygon
                     points={pointsStr}
-                    fill="#7f1d1d"
-                    fillOpacity="0.18"
-                    stroke="#dc2626"
-                    strokeWidth="3"
+                    fill="#09090b"
+                    fillOpacity="0.08"
+                    stroke="#78350f"
+                    strokeWidth="2.4"
+                    strokeDasharray="7,3.5"
                   />
                 ) : (
                   <polygon
@@ -566,47 +580,85 @@ export const Board: React.FC<BoardProps> = ({
                   </g>
                 )}
 
-                {/* Robber Meeple - Static, crisp 3D wooden pawn silhouette with menacing eyes */}
+                {/* Authentic Turned-Wood Catan Robber with Hooded Rogue Pawn Styling */}
                 {isRobberHere && (
                   <g
                     transform={`translate(${center.x}, ${hex.diceNumber !== null ? center.y - 12 : center.y})`}
                     filter="url(#catan-shadow)"
                     className="animate-robber-hover pointer-events-none"
                   >
-                    {/* Ground drop shadow */}
-                    <ellipse cx="0" cy="15" rx="14" ry="5.5" fill="#000000" opacity="0.65" />
+                    {/* Soft ground contact shadow */}
+                    <ellipse cx="0" cy="18" rx="14" ry="4.5" fill="#000000" opacity="0.55" />
 
-                    {/* Meeple Base / Body */}
+                    {/* Lathe-turned weighted base pedestal */}
                     <path
-                      d="M -11,14 C -11,11 -9,8 -5,4 C -4,2 -3,-2 -3,-5 C -4,-6 -4,-7 0,-7 C 4,-7 4,-6 3,-5 C 3,-2 4,2 5,4 C 9,8 11,11 11,14 Z"
-                      fill="url(#robber-wood)"
+                      d="M -13,16 C -13,13.5 -10,12 0,12 C 10,12 13,13.5 13,16 C 13,18.5 10,20 0,20 C -10,20 -13,18.5 -13,16 Z"
+                      fill="url(#robber-pawn-body)"
                       stroke="#09090b"
-                      strokeWidth="1.2"
+                      strokeWidth="0.8"
+                    />
+                    {/* Base rim specular reflection */}
+                    <path
+                      d="M -11,15.5 C -6,14.5 6,14.5 11,15.5"
+                      stroke="#71717a"
+                      strokeWidth="0.8"
+                      strokeLinecap="round"
+                      fill="none"
+                      opacity="0.6"
                     />
 
-                    {/* Meeple Head */}
-                    <circle cx="0" cy="-11" r="6.5" fill="url(#robber-wood)" stroke="#09090b" strokeWidth="1.2" />
-
-                    {/* Menacing red eye gleam */}
-                    <ellipse cx="-2.2" cy="-10.5" rx="1.2" ry="1.4" fill="#ef4444" />
-                    <ellipse cx="2.2" cy="-10.5" rx="1.2" ry="1.4" fill="#ef4444" />
-                    <circle cx="-2.0" cy="-10.7" r="0.4" fill="#ffffff" />
-                    <circle cx="2.4" cy="-10.7" r="0.4" fill="#ffffff" />
-
-                    {/* Wood sheen light highlight */}
+                    {/* Flared hourglass wooden pawn body */}
                     <path
-                      d="M -7,12 C -6,9 -3,4 -2,0"
-                      stroke="#71717a"
+                      d="M -11,14 C -11,9 -6.5,5 -4,0.5 C -5,-2 -5.5,-5 0,-5 C 5.5,-5 5,-2 4,0.5 C 6.5,5 11,9 11,14 C 7,15.5 -7,15.5 -11,14 Z"
+                      fill="url(#robber-pawn-body)"
+                      stroke="#09090b"
+                      strokeWidth="0.9"
+                    />
+
+                    {/* Dark leather cross-strap */}
+                    <line x1="-5" y1="2" x2="5" y2="-6" stroke="#451a03" strokeWidth="1.2" />
+
+                    {/* Weathered belt and antique brass buckle */}
+                    <rect x="-4.5" y="0.5" width="9" height="2" rx="0.5" fill="#291407" stroke="#120903" strokeWidth="0.5" />
+                    <rect x="-1.5" y="0" width="3" height="3" rx="0.5" fill="url(#robber-gold)" stroke="#713f12" strokeWidth="0.4" />
+
+                    {/* Hooded rogue cowl and mantle */}
+                    <path
+                      d="M 0,-19.5 C -5.5,-19.5 -6.5,-14 -5.5,-9.5 C -4.5,-7.5 -2,-7 0,-7 C 2,-7 4.5,-7.5 5.5,-9.5 C 6.5,-14 5.5,-19.5 0,-19.5 Z"
+                      fill="url(#robber-pawn-body)"
+                      stroke="#09090b"
+                      strokeWidth="0.9"
+                    />
+                    {/* Hood peak fold */}
+                    <path d="M 0,-19.5 Q 1,-21.5 2.5,-21" stroke="#64748b" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+
+                    {/* Deep shadow under cowl */}
+                    <path
+                      d="M 0,-16 C -2.8,-16 -3.2,-12.5 -2.6,-10.5 C -1.5,-9.2 0,-9.2 0,-9.2 C 0,-9.2 1.5,-9.2 2.6,-10.5 C 3.2,-12.5 2.8,-16 0,-16 Z"
+                      fill="#09090b"
+                    />
+
+                    {/* Subtle, sharp amber rogue gaze glinting from shadow */}
+                    <path d="M -2.2,-12.5 L -0.8,-12" stroke="#f59e0b" strokeWidth="0.9" strokeLinecap="round" />
+                    <path d="M 0.8,-12 L 2.2,-12.5" stroke="#f59e0b" strokeWidth="0.9" strokeLinecap="round" />
+
+                    {/* Small silver dagger brooch at collar */}
+                    <path d="M 0,-6.5 L -1.5,-4.5 L 1.5,-4.5 Z" fill="#94a3b8" stroke="#334155" strokeWidth="0.4" />
+
+                    {/* Left flank volumetric light reflection */}
+                    <path
+                      d="M -8,13 C -8,9 -5,6 -3,2"
+                      stroke="#94a3b8"
                       strokeWidth="1"
                       strokeLinecap="round"
                       fill="none"
-                      opacity="0.45"
+                      opacity="0.4"
                     />
 
-                    {/* Prominent Robber Badge - wide enough for text and emoji */}
-                    <g transform="translate(0, 20)">
-                      <rect x="-27" y="-7" width="54" height="14" rx="4" fill="#18181b" stroke="#ef4444" strokeWidth="1" />
-                      <text x="0" y="0.5" textAnchor="middle" dominantBaseline="central" fontSize="7.5" fontWeight="900" fill="#fca5a5" fontFamily="Cinzel, serif">
+                    {/* Sleek antique seal badge */}
+                    <g transform="translate(0, 24)">
+                      <rect x="-24" y="-6.5" width="48" height="13" rx="6.5" fill="#140c06" stroke="#854d0e" strokeWidth="1" />
+                      <text x="0" y="0.5" textAnchor="middle" dominantBaseline="central" fontSize="7.2" fontWeight="900" fill="#fde047" fontFamily="Cinzel, serif" letterSpacing="0.6">
                         🏴‍☠️ RÄUBER
                       </text>
                     </g>
