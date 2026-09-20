@@ -399,8 +399,9 @@ export const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Game Over Modal (Victory or Defeat) */}
+      {/* Game Over Modal (Victory or Defeat) with Statistics and Board Inspection */}
       <GameOverModal
+        roomState={roomState}
         phase={roomState.phase}
         solvedCount={roomState.solvedQuestsCount}
         failedCount={roomState.failedQuestsCount}

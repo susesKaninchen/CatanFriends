@@ -181,4 +181,39 @@ export interface GameRoomState {
   robberMovedThisRound: boolean;
   robberStunnedRounds?: number;
   activeTradeProposal?: ActiveTradeProposal | null;
+  gameStats?: GameEndStats;
+}
+
+export interface PlayerContributionStat {
+  playerId: string;
+  name: string;
+  color: PlayerColor;
+  role: PlayerRole;
+  isBot: boolean;
+  roadsBuilt: number;
+  settlementsBuilt: number;
+  citiesBuilt: number;
+  resourcesDepositedToQuests: number;
+  resourcesHarvested: number;
+  knightsPlayed: number;
+  longestRoadLength: number;
+}
+
+export interface GameEndStats {
+  diceRolls: { [sum: number]: number };
+  totalRolls: number;
+  playerStats: { [playerId: string]: PlayerContributionStat };
+  totalResourcesHarvested: number;
+  totalQuestsSolved: number;
+  totalQuestsFailed: number;
+  totalRounds: number;
+  victoryPointsBreakdown: {
+    settlements: number;
+    cities: number;
+    quests: number;
+    longestRoad: number;
+    largestArmy: number;
+    total: number;
+    target: number;
+  };
 }

@@ -15,7 +15,9 @@ import {
   HexTile,
   Edge,
   ActiveTradeProposal,
-  TradeProposalType
+  TradeProposalType,
+  GameEndStats,
+  PlayerContributionStat
 } from './types.js';
 import { generateBoard, getNextRobberLetter, getPreviousRobberLetter, ROBBER_LETTER_ORDER, hexToPixel, exploreAdjacent, hexDistance } from './board.js';
 import { createQuestSlot, initializeQuestSlots } from './quests.js';
@@ -1023,12 +1025,102 @@ export class GameManager {
     };
   }
 
+  public buildGameEndStats(state: GameRoomState): GameEndStats {
+    const diceRolls: { [sum: number]: number } = {
+      2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0
+    };
+    let totalRolls = 0;
+
+    for (const log of state.logs) {
+      if (log.type === 'roll') {
+        const match = log.message.match(/würfelt eine (\d+)/);
+        if (match) {
+          const sum = parseInt(match[1], 10);
+          if (sum >= 2 && sum <= 12) {
+            diceRolls[sum] = (diceRolls[sum] || 0) + 1;
+            totalRolls++;
+          }
+        }
+      }
+    }
+
+    const playerStats: { [playerId: string]: PlayerContributionStat } = {};
+    for (const p of state.players) {
+      let settlementsCount = 0;
+      let citiesCount = 0;
+      for (const vertex of Object.values(state.board.vertices)) {
+        if (vertex.building?.ownerColor === p.color) {
+          if (vertex.building.type === 'settlement') settlementsCount++;
+          else if (vertex.building.type === 'city') citiesCount++;
+        }
+      }
+
+      let roadsCount = 0;
+      for (const edge of Object.values(state.board.edges)) {
+        if (edge.road?.ownerColor === p.color) {
+          roadsCount++;
+        }
+      }
+
+      let depositedCount = 0;
+      let harvestedCount = 0;
+      for (const log of state.logs) {
+        if (log.message.startsWith(`${p.name} zahlt `)) {
+          const m = log.message.match(/zahlt (\d+)x/);
+          if (m) depositedCount += parseInt(m[1], 10);
+          else depositedCount += 1;
+        } else if (log.message.startsWith(`${p.name} erhält `) || log.message.includes(`: ${p.name} erhält +`)) {
+          const m = log.message.match(/(\d+)x/);
+          if (m) harvestedCount += parseInt(m[1], 10);
+          else harvestedCount += 1;
+        }
+      }
+
+      playerStats[p.id] = {
+        playerId: p.id,
+        name: p.name,
+        color: p.color,
+        role: p.role,
+        isBot: Boolean(p.isBot),
+        roadsBuilt: roadsCount,
+        settlementsBuilt: settlementsCount,
+        citiesBuilt: citiesCount,
+        resourcesDepositedToQuests: depositedCount,
+        resourcesHarvested: harvestedCount,
+        knightsPlayed: p.knightsPlayed,
+        longestRoadLength: p.longestRoadLength
+      };
+    }
+
+    const score = this.calculateTeamVictoryPoints(state);
+
+    return {
+      diceRolls,
+      totalRolls,
+      playerStats,
+      totalResourcesHarvested: Object.values(playerStats).reduce((acc, ps) => acc + ps.resourcesHarvested, 0),
+      totalQuestsSolved: state.solvedQuestsCount,
+      totalQuestsFailed: state.failedQuestsCount,
+      totalRounds: state.roundNumber,
+      victoryPointsBreakdown: {
+        settlements: score.settlementPoints,
+        cities: score.cityPoints,
+        quests: score.questPoints,
+        longestRoad: score.longestRoadPoints,
+        largestArmy: score.largestArmyPoints,
+        total: score.totalPoints,
+        target: state.targetQuestsToWin
+      }
+    };
+  }
+
   private checkTeamVictory(state: GameRoomState) {
     const score = this.calculateTeamVictoryPoints(state);
     state.teamVictoryPoints = score.totalPoints;
 
     if (score.totalPoints >= state.targetQuestsToWin && state.phase !== 'GAME_OVER_VICTORY') {
       state.phase = 'GAME_OVER_VICTORY';
+      state.gameStats = this.buildGameEndStats(state);
       const parts = [
         `${score.settlementsCount} Siedlung(en) (${score.settlementPoints} Pkt)`,
         `${score.citiesCount} Stadt/Städte (${score.cityPoints} Pkt)`,
@@ -1518,6 +1610,7 @@ export class GameManager {
 
         if (state.failedQuestsCount >= 4) {
           state.phase = 'GAME_OVER_DEFEAT';
+          state.gameStats = this.buildGameEndStats(state);
           this.addLog(state, 'NIEDERLAGE: 4 Quests gescheitert! Der Räuber hat Catan überrannt.', 'alert');
           return true;
         }
