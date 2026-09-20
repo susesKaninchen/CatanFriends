@@ -1057,8 +1057,8 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                   className="w-1/2 bg-[#2d1a0e] hover:bg-[#422614] disabled:opacity-40 disabled:hover:bg-[#2d1a0e] border border-[#7a4d25] text-rose-300 font-bold py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs shadow cursor-pointer disabled:cursor-not-allowed"
                   title={
                     myPlayer.role === 'captain'
-                      ? 'Kapitän: Kostenloser Ritter! (Räuber vertreiben & Beute)'
-                      : 'Ritter anheuern (1x Erz, 1x Wolle, 1x Weizen): Räuber vertreiben & Beute'
+                      ? 'Kapitän: Kostenloser Ritter! (Räuber 2 Felder zurückdrängen)'
+                      : 'Ritter anheuern (1x Erz, 1x Wolle, 1x Weizen): Räuber 2 Felder zurückdrängen'
                   }
                 >
                   <Shield className="w-4 h-4 text-rose-400" />

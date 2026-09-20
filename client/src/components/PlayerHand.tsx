@@ -142,12 +142,12 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
             }`}
             title={
               teamHasLargestArmy
-                ? 'Größte Rittermacht aktiv: +1 SP, Weit-Rückstoß, 1 Runde Betäubung, Patrouille nur jede 2. Runde'
-                : 'Rittermacht: Ab 3 Rittern im Team (+1 SP, Max-Rückstoß, Betäubung, 1/2 Patrouille)'
+                ? 'Größte Rittermacht aktiv: +3 SP, 3-Felder-Rückstoß, 1 Runde Betäubung, Patrouille nur jede 2. Runde'
+                : 'Rittermacht: Ab 3 Rittern im Team (+3 SP, 3-Felder-Rückstoß, Betäubung, 1/2 Patrouille)'
             }
           >
             <Shield className="w-3.5 h-3.5" />
-            Rittermacht {teamHasLargestArmy ? '(+1 SP / Exil)' : '(<3)'}
+            Rittermacht {teamHasLargestArmy ? '(+3 SP / 3 Felder)' : '(<3)'}
           </span>
         </div>
       </div>

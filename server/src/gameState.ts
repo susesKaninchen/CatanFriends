@@ -385,7 +385,7 @@ export class GameManager {
     }
 
     if (adjacentBuildings.length === 0) {
-      return ' (Keine anliegenden Gebäude zum Bestehlen)';
+      return '';
     }
 
     const stolenList: string[] = [];
@@ -404,9 +404,9 @@ export class GameManager {
     }
 
     if (stolenList.length > 0) {
-      return ` und stiehlt von allen anliegenden Gebäuden: ${stolenList.join(', ')}!`;
+      return ` und stiehlt von den anliegenden Gebäuden: ${stolenList.join(', ')}!`;
     } else {
-      return ' (Anliegende Gebäude besitzen keine Handkarten mehr zum Stehlen)';
+      return ' (Anliegende Gebäude besitzen keine Rohstoffe mehr zum Stehlen)';
     }
   }
 
@@ -443,64 +443,76 @@ export class GameManager {
     scoredHexes.sort((a, b) => b.score - a.score);
     const targetHex = scoredHexes[0].hex;
 
-    let destinationHex = currentHex;
-    let movedStep = false;
-    let minDist = 0;
-
-    // 3. If robber is NOT at target hex: Take exactly 1 step in the direction of targetHex!
-    if (currentHex.id !== targetHex.id) {
+    // Helper: take 1 step from fromHex towards targetHex
+    const takeStepTowardsTarget = (fromHex: HexTile): HexTile => {
+      if (fromHex.id === targetHex.id) return fromHex;
       const neighbors = state.board.hexes.filter(h => {
-        if (h.type === 'water' || h.id === currentHex!.id) return false;
-        return hexDistance(currentHex!, h) === 1;
+        if (h.type === 'water' || h.id === fromHex.id) return false;
+        return hexDistance(fromHex, h) === 1;
       });
+      if (neighbors.length === 0) return fromHex;
 
-      if (neighbors.length > 0) {
-        const neighborsWithDist = neighbors.map(n => ({
-          hex: n,
-          dist: hexDistance(n, targetHex)
-        }));
+      const neighborsWithDist = neighbors.map(n => ({
+        hex: n,
+        dist: hexDistance(n, targetHex)
+      }));
+      neighborsWithDist.sort((a, b) => a.dist - b.dist);
+      const minDist = neighborsWithDist[0].dist;
+      const bestCandidates = neighborsWithDist.filter(n => n.dist === minDist).map(n => n.hex);
+      return bestCandidates[Math.floor(Math.random() * bestCandidates.length)];
+    };
 
-        neighborsWithDist.sort((a, b) => a.dist - b.dist);
-        minDist = neighborsWithDist[0].dist;
-        const bestStepCandidates = neighborsWithDist.filter(n => n.dist === minDist).map(n => n.hex);
-        destinationHex = bestStepCandidates[Math.floor(Math.random() * bestStepCandidates.length)];
+    // 3. Movement execution: 2-step sprint on 7, 1 step on patrol
+    const maxSteps = isSevenRoll ? 2 : 1;
+    let destinationHex = currentHex;
+    let stepsTaken = 0;
 
-        // Relocate robber by 1 step
-        state.board.robberHexId = destinationHex.id;
-        state.board.hexes.forEach(h => { h.hasRobber = (h.id === destinationHex.id); });
-        movedStep = true;
+    for (let step = 0; step < maxSteps; step++) {
+      if (destinationHex.id === targetHex.id) {
+        break;
+      }
+      const nextHex = takeStepTowardsTarget(destinationHex);
+      if (nextHex.id !== destinationHex.id) {
+        destinationHex = nextHex;
+        stepsTaken++;
+      } else {
+        break;
       }
     }
 
-    // 4. If triggered by rolling a 7: steal from ALL adjacent buildings of destinationHex!
-    let stolenMsg = '';
-    if (isSevenRoll) {
-      stolenMsg = this.stealFromAdjacentBuildings(state, destinationHex.id);
-    }
+    // Update board state
+    state.board.robberHexId = destinationHex.id;
+    state.board.hexes.forEach(h => { h.hasRobber = (h.id === destinationHex.id); });
+
+    // 4. Plunder on contact: Always steals from adjacent buildings whenever entering/occupying a tile with buildings
+    const stolenMsg = this.stealFromAdjacentBuildings(state, destinationHex.id);
 
     // 5. Game Log messages
     const currentNumStr = destinationHex.diceNumber ? `Zahl ${destinationHex.diceNumber}` : 'Wüste';
     const targetNumStr = targetHex.diceNumber ? `Zahl ${targetHex.diceNumber}` : 'Wüste';
+    const remainingDist = hexDistance(destinationHex, targetHex);
     const reasonPrefix = isSevenRoll ? 'Eine 7 gewürfelt!' : 'Runden-Patrouille:';
 
     if (destinationHex.id === targetHex.id) {
-      if (movedStep) {
+      if (stepsTaken > 0) {
+        const sprintStr = isSevenRoll && stepsTaken > 1 ? 'sprintet 2 Felder vor' : 'zieht 1 Feld vor';
         this.addLog(
           state,
-          `${reasonPrefix} Der Räuber erreicht das ertragreichste Feld: ${destinationHex.type} (${currentNumStr})${stolenMsg}`,
+          `${reasonPrefix} Der Räuber ${sprintStr} und besetzt das ertragreichste Feld: ${destinationHex.type} (${currentNumStr})!${stolenMsg}`,
           'robber'
         );
       } else {
         this.addLog(
           state,
-          `${reasonPrefix} Der Räuber besetzt weiterhin das ertragreichste Feld: ${destinationHex.type} (${currentNumStr}) und blockiert dort die Erträge.${stolenMsg}`,
+          `${reasonPrefix} Der Räuber belagert weiterhin das ertragreichste Feld: ${destinationHex.type} (${currentNumStr}) und blockiert dort alle Erträge!${stolenMsg}`,
           'robber'
         );
       }
     } else {
+      const stepStr = stepsTaken === 2 ? 'sprintet 2 Felder vor' : 'zieht 1 Feld vor';
       this.addLog(
         state,
-        `${reasonPrefix} Der Räuber zieht 1 Feld vor auf ${destinationHex.type} (${currentNumStr}) in Richtung ${targetHex.type} (${targetNumStr}, noch ${minDist} Felder entfernt).${stolenMsg}`,
+        `${reasonPrefix} Der Räuber ${stepStr} auf ${destinationHex.type} (${currentNumStr}) in Richtung ${targetHex.type} (${targetNumStr}, noch ${remainingDist} Felder entfernt).${stolenMsg}`,
         'robber'
       );
     }
@@ -1181,52 +1193,74 @@ export class GameManager {
     // Check Largest Army milestone (>= 3 knights in team)
     const teamTotalKnights = state.players.reduce((sum, p) => sum + p.knightsPlayed, 0);
 
-    // Progressive Robber Exile: The more knights the team has, the further the robber is banished
-    const candidateHexes = state.board.hexes.filter(h => h.type !== 'water' && h.id !== state.board.robberHexId);
-    if (candidateHexes.length === 0) return { success: false, message: 'Kein Zielfeld verfügbar.' };
+    // Knight Pushback: Pushes robber 2 steps back (3 steps if Largest Army >= 3 knights) away from team buildings
+    const pushSteps = teamTotalKnights >= 3 ? 3 : 2;
 
-    const scoredHexes = candidateHexes.map(hex => {
-      const center = hexToPixel(hex.q, hex.r);
-      let minBuildingDist = Infinity;
-      let hasBuildingDirectly = false;
-
-      for (const vKey of Object.keys(state.board.vertices)) {
-        const v = state.board.vertices[vKey];
-        if (v.building) {
-          const d = Math.hypot(center.x - v.x, center.y - v.y);
-          if (d < minBuildingDist) minBuildingDist = d;
-          if (v.adjacentHexIds.includes(hex.id)) hasBuildingDirectly = true;
-        }
-      }
-
-      const pips = hex.diceNumber ? (6 - Math.abs(7 - hex.diceNumber)) : 0;
-      return { hex, minBuildingDist, hasBuildingDirectly, pips };
-    });
-
-    const safeHexes = scoredHexes.filter(h => !h.hasBuildingDirectly);
-    const pool = safeHexes.length > 0 ? safeHexes : scoredHexes;
-
-    // Sort by minBuildingDist descending (furthest away from team buildings first)
-    pool.sort((a, b) => b.minBuildingDist - a.minBuildingDist);
-
-    // Pick exile distance based on teamTotalKnights
-    let chosenIndex = 0;
-    if (teamTotalKnights >= 3) {
-      chosenIndex = 0; // Absolute furthest hex away (maximum exile)
-    } else if (teamTotalKnights === 2) {
-      chosenIndex = Math.min(pool.length - 1, Math.floor(Math.random() * Math.min(2, pool.length)));
-    } else {
-      chosenIndex = Math.min(pool.length - 1, Math.floor(Math.random() * Math.min(4, pool.length)));
+    let currentHex = state.board.hexes.find(h => h.id === state.board.robberHexId);
+    if (!currentHex) {
+      currentHex = state.board.hexes.find(h => h.type === 'desert') || state.board.hexes[0];
     }
 
-    const targetHex = pool[chosenIndex].hex;
+    // Find all building vertices to calculate distance away from them
+    const buildingVertices = Object.values(state.board.vertices).filter(v => v.building !== null);
 
-    state.board.hexes.forEach(h => { h.hasRobber = false; });
-    targetHex.hasRobber = true;
-    state.board.robberHexId = targetHex.id;
+    const calcHexDistanceToBuildings = (hex: HexTile): number => {
+      if (buildingVertices.length === 0) return 99;
+      let minD = 999;
+      for (const bv of buildingVertices) {
+        const vHexes = bv.adjacentHexIds.map(id => state.board.hexes.find(h => h.id === id)).filter((h): h is HexTile => Boolean(h));
+        for (const vh of vHexes) {
+          const d = hexDistance(hex, vh);
+          if (d < minD) minD = d;
+        }
+      }
+      return minD;
+    };
 
-    const numStr = targetHex.diceNumber ? `Zahl ${targetHex.diceNumber}` : 'Wüste';
-    this.addLog(state, `${activePlayer.name} ${isCaptain ? 'befiehlt die Ritterwache' : 'heuert einen Ritter an'} (Team-Ritter: ${teamTotalKnights})! Der Räuber wird ${teamTotalKnights >= 3 ? 'maximal weit in die Einöde verbannt' : `${teamTotalKnights}x weiter zurückgedrängt`} auf ${targetHex.type} (${numStr})!`, 'alert');
+    let actualStepsPushed = 0;
+    for (let step = 0; step < pushSteps; step++) {
+      if (!currentHex) break;
+      const neighbors = state.board.hexes.filter(h => {
+        if (h.type === 'water' || h.id === currentHex!.id) return false;
+        return hexDistance(currentHex!, h) === 1;
+      });
+      if (neighbors.length === 0) break;
+
+      // Score neighbors: we want to MAXIMIZE distance to nearest building, and minimize pips on tie
+      const scoredNeighbors = neighbors.map(n => {
+        const distToBuildings = calcHexDistanceToBuildings(n);
+        const pips = n.diceNumber ? (6 - Math.abs(7 - n.diceNumber)) : 0;
+        const touchesDirectBuilding = buildingVertices.some(v => v.adjacentHexIds.includes(n.id));
+        // Higher score is better: huge bonus for not touching building directly, plus building distance
+        const score = (distToBuildings * 100) - (touchesDirectBuilding ? 500 : 0) - pips;
+        return { hex: n, score, distToBuildings };
+      });
+
+      scoredNeighbors.sort((a, b) => b.score - a.score);
+      const bestScore = scoredNeighbors[0].score;
+      const bestCandidates = scoredNeighbors.filter(sn => sn.score === bestScore).map(sn => sn.hex);
+      const nextHex = bestCandidates[Math.floor(Math.random() * bestCandidates.length)];
+
+      if (nextHex && nextHex.id !== currentHex.id) {
+        currentHex = nextHex;
+        actualStepsPushed++;
+      } else {
+        break;
+      }
+    }
+
+    if (currentHex) {
+      state.board.hexes.forEach(h => { h.hasRobber = (h.id === currentHex!.id); });
+      state.board.robberHexId = currentHex.id;
+    }
+
+    const numStr = currentHex && currentHex.diceNumber ? `Zahl ${currentHex.diceNumber}` : 'Wüste';
+    const hexType = currentHex ? currentHex.type : 'Einöde';
+    this.addLog(
+      state,
+      `${activePlayer.name} ${isCaptain ? 'befiehlt die Ritterwache' : 'heuert einen Ritter an'} (Team-Ritter: ${teamTotalKnights})! Der Räuber wird ${actualStepsPushed} Felder zurückgedrängt auf ${hexType} (${numStr})!`,
+      'alert'
+    );
 
     if (teamTotalKnights >= 3) {
       if (!state.teamHasLargestArmy) {

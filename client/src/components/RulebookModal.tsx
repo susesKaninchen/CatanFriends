@@ -202,7 +202,7 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                     <strong>Längste Handelsstraße (ab 7 Straßen):</strong> +3 Team-Siegpunkte, +1 zusätzliche Schenkung pro Zug, 3:1 Bankhandel auch ohne Hafen und +1 W6-Timer für künftige Quests.
                   </li>
                   <li>
-                    <strong>Größte Rittermacht (ab 3 Rittern):</strong> +3 Team-Siegpunkte, schleudert den Räuber maximal weit weg, betäubt ihn für 1 Runde und halbiert seine Patrouille (nur noch jede 2. Runde).
+                    <strong>Größte Rittermacht (ab 3 Rittern):</strong> +3 Team-Siegpunkte, drängt den Räuber 3 Felder weit zurück, betäubt ihn für 1 Runde und halbiert seine Patrouille (nur noch jede 2. Runde).
                   </li>
                 </ul>
               </div>
@@ -297,7 +297,13 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                 </h4>
                 <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#cfbeaa]">
                   <li>
-                    Wird eine <strong>7</strong> gewürfelt oder beginnt eine neue Runde, zieht der Räuber <strong>genau 1 Feld</strong> Schritt für Schritt in Richtung des ertragreichsten Feldes der Siedler.
+                    <strong>Sprint bei einer 7:</strong> Wird eine <strong>7</strong> gewürfelt, sprintet der Räuber <strong>bis zu 2 Felder</strong> in Richtung des ertragreichsten Team-Gebäudes!
+                  </li>
+                  <li>
+                    <strong>Runden-Patrouille:</strong> Am Ende jeder vollen Runde rückt der Räuber <strong>1 Feld</strong> weiter auf seinem Weg vor.
+                  </li>
+                  <li>
+                    <strong>Plünderung bei Kontakt:</strong> Sobald der Räuber ein Feld mit anliegenden Team-Gebäuden betritt oder besetzt hält (sowohl beim 7-Sprint als auch bei der Runden-Patrouille), <strong>stiehlt er je 1 Rohstoffkarte</strong> von jedem betroffenen Gebäudebesitzer und blockiert sämtliche Erträge!
                   </li>
                   <li>
                     Alle Spieler mit mehr als <strong>7 Handkarten</strong> müssen bei einer 7 die Hälfte ihrer Handkarten an die Bank abgeben. In Quests eingelagerte Rohstoffe sind sicher!
@@ -305,27 +311,24 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                   <li>
                     Der Räuber blockiert immer <strong>nur genau das Feld, auf dem er steht</strong> (keine Nachbarfelder).
                   </li>
-                  <li>
-                    Wird eine <strong>7</strong> gewürfelt, zieht er 1 Feld vor und <strong>stiehlt von allen anliegenden Gebäuden</strong> (Siedlungen und Städten) je eine Rohstoffkarte von deren Besitzern. Bei Runden-Patrouillen wird nicht gestohlen.
-                  </li>
                 </ul>
               </div>
               <div className="bg-[#241510] border border-[#5e2d1d] rounded-xl p-4 space-y-2">
                 <h4 className="font-bold text-rose-400 text-xs uppercase tracking-wider">
-                  Ritter anheuern & Räuber zurückwerfen
+                  Ritter anheuern & Räuber zurückdrängen
                 </h4>
                 <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#cfbeaa]">
                   <li>
-                    <strong>Für alle Spieler:</strong> Jeder Spieler kann in seinem Zug für 1x Erz, 1x Wolle und 1x Weizen einen Ritter rufen.
+                    <strong>Für alle Spieler:</strong> Jeder Spieler kann in seinem Zug für 1x Erz, 1x Wolle und 1x Weizen einen Ritter anheuern.
                   </li>
                   <li>
                     <strong>Kapitän-Vorteil:</strong> Der Kapitän erhält pro Zug 1 kostenlosen Ritter!
                   </li>
                   <li>
-                    <strong>Progressiver Rückstoß:</strong> Jeder Ritter drängt den Räuber auf der Route zurück und erbeutet 1 Rohstoffkarte. Je mehr Ritter das Team versammelt hat, desto weiter wird der Räuber nach hinten geworfen!
+                    <strong>Rückstoß um 2 Felder:</strong> Jeder Ritter befreit das besetzte Feld und drängt den Räuber <strong>2 Felder weit zurück</strong> von den Team-Siedlungen weg!
                   </li>
                   <li>
-                    <strong>Größte Rittermacht (ab 3 Rittern):</strong> Bringt +1 Siegpunkt, verbannt den Räuber an den fernsten Punkt der Insel, betäubt ihn für 1 Runde und halbiert seine Patrouille auf jede 2. Runde!
+                    <strong>Größte Rittermacht (ab 3 Rittern):</strong> Bringt <strong>+3 Team-Siegpunkte</strong>, wirft den Räuber sogar <strong>3 Felder weit zurück</strong>, betäubt ihn für 1 Runde (seine nächste Patrouille fällt aus) und halbiert seine Patrouille auf jede 2. Runde!
                   </li>
                 </ul>
               </div>
