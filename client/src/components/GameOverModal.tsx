@@ -414,7 +414,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
                 </span>
               </div>
 
-              {/* Bar Chart 2 to 12 */}
+              {/* Bar Chart 2 to 12 with Best Rolled Highlight */}
               <div className="bg-[#170c06] p-4 rounded-2xl border border-[#5c3718] space-y-2">
                 {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(num => {
                   const count = stats.diceRolls[num] || 0;
@@ -422,27 +422,37 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
                   const barWidth = `${Math.max(4, Math.round((count / maxRollCount) * 100))}%`;
                   const isRed = num === 6 || num === 8;
                   const isSeven = num === 7;
+                  const isTopRoll = count > 0 && count === maxRollCount;
                   const dots = '•'.repeat(EXPECTED_PIPS[num]);
 
                   return (
-                    <div key={num} className="flex items-center gap-2 text-xs">
+                    <div
+                      key={num}
+                      className={`flex items-center gap-2 text-xs p-1 rounded-xl transition-all ${
+                        isTopRoll ? 'bg-amber-500/10 border border-amber-500/40 shadow-sm' : ''
+                      }`}
+                    >
                       {/* Number Chip */}
                       <div className={`w-8 h-7 rounded-lg flex flex-col items-center justify-center font-bold font-mono border ${
-                        isRed
+                        isTopRoll
+                          ? 'bg-amber-500 border-amber-300 text-slate-950 shadow'
+                          : isRed
                           ? 'bg-red-950/80 border-red-500 text-red-400'
                           : isSeven
                           ? 'bg-amber-950/80 border-amber-600 text-amber-300'
                           : 'bg-[#2b170c] border-[#5c3718] text-[#e8d5b5]'
                       }`}>
                         <span className="text-xs leading-none">{num}</span>
-                        <span className="text-[8px] tracking-tighter leading-none text-slate-400">{dots}</span>
+                        <span className={`text-[8px] tracking-tighter leading-none ${isTopRoll ? 'text-slate-900 font-bold' : 'text-slate-400'}`}>{dots}</span>
                       </div>
 
                       {/* Bar */}
                       <div className="flex-1 bg-[#25140a] h-6 rounded-lg overflow-hidden border border-[#4d2c12] p-0.5 relative flex items-center">
                         <div
                           className={`h-full rounded-md transition-all duration-500 ${
-                            isRed
+                            isTopRoll
+                              ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300'
+                              : isRed
                               ? 'bg-gradient-to-r from-red-600 to-amber-500'
                               : isSeven
                               ? 'bg-gradient-to-r from-amber-600 to-amber-400'
@@ -450,9 +460,16 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
                           }`}
                           style={{ width: count > 0 ? barWidth : '0%' }}
                         />
-                        <span className="absolute left-2 text-[11px] font-mono font-bold text-white drop-shadow">
-                          {count}x ({pct}%)
-                        </span>
+                        <div className="absolute left-2 flex items-center gap-2">
+                          <span className={`text-[11px] font-mono font-bold drop-shadow ${isTopRoll ? 'text-slate-950 font-black' : 'text-white'}`}>
+                            {count}x ({pct}%)
+                          </span>
+                        </div>
+                        {isTopRoll && (
+                          <span className="absolute right-2 text-[10px] font-extrabold uppercase tracking-wider text-amber-300 drop-shadow flex items-center gap-1 font-['Cinzel',serif]">
+                            👑 Häufigste Zahl
+                          </span>
+                        )}
                       </div>
                     </div>
                   );
@@ -461,72 +478,166 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             </div>
           )}
 
-          {/* TAB 3: Spielerbeiträge */}
-          {activeTab === 'players' && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {Object.values(stats.playerStats).map(player => {
-                  const colorStyle = COLOR_MAP[player.color] || COLOR_MAP.white;
-                  const roleName = ROLE_LABELS[player.role] || player.role;
+          {/* TAB 3: Spielerbeiträge mit Bestwert- und MVP-Hervorhebung */}
+          {activeTab === 'players' && (() => {
+            const playerList = Object.values(stats.playerStats);
+            const maxRoads = Math.max(0, ...playerList.map(p => p.roadsBuilt));
+            const maxSettlements = Math.max(0, ...playerList.map(p => p.settlementsBuilt));
+            const maxCities = Math.max(0, ...playerList.map(p => p.citiesBuilt));
+            const maxDeposited = Math.max(0, ...playerList.map(p => p.resourcesDepositedToQuests));
+            const maxKnights = Math.max(0, ...playerList.map(p => p.knightsPlayed));
+            const maxRoadLen = Math.max(0, ...playerList.map(p => p.longestRoadLength));
 
-                  return (
-                    <div
-                      key={player.playerId}
-                      className={`p-4 rounded-2xl border ${colorStyle.bg} ${colorStyle.border} space-y-3`}
-                    >
-                      {/* Player Header */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className={`w-3 h-3 rounded-full ${colorStyle.dot} shadow`} />
-                          <span className="font-bold text-white text-sm">
-                            {player.name}
-                          </span>
-                          {player.isBot && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/40 text-slate-400 border border-slate-700">
-                              Bot
+            // MVP Calculation based on overall contribution
+            const mvpPlayerId = playerList.reduce((best, p) => {
+              const score = p.settlementsBuilt * 2 + p.citiesBuilt * 4 + p.roadsBuilt + p.resourcesDepositedToQuests * 1.5 + p.knightsPlayed * 2;
+              if (!best || score > best.score) return { id: p.playerId, score };
+              return best;
+            }, null as { id: string; score: number } | null)?.id;
+
+            return (
+              <div className="space-y-3">
+                <div className="text-[11px] text-[#a8825c] bg-[#170c06] px-3 py-2 rounded-xl border border-[#5c3718] flex items-center justify-between">
+                  <span>Goldene Werte 👑 markieren die Bestwerte des Teams in der jeweiligen Kategorie.</span>
+                  <span className="text-amber-400 font-bold">Teamwork gewinnt!</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {playerList.map(player => {
+                    const colorStyle = COLOR_MAP[player.color] || COLOR_MAP.white;
+                    const roleName = ROLE_LABELS[player.role] || player.role;
+                    const isMvp = player.playerId === mvpPlayerId;
+
+                    return (
+                      <div
+                        key={player.playerId}
+                        className={`p-4 rounded-2xl border transition-all ${colorStyle.bg} ${
+                          isMvp ? 'border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.25)]' : colorStyle.border
+                        } space-y-3 relative overflow-hidden`}
+                      >
+                        {isMvp && (
+                          <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-amber-600 text-slate-950 text-[9px] font-black uppercase px-2 py-0.5 rounded-bl-lg flex items-center gap-1 shadow">
+                            👑 Team-MVP
+                          </div>
+                        )}
+
+                        {/* Player Header */}
+                        <div className="flex items-center justify-between pr-14">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-3 h-3 rounded-full ${colorStyle.dot} shadow`} />
+                            <span className="font-bold text-white text-sm">
+                              {player.name}
                             </span>
-                          )}
-                        </div>
-                        <span className="text-[11px] font-medium text-[#cbb299] px-2 py-0.5 rounded-full bg-[#1c1109] border border-[#5c3718]">
-                          {roleName}
-                        </span>
-                      </div>
-
-                      {/* Player Metrics Grid */}
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div className="bg-black/30 p-2 rounded-xl text-center">
-                          <span className="text-[#a8825c] block text-[9px] uppercase font-bold">Straßen</span>
-                          <span className="font-mono font-black text-amber-300 text-sm">{player.roadsBuilt}</span>
-                        </div>
-                        <div className="bg-black/30 p-2 rounded-xl text-center">
-                          <span className="text-[#a8825c] block text-[9px] uppercase font-bold">Siedlungen</span>
-                          <span className="font-mono font-black text-amber-300 text-sm">{player.settlementsBuilt}</span>
-                        </div>
-                        <div className="bg-black/30 p-2 rounded-xl text-center">
-                          <span className="text-[#a8825c] block text-[9px] uppercase font-bold">Städte</span>
-                          <span className="font-mono font-black text-amber-300 text-sm">{player.citiesBuilt}</span>
-                        </div>
-                        <div className="bg-black/30 p-2 rounded-xl text-center">
-                          <span className="text-[#a8825c] block text-[9px] uppercase font-bold">Quest-Abgabe</span>
-                          <span className="font-mono font-black text-emerald-400 text-sm">
-                            {player.resourcesDepositedToQuests}x
+                            {player.isBot && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/40 text-slate-400 border border-slate-700">
+                                Bot
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] font-medium text-[#cbb299] px-2 py-0.5 rounded-full bg-[#1c1109] border border-[#5c3718]">
+                            {roleName}
                           </span>
                         </div>
-                        <div className="bg-black/30 p-2 rounded-xl text-center">
-                          <span className="text-[#a8825c] block text-[9px] uppercase font-bold">Ritter</span>
-                          <span className="font-mono font-black text-indigo-300 text-sm">{player.knightsPlayed}</span>
-                        </div>
-                        <div className="bg-black/30 p-2 rounded-xl text-center">
-                          <span className="text-[#a8825c] block text-[9px] uppercase font-bold">Max. Straße</span>
-                          <span className="font-mono font-black text-amber-200 text-sm">{player.longestRoadLength}</span>
+
+                        {/* Player Metrics Grid with Record Highlights */}
+                        <div className="grid grid-cols-3 gap-2 text-xs">
+                          {/* Straßen */}
+                          <div className={`p-2 rounded-xl text-center border transition-all ${
+                            player.roadsBuilt === maxRoads && maxRoads > 0
+                              ? 'bg-amber-500/20 border-amber-400 shadow-sm'
+                              : 'bg-black/30 border-transparent'
+                          }`}>
+                            <span className="text-[#a8825c] block text-[9px] uppercase font-bold">Straßen</span>
+                            <span className={`font-mono font-black text-sm flex items-center justify-center gap-0.5 ${
+                              player.roadsBuilt === maxRoads && maxRoads > 0 ? 'text-amber-300' : 'text-slate-300'
+                            }`}>
+                              {player.roadsBuilt === maxRoads && maxRoads > 0 && <span className="text-[10px]">👑</span>}
+                              {player.roadsBuilt}
+                            </span>
+                          </div>
+
+                          {/* Siedlungen */}
+                          <div className={`p-2 rounded-xl text-center border transition-all ${
+                            player.settlementsBuilt === maxSettlements && maxSettlements > 0
+                              ? 'bg-amber-500/20 border-amber-400 shadow-sm'
+                              : 'bg-black/30 border-transparent'
+                          }`}>
+                            <span className="text-[#a8825c] block text-[9px] uppercase font-bold">Siedlungen</span>
+                            <span className={`font-mono font-black text-sm flex items-center justify-center gap-0.5 ${
+                              player.settlementsBuilt === maxSettlements && maxSettlements > 0 ? 'text-amber-300' : 'text-slate-300'
+                            }`}>
+                              {player.settlementsBuilt === maxSettlements && maxSettlements > 0 && <span className="text-[10px]">👑</span>}
+                              {player.settlementsBuilt}
+                            </span>
+                          </div>
+
+                          {/* Städte */}
+                          <div className={`p-2 rounded-xl text-center border transition-all ${
+                            player.citiesBuilt === maxCities && maxCities > 0
+                              ? 'bg-amber-500/20 border-amber-400 shadow-sm'
+                              : 'bg-black/30 border-transparent'
+                          }`}>
+                            <span className="text-[#a8825c] block text-[9px] uppercase font-bold">Städte</span>
+                            <span className={`font-mono font-black text-sm flex items-center justify-center gap-0.5 ${
+                              player.citiesBuilt === maxCities && maxCities > 0 ? 'text-amber-300' : 'text-slate-300'
+                            }`}>
+                              {player.citiesBuilt === maxCities && maxCities > 0 && <span className="text-[10px]">👑</span>}
+                              {player.citiesBuilt}
+                            </span>
+                          </div>
+
+                          {/* Quest-Abgabe */}
+                          <div className={`p-2 rounded-xl text-center border transition-all ${
+                            player.resourcesDepositedToQuests === maxDeposited && maxDeposited > 0
+                              ? 'bg-emerald-500/20 border-emerald-400 shadow-sm'
+                              : 'bg-black/30 border-transparent'
+                          }`}>
+                            <span className="text-[#a8825c] block text-[9px] uppercase font-bold">Quest-Abgabe</span>
+                            <span className={`font-mono font-black text-sm flex items-center justify-center gap-0.5 ${
+                              player.resourcesDepositedToQuests === maxDeposited && maxDeposited > 0 ? 'text-emerald-300' : 'text-slate-300'
+                            }`}>
+                              {player.resourcesDepositedToQuests === maxDeposited && maxDeposited > 0 && <span className="text-[10px]">👑</span>}
+                              {player.resourcesDepositedToQuests}x
+                            </span>
+                          </div>
+
+                          {/* Ritter */}
+                          <div className={`p-2 rounded-xl text-center border transition-all ${
+                            player.knightsPlayed === maxKnights && maxKnights > 0
+                              ? 'bg-indigo-500/20 border-indigo-400 shadow-sm'
+                              : 'bg-black/30 border-transparent'
+                          }`}>
+                            <span className="text-[#a8825c] block text-[9px] uppercase font-bold">Ritter</span>
+                            <span className={`font-mono font-black text-sm flex items-center justify-center gap-0.5 ${
+                              player.knightsPlayed === maxKnights && maxKnights > 0 ? 'text-indigo-300' : 'text-slate-300'
+                            }`}>
+                              {player.knightsPlayed === maxKnights && maxKnights > 0 && <span className="text-[10px]">👑</span>}
+                              {player.knightsPlayed}
+                            </span>
+                          </div>
+
+                          {/* Max. Straße */}
+                          <div className={`p-2 rounded-xl text-center border transition-all ${
+                            player.longestRoadLength === maxRoadLen && maxRoadLen > 0
+                              ? 'bg-amber-500/20 border-amber-400 shadow-sm'
+                              : 'bg-black/30 border-transparent'
+                          }`}>
+                            <span className="text-[#a8825c] block text-[9px] uppercase font-bold">Max. Straße</span>
+                            <span className={`font-mono font-black text-sm flex items-center justify-center gap-0.5 ${
+                              player.longestRoadLength === maxRoadLen && maxRoadLen > 0 ? 'text-amber-300' : 'text-slate-300'
+                            }`}>
+                              {player.longestRoadLength === maxRoadLen && maxRoadLen > 0 && <span className="text-[10px]">👑</span>}
+                              {player.longestRoadLength}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       </div>
     </div>
