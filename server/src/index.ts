@@ -3,8 +3,14 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { gameManager } from './gameState.js';
 import { PlayerColor, PlayerRole, ResourceType, TradeProposalType } from './types.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
@@ -24,6 +30,26 @@ const PORT = process.env.PORT || 3001;
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
+
+// Static frontend file serving (in production or when client dist exists)
+const clientDistPath = process.env.CLIENT_DIST_PATH || path.resolve(__dirname, '../../client/dist');
+if (fs.existsSync(clientDistPath)) {
+  console.log(`[Static Files] Serving frontend from: ${clientDistPath}`);
+  app.use(express.static(clientDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
+      return next();
+    }
+    const indexPath = path.join(clientDistPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      next();
+    }
+  });
+} else {
+  console.log(`[Static Files] No static build found at ${clientDistPath} (API-only mode)`);
+}
 
 // Register state change listener for bots and timers
 gameManager.onStateChanged = (roomCode, state) => {
