@@ -71,6 +71,7 @@ export class GameManager {
       resources: { wood: 0, clay: 0, sheep: 0, wheat: 0, ore: 0 },
       remainingPieces: { roads: 30, settlements: 5, cities: 4 },
       knightsPlayed: 0,
+      knightsPlayedThisTurn: 0,
       longestRoadLength: 0,
       tradesRemainingThisTurn: 1
     };
@@ -143,6 +144,7 @@ export class GameManager {
       resources: { wood: 0, clay: 0, sheep: 0, wheat: 0, ore: 0 },
       remainingPieces: { roads: 30, settlements: 5, cities: 4 },
       knightsPlayed: 0,
+      knightsPlayedThisTurn: 0,
       longestRoadLength: 0,
       tradesRemainingThisTurn: 1
     };
@@ -182,6 +184,7 @@ export class GameManager {
       resources: { wood: 0, clay: 0, sheep: 0, wheat: 0, ore: 0 },
       remainingPieces: { roads: 30, settlements: 5, cities: 4 },
       knightsPlayed: 0,
+      knightsPlayedThisTurn: 0,
       longestRoadLength: 0,
       tradesRemainingThisTurn: 1
     };
@@ -717,6 +720,7 @@ export class GameManager {
 
         state.players.forEach(p => {
           p.tradesRemainingThisTurn = this.calculateTradeCapacity(p, state);
+          p.knightsPlayedThisTurn = 0;
         });
 
         const score = this.calculateTeamVictoryPoints(state);
@@ -1178,8 +1182,30 @@ export class GameManager {
       return { success: false, message: 'Ritterkarte kann nur in der Aktionsphase gespielt werden.' };
     }
 
+    if ((activePlayer.knightsPlayedThisTurn ?? 0) >= 1) {
+      return { success: false, message: 'Du kannst maximal 1 Ritter pro Zug einsetzen.' };
+    }
+
     const isCaptain = activePlayer.role === 'captain';
-    if (!isCaptain) {
+    if (isCaptain) {
+      // Captain benefit: 1 resource discount (needs only 2 resources from ore, sheep, wheat)
+      const totalKnightRes = activePlayer.resources.ore + activePlayer.resources.sheep + activePlayer.resources.wheat;
+      if (totalKnightRes < 2) {
+        return { success: false, message: 'Hauptmann-Rabatt: Ritter anheuern erfordert 2 Rohstoffe aus Erz, Wolle oder Weizen (1 Rohstoff Rabatt).' };
+      }
+
+      // Deduct 2 resources, prioritizing resources the player has most of
+      let toDeduct = 2;
+      const resPriority: ResourceType[] = (['ore', 'sheep', 'wheat'] as ResourceType[])
+        .sort((a, b) => activePlayer.resources[b] - activePlayer.resources[a]);
+
+      for (const r of resPriority) {
+        while (toDeduct > 0 && activePlayer.resources[r] > 0) {
+          activePlayer.resources[r] -= 1;
+          toDeduct -= 1;
+        }
+      }
+    } else {
       if (activePlayer.resources.ore < 1 || activePlayer.resources.sheep < 1 || activePlayer.resources.wheat < 1) {
         return { success: false, message: 'Ritter anheuern erfordert: 1x Erz, 1x Wolle und 1x Weizen.' };
       }
@@ -1189,6 +1215,7 @@ export class GameManager {
     }
 
     activePlayer.knightsPlayed += 1;
+    activePlayer.knightsPlayedThisTurn = (activePlayer.knightsPlayedThisTurn ?? 0) + 1;
 
     // Check Largest Army milestone (>= 3 knights in team)
     const teamTotalKnights = state.players.reduce((sum, p) => sum + p.knightsPlayed, 0);
@@ -1258,7 +1285,7 @@ export class GameManager {
     const hexType = currentHex ? currentHex.type : 'Einöde';
     this.addLog(
       state,
-      `${activePlayer.name} ${isCaptain ? 'befiehlt die Ritterwache' : 'heuert einen Ritter an'} (Team-Ritter: ${teamTotalKnights})! Der Räuber wird ${actualStepsPushed} Felder zurückgedrängt auf ${hexType} (${numStr})!`,
+      `${activePlayer.name} ${isCaptain ? 'setzt die Hauptmann-Ritterwache ein (1 Rabatt)' : 'heuert einen Ritter an'} (Team-Ritter: ${teamTotalKnights})! Der Räuber wird ${actualStepsPushed} Felder zurückgedrängt auf ${hexType} (${numStr})!`,
       'alert'
     );
 
@@ -1599,6 +1626,7 @@ export class GameManager {
     // Ready next player
     const nextPlayer = state.players[state.activePlayerIndex];
     nextPlayer.tradesRemainingThisTurn = this.calculateTradeCapacity(nextPlayer, state);
+    nextPlayer.knightsPlayedThisTurn = 0;
     state.phase = 'TURN_DICE';
 
     this.addLog(state, `Zug beendet. ${nextPlayer.name} ist am Zug.`, 'info');
@@ -1938,12 +1966,16 @@ export class GameManager {
       const isHighValue = robberHex.diceNumber === 6 || robberHex.diceNumber === 8 || robberHex.diceNumber === 5 || robberHex.diceNumber === 9;
 
       if (touchesTeamBuilding && (isHighValue || (robberHex.diceNumber !== null && state.players.reduce((sum, p) => sum + p.knightsPlayed, 0) === 0))) {
-        if (bot.role === 'captain') {
-          this.playKnightCard(roomCode, botId);
-          this.notifyStateChanged(roomCode);
-        } else if (bot.resources.ore >= 1 && bot.resources.sheep >= 1 && bot.resources.wheat >= 1) {
-          this.playKnightCard(roomCode, botId);
-          this.notifyStateChanged(roomCode);
+        const canPlay = (bot.knightsPlayedThisTurn ?? 0) === 0;
+        const captainRes = bot.resources.ore + bot.resources.sheep + bot.resources.wheat;
+        if (canPlay) {
+          if (bot.role === 'captain' && captainRes >= 2) {
+            this.playKnightCard(roomCode, botId);
+            this.notifyStateChanged(roomCode);
+          } else if (bot.resources.ore >= 1 && bot.resources.sheep >= 1 && bot.resources.wheat >= 1) {
+            this.playKnightCard(roomCode, botId);
+            this.notifyStateChanged(roomCode);
+          }
         }
       }
     }

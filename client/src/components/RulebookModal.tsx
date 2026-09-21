@@ -319,10 +319,10 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                 </h4>
                 <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#cfbeaa]">
                   <li>
-                    <strong>Für alle Spieler:</strong> Jeder Spieler kann in seinem Zug für 1x Erz, 1x Wolle und 1x Weizen einen Ritter anheuern.
+                    <strong>Für alle Spieler:</strong> Jeder Spieler kann in seinem Zug für 1x Erz, 1x Wolle und 1x Weizen maximal 1 Ritter anheuern.
                   </li>
                   <li>
-                    <strong>Kapitän-Vorteil:</strong> Der Kapitän erhält pro Zug 1 kostenlosen Ritter!
+                    <strong>Kapitän-Vorteil:</strong> Der Kapitän erhält 1 Rohstoff Rabatt und benötigt nur 2 statt 3 Rohstoffe aus Erz, Wolle oder Weizen!
                   </li>
                   <li>
                     <strong>Rückstoß um 2 Felder:</strong> Jeder Ritter befreit das besetzte Feld und drängt den Räuber <strong>2 Felder weit zurück</strong> von den Team-Siedlungen weg!
@@ -373,7 +373,7 @@ export const RulebookModal: React.FC<RulebookModalProps> = ({ isOpen, onClose })
                     <Shield className="w-4 h-4" /> Kapitän
                   </h4>
                   <p className="text-[11px] text-[#c9b59e] mt-1">
-                    Kann Ritterkarten aktivieren, um den Räuber auf seiner Route zurückzuwerfen und Plünderungen abzuwehren.
+                    Heuert Ritterkarten mit 1 Rohstoff Rabatt an (zahlt nur 2 aus Erz, Wolle, Weizen), um den Räuber zurückzuwerfen.
                   </p>
                 </div>
               </div>

@@ -151,8 +151,12 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
   };
 
   const canAffordKnight = () => {
+    if ((myPlayer.knightsPlayedThisTurn ?? 0) >= 1) {
+      return false;
+    }
     if (myPlayer.role === 'captain') {
-      return true;
+      const knightRes = myPlayer.resources.ore + myPlayer.resources.sheep + myPlayer.resources.wheat;
+      return knightRes >= 2;
     }
     return (
       myPlayer.resources.ore >= 1 &&
@@ -1056,15 +1060,19 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
                   disabled={!canAffordKnight()}
                   className="w-1/2 bg-[#2d1a0e] hover:bg-[#422614] disabled:opacity-40 disabled:hover:bg-[#2d1a0e] border border-[#7a4d25] text-rose-300 font-bold py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs shadow cursor-pointer disabled:cursor-not-allowed"
                   title={
-                    myPlayer.role === 'captain'
-                      ? 'Kapitän: Kostenloser Ritter! (Räuber 2 Felder zurückdrängen)'
+                    (myPlayer.knightsPlayedThisTurn ?? 0) >= 1
+                      ? 'In diesem Zug wurde bereits ein Ritter eingesetzt (max. 1x pro Zug).'
+                      : myPlayer.role === 'captain'
+                      ? 'Hauptmann-Rabatt: 1 Rohstoff weniger (zahlt nur 2 statt 3 Rohstoffe aus Erz, Wolle oder Weizen) - Räuber 2 Felder zurückdrängen'
                       : 'Ritter anheuern (1x Erz, 1x Wolle, 1x Weizen): Räuber 2 Felder zurückdrängen'
                   }
                 >
                   <Shield className="w-4 h-4 text-rose-400" />
                   <span>
-                    {myPlayer.role === 'captain'
-                      ? 'Ritter (Gratis)'
+                    {(myPlayer.knightsPlayedThisTurn ?? 0) >= 1
+                      ? 'Ritter (1x/Zug)'
+                      : myPlayer.role === 'captain'
+                      ? 'Ritter (2 aus E/W/G)'
                       : 'Ritter (1E/1W/1G)'}
                   </span>
                 </button>

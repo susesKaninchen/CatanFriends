@@ -34,6 +34,7 @@ export interface Player {
   resources: ResourceCount;
   remainingPieces: PlayerPieces;
   knightsPlayed: number;
+  knightsPlayedThisTurn?: number;
   longestRoadLength: number;
   tradesRemainingThisTurn: number;
 }

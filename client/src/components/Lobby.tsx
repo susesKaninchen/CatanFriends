@@ -32,7 +32,7 @@ const ROLES: { id: PlayerRole; name: string; icon: React.ReactNode; description:
     id: 'captain',
     name: 'Hauptmann',
     icon: <Shield className="w-5 h-5 text-rose-400" />,
-    description: 'Drängt den Räuber mit Ritterkarten 2 Felder zurück auf seiner Route.'
+    description: 'Heuert Ritter mit 1 Rohstoff Rabatt an (2 statt 3 Rohstoffe aus Erz, Wolle, Weizen; max. 1x/Zug).'
   }
 ];
 

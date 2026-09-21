@@ -33,9 +33,9 @@ Gemeinsam statt gegeneinander: Erkundet einen unendlichen Kontinent, erfüllt mo
 ### 4. Die Patrouille des Räubers & Rittermacht
 - **Feste Patrouillen-Route (A bis R)**: Bei einer gewürfelten 7 zieht der Räuber automatisch zum nächsten Buchstaben seiner Route und plündert angrenzende Siedlungen.
 - **Handkarten-Abwurf**: Spieler mit mehr als 7 Handkarten müssen bei einer 7 die Hälfte ihrer Karten abgeben (eingelagerte Quest-Rohstoffe bleiben geschützt).
-- **Ritter anheuern**: Jeder Spieler kann für 1x Erz, 1x Wolle und 1x Weizen einen Ritter rufen (Kapitän erhält pro Zug 1 kostenlosen Ritter).
-- **Progressiver Rückstoß**: Jeder Ritter wirft den Räuber auf seiner Route nach hinten und erbeutet 1 Rohstoffkarte.
-- **Größte Rittermacht (ab 3 Rittern)**: Schleudert den Räuber maximal weit weg, betäubt ihn für 1 Runde und halbiert seine Patrouille (nur noch jede 2. Runde).
+- **Ritter anheuern**: Jeder Spieler kann für 1x Erz, 1x Wolle und 1x Weizen maximal 1 Ritter pro Zug rufen (Hauptmann erhält 1 Rohstoff Rabatt: zahlt nur 2 aus Erz, Wolle, Weizen).
+- **Progressiver Rückstoß**: Jeder Ritter drängt den Räuber um 2 Felder zurück (3 Felder bei Größter Rittermacht).
+- **Größte Rittermacht (ab 3 Rittern)**: Drängt den Räuber 3 Felder zurück, bringt +3 Team-Siegpunkte, betäubt ihn für 1 Runde und halbiert seine Patrouille (nur noch jede 2. Runde).
 
 ### 5. Kooperative Team-Meilensteine
 - **Längste Handelsstraße (ab 7 Straßen)**:
@@ -45,7 +45,7 @@ Gemeinsam statt gegeneinander: Erkundet einen unendlichen Kontinent, erfüllt mo
   - +1 W6-Timer-Puffer für alle künftigen Quests
 - **Größte Rittermacht (ab 3 Rittern)**:
   - +3 permanente Team-Siegpunkte
-  - Maximales Exil für den Räuber
+  - Rückstoß um 3 Felder für den Räuber
   - Betäubung des Räubers für 1 Runde (kein Raubzug)
   - Halbierung der Räuber-Aktivität auf jede 2. Runde
 
@@ -60,7 +60,7 @@ Gemeinsam statt gegeneinander: Erkundet einen unendlichen Kontinent, erfüllt mo
   - **Pionier**: Zahlt für Straßen nur 1 Holz oder 1 Lehm.
   - **Baumeister**: Benötigt für Siedlungen und Städte je 1 Rohstoff weniger.
   - **Schürfer**: Erhält auf Erz- und Getreidefeldern bei passendem Wurf +1 Bonus-Rohstoff.
-  - **Hauptmann**: Erhält pro Zug 1 kostenlosen Ritter und wirft den Räuber weiter zurück.
+  - **Hauptmann**: Erhält beim Anheuern von Rittern 1 Rohstoff Rabatt (zahlt nur 2 aus Erz, Wolle, Weizen) und drängt den Räuber 2 Felder zurück.
 
 ### 8. Dynamische Animationen & Visuals
 - Taumelnde 3D-Würfel mit echter Wurf-Animation.
